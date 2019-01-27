@@ -1,0 +1,25 @@
+{
+    "manifest_version": 2,
+    "name": "Highlighter",
+    "version": "1.0",
+
+    "description": "Adds a items to the context menu of your browser in order to highlight pieces of text on a web page to keep such marks after saving the page",
+    
+    "permissions": [
+        "activeTab",
+        "menus"
+    ],
+
+    "content_scripts": [
+        {
+            "matches": ["*://*/*"],
+            "js": ["content_scripts/messageEvent.js", "content_scripts/messageReceiver.js", 
+                "content_scripts/marker.js"],
+            "css": ["content/marker.css"]
+        }
+    ],
+
+    "background": {
+        "page": "views/background-loader.html"
+    }
+}
