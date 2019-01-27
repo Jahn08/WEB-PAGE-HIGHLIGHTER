@@ -1,7 +1,7 @@
 void function() {
     const markerClass = 'marker';
 
-    let ctrlForUnmark;
+    let activeNode;
 
     document.addEventListener('contextmenu', info => {
         try {
@@ -12,7 +12,7 @@ void function() {
                 if (info.target.classList.contains(markerClass)) 
                 {
                     msg = MessageReceiver.setUnmarkMenuReady();
-                    ctrlForUnmark = info.target;
+                    activeNode = info.target;
                 }
                 else 
                     msg = MessageReceiver.setMarkMenuReady();
@@ -29,30 +29,37 @@ void function() {
         return new Promise((resolve, reject) => {
             const receiver = new MessageReceiver(msg);
 
+            const curNode = activeNode;
+            activeNode = null;
+
             if (receiver.shouldMark())
             {
                 const spanEl = document.createElement('span');
-                spanEl.classList.add(markerClass, 'greenMarker');
-                
+                spanEl.classList.add(markerClass, receiver.getMarkColourClass());
+
                 const range = window.getSelection().getRangeAt(0);
                 range.surroundContents(spanEl);
                 range.collapse();
-
-                resolve();
             }
             else if (receiver.shouldUnmark())
             {
-                if (ctrlForUnmark)
+                if (curNode)
                 {
-                    ctrlForUnmark.replaceWith(document.createTextNode(ctrlForUnmark.innerHTML));
-                    ctrlForUnmark.remove();
-                    ctrlForUnmark = null;
+                    curNode.replaceWith(document.createTextNode(curNode.innerHTML));
+                    curNode.remove();
                 }
-
-                resolve();
             }
-            else
+            else if (receiver.shouldChangeColour())
+            {
+                if (curNode) 
+                    curNode.classList.replace(curNode.classList.item(1), receiver.getMarkColourClass());
+            }
+            else {
                 reject(new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`));
+                return;
+            }
+
+            resolve();
         });
     };
 

@@ -3,9 +3,6 @@ import { ButtonMenuItem, SeparatorMenuItem, RadioSubMenuItem } from './menuItem.
 export class ContextMenu {
     constructor ()
     {
-        this.onMarking = null;
-        this.onUnmarking = null;
-        
         new SeparatorMenuItem().addToMenu();
     
         const markBtn = new ButtonMenuItem('mark', 'Mark selected text');
@@ -20,8 +17,10 @@ export class ContextMenu {
             return activeTabs[0].id;
         };
     
-        let curColourClass = 'greenMarker';
+        const defaultColourClass = 'greenMarker';
+        let curColourClass = defaultColourClass;
 
+        this.onMarking = null;
         markBtn.addToSelectionMenu(async () => {
             try {
                 if (!this.onMarking)
@@ -35,6 +34,7 @@ export class ContextMenu {
             }
         });
     
+        this.onUnmarking = null;
         unmarkBtn.addToMenu(async () => { 
             try {
                 if (!this.onUnmarking)
@@ -65,11 +65,28 @@ export class ContextMenu {
         const setColourBtn = new ButtonMenuItem('palette', 'Set mark colour');
         setColourBtn.addToMenu();
 
-        new RadioSubMenuItem('green', setColourBtn.getId(), 'Green').addToMenu(null, null, true);
-        new RadioSubMenuItem('red', setColourBtn.getId(), 'Red').addToMenu();
-        new RadioSubMenuItem('pink', setColourBtn.getId(), 'Pink').addToMenu();
-        new RadioSubMenuItem('orange', setColourBtn.getId(), 'Orange').addToMenu();
-        new RadioSubMenuItem('yellow', setColourBtn.getId(), 'Yellow').addToMenu();
-        new RadioSubMenuItem('blue', setColourBtn.getId(), 'Blue').addToMenu();
+        this.onChangingColour = null;
+        const changeColour = async (info) => {
+            try {
+                curColourClass = info.menuItemId;
+
+                if (!this.onChangingColour)
+                    return;
+
+                const tabId = await getCurrentTabId();
+                await this.onChangingColour({ tabId, colourClass: curColourClass });
+            }
+            catch (ex) {
+                console.error('Error while trying to change mark colour: ' + ex.toString());
+            }
+        };
+
+        new RadioSubMenuItem(defaultColourClass, setColourBtn.getId(), 'Green')
+            .addToMenu(changeColour, null, true);
+        new RadioSubMenuItem('redMarker', setColourBtn.getId(), 'Red').addToMenu(changeColour);
+        new RadioSubMenuItem('pinkMarker', setColourBtn.getId(), 'Pink').addToMenu(changeColour);
+        new RadioSubMenuItem('orangeMarker', setColourBtn.getId(), 'Orange').addToMenu(changeColour);
+        new RadioSubMenuItem('yellowMarker', setColourBtn.getId(), 'Yellow').addToMenu(changeColour);
+        new RadioSubMenuItem('blueMarker', setColourBtn.getId(), 'Blue').addToMenu(changeColour);
     }
 };
