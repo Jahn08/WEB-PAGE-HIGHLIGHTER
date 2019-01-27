@@ -11,6 +11,9 @@ class BaseMenuItem {
                 options.id = id;
                 options.type = type;
 
+                if (!options.contexts || !options.contexts.length)
+                    options.contexts = ['all'];
+
                 browser.menus.create(options);
     
                 return isAdded = true, isAdded;
@@ -36,17 +39,37 @@ class SeparatorMenuItem extends BaseMenuItem {
     }
 }
 
+class RadioSubMenuItem extends BaseMenuItem {
+    constructor (id, parentId, title)
+    {
+        super(id, 'radio');
+
+        const baseAddToMenu = this.addToMenu;
+        const _addToMenu = (onchange, icons, checked) => { 
+            baseAddToMenu({
+                title,
+                icons,
+                parentId,
+                checked,
+                onclick: onchange,
+            });
+        };
+
+        this.addToMenu = (onchange, icons = null, checked = false) => _addToMenu(onchange, icons, checked);
+    }
+;}
+
 class ButtonMenuItem extends BaseMenuItem {
     constructor (id, title) {
         super(id);
 
         const baseAddToMenu = this.addToMenu;
         const _addToMenu = (onclick, icons, forSelection = false) => { 
-            const contexts = ['selection'];
-            
-            if (!forSelection)
-                contexts.push('all');
+            const contexts = [];
 
+            if (forSelection)
+                contexts.push('selection');
+            
             baseAddToMenu({
                 title,
                 icons,
@@ -65,4 +88,4 @@ class ButtonMenuItem extends BaseMenuItem {
     }
 }
 
-export { SeparatorMenuItem, ButtonMenuItem };
+export { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem };

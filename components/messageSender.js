@@ -8,7 +8,7 @@ export class MessageSender {
         this.shouldSetUnmarkMenuReady = () => msgEvent.isSetUnmarkReadyEvent(msg);
     }
 
-    static startMarking() { return msgEvent.createMarkEvent(); }
+    static startMarking(colourClass) { return msgEvent.createMarkEvent(colourClass); }
 
     static startUnmarking() { return msgEvent.createUnmarkEvent(); }
 }

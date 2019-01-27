@@ -7,7 +7,12 @@ class MessageEvent {
         const isEvent = (msg, eventName) => msg && msg.event === eventName;
 
         const markEvent = 'mark';
-        this.createMarkEvent = () => createEvent(markEvent);
+        this.createMarkEvent = (colourClass) => { 
+            const event = createEvent(markEvent);
+            event.colourClass = colourClass;
+
+            return event; 
+        };
         this.isMarkEvent = (msg) => isEvent(msg, markEvent);
 
         const markReadyEvent = 'setMarkReady';
