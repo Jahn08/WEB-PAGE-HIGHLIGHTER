@@ -14,7 +14,7 @@
         {
             "matches": ["*://*/*"],
             "js": ["content_scripts/messageEvent.js", "content_scripts/messageReceiver.js", 
-                "content_scripts/marker.js"],
+                "content_scripts/rangeMarker.js", "content_scripts/marker.js"],
             "css": ["content/marker.css"]
         }
     ],

@@ -4,7 +4,7 @@ void function() {
     let activeNode;
 
     document.addEventListener('contextmenu', info => {
-        try {
+        try {            
             if (info && info.target)
             {
                 let msg;
@@ -34,12 +34,7 @@ void function() {
 
             if (receiver.shouldMark())
             {
-                const spanEl = document.createElement('span');
-                spanEl.classList.add(markerClass, receiver.getMarkColourClass());
-
-                const range = window.getSelection().getRangeAt(0);
-                range.surroundContents(spanEl);
-                range.collapse();
+                new RangeMarker(receiver.getMarkColourClass()).applyClassToSelectedNodes();
             }
             else if (receiver.shouldUnmark())
             {
