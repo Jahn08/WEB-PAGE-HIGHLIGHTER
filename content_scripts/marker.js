@@ -34,7 +34,7 @@ void function() {
 
             if (receiver.shouldMark())
             {
-                new RangeMarker(receiver.getMarkColourClass()).applyClassToSelectedNodes();
+                new RangeMarker(receiver.markColourClass).applyClassToSelectedNodes();
             }
             else if (receiver.shouldUnmark())
             {
@@ -47,7 +47,7 @@ void function() {
             else if (receiver.shouldChangeColour())
             {
                 if (curNode) 
-                    curNode.classList.replace(curNode.classList.item(1), receiver.getMarkColourClass());
+                    curNode.classList.replace(curNode.classList.item(1), receiver.markColourClass);
             }
             else {
                 reject(new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`));

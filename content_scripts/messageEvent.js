@@ -1,39 +1,41 @@
 class MessageEvent {
-    constructor ()
-    {
-        const createEvent = (eventName) => { 
-            return { event: eventName }; 
-        };
-        const isEvent = (msg, eventName) => msg && msg.event === eventName;
+    constructor () {
+        this._markEvent = 'mark';
+        this._markReadyEvent = 'setMarkReady';
+        this._changeColourEvent = 'changeColour';
 
-        const markEvent = 'mark';
-        const colourClassField = 'colourClass';
-        
-        const createEventWithColour = (eventName, colourClass) => {
-            const event = createEvent(eventName);
-            event[colourClassField] = colourClass;
+        this._unmarkStateEvent = 'setUnmarkReady';
+        this._unmarkEvent = 'unmark';
 
-            return event; 
-        };
-
-        this.createMarkEvent = (colourClass) => createEventWithColour(markEvent, colourClass); 
-        this.isMarkEvent = (msg) => isEvent(msg, markEvent);
-        this.getMarkColourClass = (msg) => msg ? msg[colourClassField]: '';
-
-        const markReadyEvent = 'setMarkReady';
-        this.createMarkReadyEvent = () => createEvent(markReadyEvent);
-        this.isSetMarkReadyEvent = (msg) => isEvent(msg, markReadyEvent);
-
-        const changeColourEvent = 'changeColour';
-        this.createChangeColourEvent = (colourClass) =>  createEventWithColour(changeColourEvent, colourClass); 
-        this.isChangeColourEvent = (msg) => isEvent(msg, changeColourEvent);
-
-        const unmarkStateEvent = 'setUnmarkReady';
-        this.createUnmarkReadyEvent = () => createEvent(unmarkStateEvent);
-        this.isSetUnmarkReadyEvent = (msg) => isEvent(msg, unmarkStateEvent);
-
-        const unmarkEvent = 'unmark';
-        this.createUnmarkEvent = () => createEvent(unmarkEvent);
-        this.isUnmarkEvent = (msg) => isEvent(msg, unmarkEvent);
+        this._colourClassField = 'colourClass';
     }
+
+    createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
+
+    _createEventWithColour(eventName, colourClass) {
+        const event = this._createEvent(eventName);
+        event[this._colourClassField] = colourClass;
+
+        return event; 
+    };
+
+    _createEvent(eventName) { return { event: eventName }; }
+
+    isMarkEvent(msg) { return this._isEvent(msg, this._markEvent); }
+
+    _isEvent(msg, eventName) { return msg && msg.event === eventName; }
+
+    getMarkColourClass(msg) { return msg ? msg[this._colourClassField]: ''; }
+
+    createMarkReadyEvent() { return this._createEvent(this._markReadyEvent); }
+    isSetMarkReadyEvent(msg) { return this._isEvent(msg, this._markReadyEvent); }
+
+    createChangeColourEvent(colourClass) { return this._createEventWithColour(this._changeColourEvent, colourClass); }   
+    isChangeColourEvent(msg) { return this._isEvent(msg, this._changeColourEvent); }
+
+    createUnmarkReadyEvent() { return this._createEvent(this._unmarkStateEvent); }
+    isSetUnmarkReadyEvent(msg) { return this._isEvent(msg, this._unmarkStateEvent); }
+
+    createUnmarkEvent() { return this._createEvent(this._unmarkEvent); }
+    isUnmarkEvent(msg) { return this._isEvent(msg, this._unmarkEvent); }    
 }

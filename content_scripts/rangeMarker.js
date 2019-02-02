@@ -1,7 +1,5 @@
-class RangeMarker
-{
-    constructor (colourClassName)
-    {
+class RangeMarker {
+    constructor (colourClassName) {
         this._colourClassName = colourClassName;
     }
     
