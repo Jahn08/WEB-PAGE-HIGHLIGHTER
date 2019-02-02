@@ -9,9 +9,18 @@ class RangeMarker
         const range = this._getSelectionRange();
 
         if (!range)
-            return [];
+            return;
 
         const selectedNodes = this._getRangeSelectedNodes(range).filter(this._isProperTextNode);
+
+        if (!selectedNodes.length)
+            return range.collapse();
+
+        if (selectedNodes.length === 1)
+        {
+            range.surroundContents(this._createMarkedSpan());
+            return range.collapse();
+        }
 
         if (range.startOffset)
         {
