@@ -11,8 +11,8 @@ export class ContextMenu {
         this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
 
-        const defaultColourClass = 'greenMarker';
-        let curColourClass = defaultColourClass;
+        const defaultColourClass = 'marker-green';
+        this._curColourClass = defaultColourClass;
 
         this._markBtn.addToSelectionMenu(async () => {
             try {
@@ -20,7 +20,7 @@ export class ContextMenu {
                     return;
 
                 const tabId = await this._getCurrentTabId();
-                await this.onMarking({ tabId, colourClass: curColourClass });
+                await this.onMarking({ tabId, colourClass: this._curColourClass });
             }
             catch (ex) {
                 console.error('Error while trying to mark: ' + ex.toString());
@@ -44,13 +44,13 @@ export class ContextMenu {
         
         const changeColour = async (info) => {
             try {
-                curColourClass = info.menuItemId;
+                this._curColourClass = info.menuItemId;
 
                 if (!this.onChangingColour)
                     return;
 
                 const tabId = await this._getCurrentTabId();
-                await this.onChangingColour({ tabId, colourClass: curColourClass });
+                await this.onChangingColour({ tabId, colourClass: this._curColourClass });
             }
             catch (ex) {
                 console.error('Error while trying to change mark colour: ' + ex.toString());
@@ -64,12 +64,14 @@ export class ContextMenu {
 
         new RadioSubMenuItem(defaultColourClass, setColourBtn.id, 'Green')
             .addToMenu(changeColour, null, true);
-        new RadioSubMenuItem('redMarker', setColourBtn.id, 'Red').addToMenu(changeColour);
-        new RadioSubMenuItem('pinkMarker', setColourBtn.id, 'Pink').addToMenu(changeColour);
-        new RadioSubMenuItem('orangeMarker', setColourBtn.id, 'Orange').addToMenu(changeColour);
-        new RadioSubMenuItem('yellowMarker', setColourBtn.id, 'Yellow').addToMenu(changeColour);
-        new RadioSubMenuItem('blueMarker', setColourBtn.id, 'Blue').addToMenu(changeColour);
+        new RadioSubMenuItem('marker-red', setColourBtn.id, 'Red').addToMenu(changeColour);
+        new RadioSubMenuItem('marker-pink', setColourBtn.id, 'Pink').addToMenu(changeColour);
+        new RadioSubMenuItem('marker-orange', setColourBtn.id, 'Orange').addToMenu(changeColour);
+        new RadioSubMenuItem('marker-yellow', setColourBtn.id, 'Yellow').addToMenu(changeColour);
+        new RadioSubMenuItem('marker-blue', setColourBtn.id, 'Blue').addToMenu(changeColour);
     }
+
+    get currentColourClass() { return this._curColourClass; }
 
     makeReadyForMarking() {
         this._unmarkBtn.hide();
