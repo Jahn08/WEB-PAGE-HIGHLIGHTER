@@ -73,15 +73,13 @@ export class ContextMenu {
 
     get currentColourClass() { return this._curColourClass; }
 
-    makeReadyForMarking() {
-        this._unmarkBtn.hide();
-        this._markBtn.show();
-    }
+    hideMarkingBtn() { this._markBtn.hide();  }
 
-    makeReadyForUnmarking() {
-        this._markBtn.hide();
-        this._unmarkBtn.show();
-    }
+    showMarkingBtn() { this._markBtn.show();  }
+
+    hideUnmarkingBtn() { this._unmarkBtn.hide();  }
+    
+    showUnmarkingBtn() { this._unmarkBtn.show();  }
 
     async _getCurrentTabId() {
         const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });

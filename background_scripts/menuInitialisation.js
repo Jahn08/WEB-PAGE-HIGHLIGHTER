@@ -12,11 +12,17 @@ menu.onUnmarking = (info) => browser.tabs.sendMessage(info.tabId, MessageSender.
 browser.runtime.onMessage.addListener(msg => new Promise((resolve, reject) => {
     try {
         const sender = new MessageSender(msg);
-
-        if (sender.shouldSetMarkMenuReady())
-            menu.makeReadyForMarking();
-        else if (sender.shouldSetUnmarkMenuReady())
-            menu.makeReadyForUnmarking();
+        
+        if (sender.shouldSetMarkMenuReady() && (sender.currentColourClasses.length !== 1 || 
+            sender.currentColourClasses[0] !== menu.currentColourClass))
+            menu.showMarkingBtn();
+        else
+            menu.hideMarkingBtn();
+        
+        if (sender.shouldSetUnmarkMenuReady())
+            menu.showUnmarkingBtn();
+        else
+            menu.hideUnmarkingBtn();
         
         resolve();
     }
