@@ -36,7 +36,7 @@ class BaseMenuItem {
 class SeparatorMenuItem extends BaseMenuItem {
     constructor() {
         const ctrlType = 'separator';
-        super(`${ctrlType}_${Date.now()}`, ctrlType);
+        super(`${ctrlType}_${Date.now()}_${Math.floor(Math.random() * 10000)}`, ctrlType);
     }
 
     addToMenu() { super.addToMenu(); }
