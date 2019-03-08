@@ -89,57 +89,72 @@ describe('components/RadioSubMenuItem', () => {
 });
 
 describe('components/ButtonMenuItem', () => {
+    const buttons = [];
+    const newBtnOptions = [];
 
-    describe('#addToMenu', () => {
-        const buttons = [];
-        const newBtnOptions = [];
+    const addingBtnItemMenu = (addingToMenuMethodName) => {
+        const browserMocked = new BrowserMocked();
+        browserMocked.setBrowserMenu(options => {
+            assert(options);
+            assert.deepStrictEqual(options.type, 'normal');
 
-        it('should add button items with options to menu', () => {
-
-            const browserMocked = new BrowserMocked();
-            browserMocked.setBrowserMenu(options => {
-                assert(options);
-                assert.deepStrictEqual(options.type, 'normal');
-
-                newBtnOptions.push(options);
-            });
-
-            const buildRandomBtnItem = () => {
-                return { 
-                    id: Randomiser.getRandomNumberUpToMax(), 
-                    title: Randomiser.getRandomNumberUpToMax(),
-                    onclick: () => {},
-                    icons: []
-                };
-            };
-            
-            const btn1 = buildRandomBtnItem();
-            buttons.push(new ButtonMenuItem(btn1.id, btn1.title));
-            buttons[0].addToMenu(btn1.onclick, btn1.icons);
-            
-            const btn2 = buildRandomBtnItem();
-            buttons.push(new ButtonMenuItem(btn2.id, btn2.title));
-            buttons[1].addToMenu(btn2.onclick, btn2.icons);
-
-            const testItems = [btn1, btn2]
-            assert.strictEqual(newBtnOptions.length, testItems.length);
-            assert(newBtnOptions.every(r => testItems.some(tr => tr.id === r.id && 
-                tr.parentId === r.parentId && tr.title === r.title && 
-                tr.onclick === r.onclick && tr.icons === r.icons)));
+            newBtnOptions.push(options);
         });
 
+        const buildRandomBtnItem = () => {
+            return { 
+                id: Randomiser.getRandomNumberUpToMax(), 
+                title: Randomiser.getRandomNumberUpToMax(),
+                onclick: () => {},
+                icons: []
+            };
+        };
+        
+        const getCreatedBtnOptions = () => {
+            const btnOptions = buildRandomBtnItem();
+            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title);
+            buttons.push(newBtn);
+            newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icons);
+
+            return btnOptions;
+        };
+
+        const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions()];
+        assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
+            tr.parentId === r.parentId && tr.title === r.title && 
+            tr.onclick === r.onclick && tr.icons === r.icons)));
+
+        return testOptions;
+    };
+
+    const ADD_TO_MENU_METHOD_NAME = 'addToMenu';
+    describe('#' + ADD_TO_MENU_METHOD_NAME, () => {
+        it('should add button items with options to menu', () => addingBtnItemMenu(ADD_TO_MENU_METHOD_NAME));
+    });
+
+    const ADD_TO_SELECTION_MENU_METHOD_NAME = 'addToSelectionMenu';
+    describe('#' + ADD_TO_SELECTION_MENU_METHOD_NAME, () => {
+        it('should add button items with options for selection to menu', () => {
+            const createdBtnOptions = addingBtnItemMenu(ADD_TO_SELECTION_MENU_METHOD_NAME);
+
+            const btnOptionsForSelection = newBtnOptions
+                .filter(b => b.contexts && b.contexts.includes('selection'));
+            assert.deepStrictEqual(btnOptionsForSelection.length, createdBtnOptions.length);
+        });
+    });
+
+    describe('#updateVisibility', () => {
         it('should update button items visibility in menu', () => {
             const browserMocked = new BrowserMocked();
             browserMocked.setBrowserMenu(null, (id, options) => {
                 const foundOptions = newBtnOptions.find(i => i.id === id);
                 assert(foundOptions);
-
+    
                 Object.assign(foundOptions, options);
             });
- 
-            buttons[0].updateVisibility(true);
-            buttons[1].updateVisibility(false);
-
+    
+            buttons.forEach((btn, index) => index % 2 ? btn.hide(): btn.show());
+            
             assert(newBtnOptions.every(b => b.visible !== undefined));
         });
     });
