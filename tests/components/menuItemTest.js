@@ -1,35 +1,13 @@
 import assert from 'assert';
 import { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem } from '../../components/menuItem';
 import { Randomiser } from '../tools/randomiser';
-
-class BrowserMocked {
-    constructor() {
-        global.browser = {};
-    }
-
-    setBrowserMenu(onMenuCreating, onMenuUpdating) {
-        global.browser.menus = {
-            create: onMenuCreating,
-            update: onMenuUpdating
-        };
-    }
-}
+import { BrowserMocked } from '../tools/browserMocked';
 
 describe('components/SeparatorMenuItem', () => {
-
     describe('#addToMenu', () => {
-
-        it('should add separator items with distinct ids to menu', () => {
-            const ids = [];
-
+        it('should add separator items with distinct ids to a menu', () => {
             const browserMocked = new BrowserMocked();
-            browserMocked.setBrowserMenu(options => {
-                assert(options && options.id);
-                assert(!ids.includes(options.id), 'A new separator item id is not unique');
-                assert.deepStrictEqual(options.type, 'separator');
-
-                ids.push(options.id);
-            });
+            browserMocked.setBrowserMenu();
 
             new SeparatorMenuItem().addToMenu();
             new SeparatorMenuItem().addToMenu();
@@ -39,25 +17,28 @@ describe('components/SeparatorMenuItem', () => {
             separator.addToMenu();
             separator.addToMenu();
 
-            assert.strictEqual(ids.length, 3);
+            const insertedOptions = browserMocked.options;
+            assert.strictEqual(insertedOptions.length, 3);
+            assert(insertedOptions.every(o => o.type === 'separator'));
+
+            let equalIds = 0;
+            insertedOptions.sort((a, b) => a > b ? a: b)
+                .reduce((p, c) => { 
+                    if (p === c)
+                        ++equalIds;
+
+                    return c;
+                });
+            assert.strictEqual(equalIds, 0);
         });
     });
 });
 
 describe('components/RadioSubMenuItem', () => {
-
     describe('#addToMenu', () => {
-
-        it('should add radiobutton items with options to menu', () => {
-            const radioItems = [];
-
+        it('should add radiobutton items with options to a menu', () => {
             const browserMocked = new BrowserMocked();
-            browserMocked.setBrowserMenu(options => {
-                assert(options);
-                assert.deepStrictEqual(options.type, 'radio');
-
-                radioItems.push(options);
-            });
+            browserMocked.setBrowserMenu();
 
             const buildRandomRadioItem = () => {
                 return { 
@@ -78,9 +59,12 @@ describe('components/RadioSubMenuItem', () => {
             new RadioSubMenuItem(radio2.id, radio2.parentId, radio2.title)
                 .addToMenu(radio2.onclick, radio2.icons, radio2.checked);
 
-            const testRadios = [radio1, radio2]
-            assert.strictEqual(radioItems.length, testRadios.length);
-            assert(radioItems.every(r => testRadios.some(tr => tr.id === r.id && 
+            const testRadios = [radio1, radio2];
+            const radioOptions = browserMocked.options;
+            assert(radioOptions.every(o => o.type === 'radio'));
+
+            assert.strictEqual(radioOptions.length, testRadios.length);
+            assert(radioOptions.every(r => testRadios.some(tr => tr.id === r.id && 
                 tr.parentId === r.parentId && tr.title === r.title && 
                 tr.icons === r.icons && tr.onclick === r.onclick && 
                 tr.checked === r.checked)));
@@ -89,19 +73,11 @@ describe('components/RadioSubMenuItem', () => {
 });
 
 describe('components/ButtonMenuItem', () => {
-    const buttons = [];
-    const newBtnOptions = [];
-
     const addingBtnItemMenu = (addingToMenuMethodName) => {
         const browserMocked = new BrowserMocked();
-        browserMocked.setBrowserMenu(options => {
-            assert(options);
-            assert.deepStrictEqual(options.type, 'normal');
+        browserMocked.setBrowserMenu();
 
-            newBtnOptions.push(options);
-        });
-
-        const buildRandomBtnItem = () => {
+        const buildRandomBtnOptions = () => {
             return { 
                 id: Randomiser.getRandomNumberUpToMax(), 
                 title: Randomiser.getRandomNumberUpToMax(),
@@ -109,53 +85,58 @@ describe('components/ButtonMenuItem', () => {
                 icons: []
             };
         };
-        
+
+        const buttons = [];
+
         const getCreatedBtnOptions = () => {
-            const btnOptions = buildRandomBtnItem();
+            const btnOptions = buildRandomBtnOptions();
             const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title);
             buttons.push(newBtn);
             newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icons);
 
             return btnOptions;
         };
-
+        
         const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions()];
+
+        const newBtnOptions = browserMocked.options;
+        assert(newBtnOptions.every(o => o.type === 'normal'));
         assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
             tr.parentId === r.parentId && tr.title === r.title && 
             tr.onclick === r.onclick && tr.icons === r.icons)));
 
-        return testOptions;
+        return newBtnOptions;
     };
 
     const ADD_TO_MENU_METHOD_NAME = 'addToMenu';
     describe('#' + ADD_TO_MENU_METHOD_NAME, () => {
-        it('should add button items with options to menu', () => addingBtnItemMenu(ADD_TO_MENU_METHOD_NAME));
+        it('should add button items with options to a menu', () => addingBtnItemMenu(ADD_TO_MENU_METHOD_NAME));
     });
 
     const ADD_TO_SELECTION_MENU_METHOD_NAME = 'addToSelectionMenu';
     describe('#' + ADD_TO_SELECTION_MENU_METHOD_NAME, () => {
-        it('should add button items with options for selection to menu', () => {
-            const createdBtnOptions = addingBtnItemMenu(ADD_TO_SELECTION_MENU_METHOD_NAME);
-
-            const btnOptionsForSelection = newBtnOptions
-                .filter(b => b.contexts && b.contexts.includes('selection'));
-            assert.deepStrictEqual(btnOptionsForSelection.length, createdBtnOptions.length);
+        it('should add button items with options for selection to a menu', () => {
+            assert(addingBtnItemMenu(ADD_TO_SELECTION_MENU_METHOD_NAME)
+                .every(b => b.contexts && b.contexts.includes('selection')));
         });
     });
 
     describe('#updateVisibility', () => {
-        it('should update button items visibility in menu', () => {
+        it('should update button items visibility in a menu', () => {
             const browserMocked = new BrowserMocked();
-            browserMocked.setBrowserMenu(null, (id, options) => {
-                const foundOptions = newBtnOptions.find(i => i.id === id);
-                assert(foundOptions);
-    
-                Object.assign(foundOptions, options);
-            });
-    
+            browserMocked.setBrowserMenu();
+        
+            const buildRandomBtn = () => { 
+                const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax())
+                btn.addToMenu();
+
+                return btn;
+            };
+
+            const buttons = [buildRandomBtn(), buildRandomBtn(), buildRandomBtn(), buildRandomBtn()];
             buttons.forEach((btn, index) => index % 2 ? btn.hide(): btn.show());
             
-            assert(newBtnOptions.every(b => b.visible !== undefined));
+            assert(browserMocked.options.every(b => b.visible !== undefined));
         });
     });
 });
