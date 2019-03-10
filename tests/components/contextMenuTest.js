@@ -3,34 +3,40 @@ import { ContextMenu } from '../../components/contextMenu';
 import { BrowserMocked } from '../tools/browserMocked';
 
 describe('components/ContextMenu', () => {
+    const mockBrowser = () => {
+        const browserMocked = new BrowserMocked()
+        browserMocked.setBrowserMenu();
+        return browserMocked;
+    };
+    
     describe('#constructor', () => {
-        let itemOptions;
-        let contextMenu;
-
         it('should create a proper number of items in a context menu', () => {
-            const browserMocked = new BrowserMocked()
-            browserMocked.setBrowserMenu();
-            contextMenu = new ContextMenu();
+            const browserMocked = mockBrowser();
+            new ContextMenu();
 
-            itemOptions = browserMocked.options;
+            const itemOptions = browserMocked.options;
             assert.strictEqual(itemOptions.length, 11);
             assert.strictEqual(itemOptions.filter(i => i.type === 'separator').length, 2);
             assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 3);
             assert.strictEqual(itemOptions.filter(i => i.type === 'radio').length, 6);
         });
+    });
 
-        it('should change visibility of button items in a context menu', () => {
-            contextMenu.makeReadyForMarking();
+    it('should change visibility of button items in a context menu', () => {
+        const browserMocked = mockBrowser();
+        const contextMenu = new ContextMenu();
 
-            const btnOptions = itemOptions.filter(i => i.type === 'normal' && i.visible !== undefined);
-            assert.strictEqual(btnOptions.length, 2);
-            
-            const assertHavingOnlyVisibleItem = () => 
-                assert.strictEqual(btnOptions.filter(b => b.visible).length, 1);
-            assertHavingOnlyVisibleItem();
+        contextMenu.makeReadyForMarking();
 
-            contextMenu.makeReadyForUnmarking();
-            assertHavingOnlyVisibleItem();
-        });
+        const btnOptions = browserMocked.options
+            .filter(i => i.type === 'normal' && i.visible !== undefined);
+        assert.strictEqual(btnOptions.length, 2);
+        
+        const assertHavingOnlyVisibleItem = () => 
+            assert.strictEqual(btnOptions.filter(b => b.visible).length, 1);
+        assertHavingOnlyVisibleItem();
+
+        contextMenu.makeReadyForUnmarking();
+        assertHavingOnlyVisibleItem();
     });
 });
