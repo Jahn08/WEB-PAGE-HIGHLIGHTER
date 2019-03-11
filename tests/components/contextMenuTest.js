@@ -20,23 +20,30 @@ describe('components/ContextMenu', () => {
             assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 3);
             assert.strictEqual(itemOptions.filter(i => i.type === 'radio').length, 6);
         });
+
+        it('should run event callbacks while imitating clicks on menu items');
     });
 
     it('should change visibility of button items in a context menu', () => {
         const browserMocked = mockBrowser();
         const contextMenu = new ContextMenu();
 
-        contextMenu.makeReadyForMarking();
+        contextMenu.hideMarkingBtn();
+        contextMenu.hideUnmarkingBtn();
 
         const btnOptions = browserMocked.options
             .filter(i => i.type === 'normal' && i.visible !== undefined);
         assert.strictEqual(btnOptions.length, 2);
         
-        const assertHavingOnlyVisibleItem = () => 
-            assert.strictEqual(btnOptions.filter(b => b.visible).length, 1);
-        assertHavingOnlyVisibleItem();
+        const assertItemsVisibility = (visible) => assert(btnOptions.every(b => b.visible === visible));
+        assertItemsVisibility(false);
 
-        contextMenu.makeReadyForUnmarking();
-        assertHavingOnlyVisibleItem();
+        contextMenu.showMarkingBtn();
+        contextMenu.showUnmarkingBtn();
+        assertItemsVisibility(true);
+    });
+
+    describe('#currentColourClass', () => {
+        it('should return a current colour class, chosen in a menu');
     });
 });

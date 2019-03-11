@@ -27,7 +27,7 @@ describe('content_script/messageEvent', () => {
         
         checkEventMethodNames.forEach(m =>
             assert.strictEqual(msgEvent[m](event), m === checkEventMethodName));
-        assert.strictEqual(msgEvent.getMarkColourClass(event), colourClass);
+        assert(msgEvent.getMarkColourClasses(event).includes(colourClass));
     };
    
     const CREATE_MARK_EVENT_NAME = 'createMarkEvent';
@@ -63,4 +63,8 @@ describe('content_script/messageEvent', () => {
     describe('#' + CREATE_UNMARK_EVENT_NAME, () =>
         it('should create an unmark event', () => 
             createEventAndCheckIt(CREATE_UNMARK_EVENT_NAME, IS_UNMARK_EVENT_METHOD_NAME)));
+
+    describe('#combineEvents', () => {
+        it('should combine several events correctly');
+    });
 });
