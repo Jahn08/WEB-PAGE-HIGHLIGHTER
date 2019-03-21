@@ -1,21 +1,27 @@
 void function() {
-    const markerClass = 'marker';
-
     let activeNode;
 
-    document.addEventListener('contextmenu', info => {
+    const rangeMarker = new RangeMarker();
+
+    document.addEventListener('contextmenu', (info, isSelected) => {
         try {            
             if (info && info.target)
             {
                 let msg;
+                const curColourClasses = rangeMarker.getColourClassesForSelectedNodes();
 
-                if (info.target.classList.contains(markerClass)) 
+                if (curColourClasses)
+                {
+                    msg = MessageReceiver.setMarkMenuReady(curColourClasses);
+
+                    if (curColourClasses.length)
+                        msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
+                }
+                else if (rangeMarker.isNodeMarked(info.target)) 
                 {
                     msg = MessageReceiver.setUnmarkMenuReady();
                     activeNode = info.target;
                 }
-                else 
-                    msg = MessageReceiver.setMarkMenuReady();
 
                 browser.runtime.sendMessage(msg);
             }
@@ -34,22 +40,18 @@ void function() {
 
             if (receiver.shouldMark())
             {
-                new RangeMarker(receiver.markColourClass).applyClassToSelectedNodes();
+                rangeMarker.markSelectedNodes(receiver.markColourClass);
             }
             else if (receiver.shouldUnmark())
             {
-                if (curNode)
-                {
-                    curNode.replaceWith(document.createTextNode(curNode.innerHTML));
-                    curNode.remove();
-                }
+                rangeMarker.unmarkSelectedNodes(curNode);
             }
             else if (receiver.shouldChangeColour())
             {
-                if (curNode) 
-                    curNode.classList.replace(curNode.classList.item(1), receiver.markColourClass);
+                rangeMarker.changeSelectedNodesColour(receiver.markColourClass, curNode);
             }
-            else {
+            else 
+            {
                 reject(new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`));
                 return;
             }

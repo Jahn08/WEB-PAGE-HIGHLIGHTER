@@ -1,22 +1,129 @@
-class RangeMarker {
-    constructor (colourClassName) {
-        this._colourClassName = colourClassName;
+class RangeMarker {    
+    constructor() {
+        this._focusEvent = 'focus';
     }
-    
-    applyClassToSelectedNodes() {
+
+    isNodeMarked(node) {
+        const markerClass = RangeMarker.markerClass;
+        return node.classList.contains(markerClass) || node.getElementsByClassName(markerClass).length;
+    }
+
+    getColourClassesForSelectedNodes() {
         const range = this._getSelectionRange();
 
         if (!range)
             return;
 
-        const selectedNodes = this._getRangeSelectedNodes(range).filter(this._isProperTextNode);
+        const selectedNodes = this._getSelectedTextNodes(range);
+
+        if (!selectedNodes.length)
+            return [];
+        
+        const markerClass = RangeMarker.markerClass;
+        const markerContainerClass = RangeMarker.markerContainerClass;
+
+        const colourClasses = selectedNodes.map(m => m.parentNode.className.split(' ')
+                .filter(cl => cl !== markerClass && cl !== markerContainerClass && 
+                    cl.startsWith(markerClass))[0])
+            .filter(cl => cl);
+
+        return [...new Set(colourClasses)];
+    }
+
+    unmarkSelectedNodes(targetNode = null) {
+        const range = this._getSelectionRange();
+
+        if (range)
+        {
+            this._removeAllMarkerNodes(range.commonAncestorContainer);
+            return range.collapse();
+        }
+
+        this._removeAllMarkerNodes(targetNode);
+    }
+
+    _removeAllMarkerNodes(targetNode) {
+        if (!targetNode)
+            return;
+
+        const parentNode = this._getMarkerContainer(targetNode);
+
+        if (parentNode)
+        {
+            [...parentNode.getElementsByClassName(RangeMarker.markerClass)]
+                .forEach(node => {
+                    node.replaceWith(document.createTextNode(node.innerText));
+                    node.remove();
+                });
+            parentNode.classList.remove(RangeMarker.markerContainerClass);
+        }
+    }
+
+    _getMarkerContainer(node) {
+        let curNode = node;
+        
+        while (curNode.classList && 
+            !curNode.classList.contains(RangeMarker.markerContainerClass) && 
+            (curNode = curNode.parentNode));
+        
+        return curNode.classList && 
+            curNode.classList.contains(RangeMarker.markerContainerClass) ? curNode: null;
+    }
+    
+    changeSelectedNodesColour(colourClass, targetNode = null) {
+        const range = this._getSelectionRange();
+
+        if (range)
+        {
+            this._changeAllMarkerNodes(range.commonAncestorContainer, colourClass);
+            return range.collapse();
+        }
+
+        this._changeAllMarkerNodes(targetNode, colourClass);
+    }
+
+    _changeAllMarkerNodes(targetNode, colourClass) {
+        if (!targetNode)
+            return false;
+
+        const parentNode = this._getMarkerContainer(targetNode);
+        let markedNodes;
+
+        if (!parentNode || 
+            !(markedNodes = [...parentNode.getElementsByClassName(RangeMarker.markerClass)]).length)
+            return false;
+
+        markedNodes.forEach(node => node.classList.replace(node.classList.item(1), colourClass));
+        return true;
+    }
+
+    markSelectedNodes(colourClass) {
+        const range = this._getSelectionRange();
+
+        if (!range)
+            return;
+
+        if (this._changeAllMarkerNodes(range.commonAncestorContainer, colourClass))
+            return range.collapse();
+
+        const selectedNodes = this._getSelectedTextNodes(range);
 
         if (!selectedNodes.length)
             return range.collapse();
 
+        let commonParent = range.commonAncestorContainer;
+
+        if (!commonParent.classList)
+            commonParent = commonParent.parentNode;
+        
+        const markerContainerClass = RangeMarker.markerContainerClass;
+
+        if (!commonParent.classList.contains(markerContainerClass))
+            commonParent.classList.add(markerContainerClass);
+
         if (selectedNodes.length === 1)
         {
-            range.surroundContents(this._createMarkedSpan());
+            range.surroundContents(this._createMarkedSpan(colourClass));
             return range.collapse();
         }
 
@@ -25,7 +132,7 @@ class RangeMarker {
             const firstNode = selectedNodes.shift();
 
             const val = firstNode.nodeValue;
-            const newNode = this._createMarkedSpan();
+            const newNode = this._createMarkedSpan(colourClass);
             newNode.innerHTML = val.substring(range.startOffset);
 
             firstNode.nodeValue = val.substring(0, range.startOffset);
@@ -39,14 +146,16 @@ class RangeMarker {
             selectedNodes.pop();
 
             const val = lastNode.nodeValue;
-            const newNode = this._createMarkedSpan();
+            const newNode = this._createMarkedSpan(colourClass);
             newNode.innerHTML = val.substring(0, range.endOffset);
 
             lastNode.nodeValue = val.substring(range.endOffset);
             lastNode.parentNode.insertBefore(newNode, lastNode);
         }
+        else if (!range.endOffset)
+            selectedNodes.pop();
 
-        selectedNodes.forEach(n => n.parentNode.insertBefore(this._createMarkedSpan(), n).appendChild(n));
+        selectedNodes.forEach(n => n.parentNode.insertBefore(this._createMarkedSpan(colourClass), n).appendChild(n));
         range.collapse();
     }
 
@@ -55,7 +164,10 @@ class RangeMarker {
         return sel.isCollapsed ? null: sel.getRangeAt(0);
     }
 
-    _getRangeSelectedNodes(range) {
+    _getSelectedTextNodes(range) {
+        if (!range)
+            return [];
+
         let curNode = this._getDeepestNode(range.startContainer);
 
         if (curNode !== range.startContainer)
@@ -71,7 +183,7 @@ class RangeMarker {
         while (curNode && curNode !== endNode)
             rangeNodes.push(curNode = this._nextNode(curNode));
     
-        return rangeNodes;
+        return rangeNodes.filter(this._isProperTextNode);
     }
 
     _getDeepestNode(container) {
@@ -124,9 +236,13 @@ class RangeMarker {
         }
     }
 
-    _createMarkedSpan() {
+    _createMarkedSpan(colourClass) {
         const node = document.createElement('span');
-        node.classList.add('marker', this._colourClassName);
+        node.classList.add(RangeMarker.markerClass, colourClass);
         return node;
     };
+
+    static get markerClass() { return 'marker'; }
+
+    static get markerContainerClass() { return 'marker-container'; }
 };
