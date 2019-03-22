@@ -17,7 +17,7 @@ describe('components/SeparatorMenuItem', () => {
             separator.addToMenu();
             separator.addToMenu();
 
-            const insertedOptions = browserMocked.options;
+            const insertedOptions = browserMocked.menuOptions;
             assert.strictEqual(insertedOptions.length, 3);
             assert(insertedOptions.every(o => o.type === 'separator'));
 
@@ -60,7 +60,7 @@ describe('components/RadioSubMenuItem', () => {
                 .addToMenu(radio2.onclick, radio2.icons, radio2.checked);
 
             const testRadios = [radio1, radio2];
-            const radioOptions = browserMocked.options;
+            const radioOptions = browserMocked.menuOptions;
             assert(radioOptions.every(o => o.type === 'radio'));
 
             assert.strictEqual(radioOptions.length, testRadios.length);
@@ -99,7 +99,7 @@ describe('components/ButtonMenuItem', () => {
         
         const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions()];
 
-        const newBtnOptions = browserMocked.options;
+        const newBtnOptions = browserMocked.menuOptions;
         assert(newBtnOptions.every(o => o.type === 'normal'));
         assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
             tr.parentId === r.parentId && tr.title === r.title && 
@@ -136,7 +136,7 @@ describe('components/ButtonMenuItem', () => {
             const buttons = [buildRandomBtn(), buildRandomBtn(), buildRandomBtn(), buildRandomBtn()];
             buttons.forEach((btn, index) => index % 2 ? btn.hide(): btn.show());
             
-            assert(browserMocked.options.every(b => b.visible !== undefined));
+            assert(browserMocked.menuOptions.every(b => b.visible !== undefined));
         });
     });
 });

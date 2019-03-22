@@ -90,7 +90,6 @@ describe('content_script/messageEvent', () => {
             const unmarkReadyEvent = msgEvent.createUnmarkReadyEvent(); 
             const unmarkEvent = msgEvent.createUnmarkEvent(); 
 
-            debugger
             const _events = msgEvent.combineEvents([changeColourEvent, markReadyEvent, 
                 unmarkReadyEvent, unmarkEvent]);
             
