@@ -1,4 +1,4 @@
-const msgEvent = new MessageEvent();
+const msgEvent = new MenuMessageEvent();
 
 export class MessageSender {
     constructor (msg) {

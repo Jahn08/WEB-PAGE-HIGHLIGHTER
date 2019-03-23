@@ -30,4 +30,4 @@ class MessageReceiver {
     static combineEvents(...msgs) { return MessageReceiver.msgEvent.combineEvents(msgs); }
 }
 
-MessageReceiver.msgEvent = new MessageEvent();
+MessageReceiver.msgEvent = new MenuMessageEvent();

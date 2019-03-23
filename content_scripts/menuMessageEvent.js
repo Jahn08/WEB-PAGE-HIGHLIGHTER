@@ -1,4 +1,4 @@
-class MessageEvent {
+class MenuMessageEvent {
     constructor () {
         this._markEvent = 'mark';
         this._markReadyEvent = 'setMarkReady';

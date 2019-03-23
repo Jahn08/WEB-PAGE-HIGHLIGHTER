@@ -1,12 +1,14 @@
 import assert from 'assert';
 import { Randomiser } from '../tools/randomiser';
-import { ScriptLoader } from '../tools/scriptLoader';
+import { EnvLoader } from '../tools/envLoader';
 
 before((done) => {
-    ScriptLoader.loadClass('./content_scripts/messageEvent.js', 'MessageEvent').then(done);
+    EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'MenuMessageEvent')
+        .then(() => done())
+        .catch(done);
 });
 
-describe('content_script/messageEvent', () => {
+describe('content_script/menuMessageEvent', function () {
     const IS_MARK_EVENT_METHOD_NAME = 'isMarkEvent';
     const IS_CHANGE_COLOUR_EVENT_METHOD_NAME = 'isChangeColourEvent';
     const IS_SET_MARK_READY_EVENT_METHOD_NAME = 'isSetMarkReadyEvent';
@@ -17,9 +19,9 @@ describe('content_script/messageEvent', () => {
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME];
 
-    const createEventWithColourAndCheckIt = (createEventMethodName, checkEventMethodName,
-        useSeveralColours = false) => {
-        const msgEvent = new MessageEvent();
+    const createEventWithColourAndCheckIt = function (createEventMethodName, checkEventMethodName,
+        useSeveralColours = false) {
+        const msgEvent = new MenuMessageEvent();
             
         const colourClass = useSeveralColours ? 
             [Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax()] :
@@ -59,7 +61,7 @@ describe('content_script/messageEvent', () => {
             createEventWithColourAndCheckIt(CREATE_MARK_READY_EVENT_NAME, IS_SET_MARK_READY_EVENT_METHOD_NAME, true)));
 
     const createEventAndCheckIt = (createEventMethodName, checkEventMethodName) => {
-        const msgEvent = new MessageEvent();
+        const msgEvent = new MenuMessageEvent();
         const event = msgEvent[createEventMethodName]();
 
         assert(event);
@@ -77,9 +79,9 @@ describe('content_script/messageEvent', () => {
         it('should create an unmark event', () => 
             createEventAndCheckIt(CREATE_UNMARK_EVENT_NAME, IS_UNMARK_EVENT_METHOD_NAME)));
 
-    describe('#combineEvents', () => {
-        it('should combine several events correctly', () => {
-            const msgEvent = new MessageEvent();
+    describe('#combineEvents', function () {
+        it('should combine several events correctly', function () {
+            const msgEvent = new MenuMessageEvent();
             
             const changeColourClass = Randomiser.getRandomNumberUpToMax();
             const changeColourEvent = msgEvent.createChangeColourEvent(changeColourClass); 
