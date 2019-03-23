@@ -5,7 +5,7 @@ class RangeMarker {
 
     isNodeMarked(node) {
         const markerClass = RangeMarker.markerClass;
-        return node.classList.contains(markerClass) || node.getElementsByClassName(markerClass).length;
+        return node.classList.contains(markerClass) || node.getElementsByClassName(markerClass).length > 0;
     }
 
     getColourClassesForSelectedNodes() {
@@ -169,13 +169,13 @@ class RangeMarker {
             return [];
 
         let curNode = this._getDeepestNode(range.startContainer);
-
         if (curNode !== range.startContainer)
-            range.setStart(curNode, 0);
+            range.setStart(curNode, range.startOffset);
 
-        // TODO: Reaching for the deepest text container too
-        const endNode = range.endContainer;
-    
+        const endNode = this._getDeepestNode(range.endContainer);
+        if (endNode !== range.endContainer)
+            range.setEnd(endNode, range.endOffset);
+
         if (curNode === endNode)
             return [curNode];
     

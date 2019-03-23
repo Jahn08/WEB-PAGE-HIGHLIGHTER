@@ -5,31 +5,51 @@
 	</head>
 	<body>
         <style>
-            .styledText {
+            .article--paragraph--sentence--label {
                 color: coral;
             }
         </style>
-		<div id="global">
-            <p>
-                <span>                    
-                    Extensions <label class="styledText">can extend and modify</label>
+		<div id="article">
+            <p id="article--paragraph">
+                <span class="article--paragraph--sentence">                    
+                    Extensions 
+                    <label class="article--paragraph--sentence--label">
+                        can extend and modify
+                    </label>
                     the capability of a browser.
                 </span>
-                <span>
-                    <em>Extensions for Firefox are built using the WebExtensions API,</em>
-                    <bold>a cross-browser <em>system for developing</em> extensions.</bold>
+                <span class="article--paragraph--sentence">
+                    <em class="article--paragraph--sentence--italic">
+                        Extensions for Firefox are built using the WebExtensions API,
+                    </em>
+                    <bold class="article--paragraph--sentence--bold">
+                        a cross-browser 
+                        <em class="article--paragraph--sentence--bold--italic">
+                            system for developing
+                        </em> 
+                        extensions.
+                    </bold>
                 </span>
-                <span>To a large extent the system is compatible with the extension API supported
-                    <label class="styledText"> by Google Chrome and Opera and the W3C Draft Community Group.</label>
+                <span class="article--paragraph--sentence">
+                    To a large extent the system is compatible with the extension API supported
+                    <label class="article--paragraph--sentence--label"> 
+                        by Google Chrome and Opera and the W3C Draft Community Group.
+                    </label>
                 </span>
             </p>
-            <p>
-                <span>
-                    <em>Extensions written for these browsers will in most cases</em>
-                    <label class="styledText">run in Firefox or Microsoft Edge</label>
+            <p id="article--paragraph">
+                <span class="article--paragraph--sentence">
+                    <em class="article--paragraph--sentence--italic">
+                        Extensions written for these browsers will in most cases
+                    </em>
+                    <label class="article--paragraph--sentence--label">
+                        run in Firefox or Microsoft Edge
+                    </label>
                     with just a few changes.
                 </span>
-                <span>The API is also fully compatible with multiprocess Firefox.</span>
+                <span class="article--paragraph--sentence">
+                    The API is also fully compatible with multiprocess Firefox.
+                </span>
             </p>
 		</div>
 	</body>
