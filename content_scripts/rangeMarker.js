@@ -172,7 +172,7 @@ class RangeMarker {
         if (curNode !== range.startContainer)
             range.setStart(curNode, range.startOffset);
 
-        const endNode = this._getDeepestNode(range.endContainer);
+        const endNode = this._getDeepestNode(range.endContainer, true);
         if (endNode !== range.endContainer)
             range.setEnd(endNode, range.endOffset);
 
@@ -186,11 +186,11 @@ class RangeMarker {
         return rangeNodes.filter(this._isProperTextNode);
     }
 
-    _getDeepestNode(container) {
+    _getDeepestNode(container, traverseFromEnd = false) {
         if (this._isProperTextNode(container))
             return container;
 
-        return this._lookIntoNode(container);
+        return this._lookIntoNode(container, traverseFromEnd);
     }
 
     _isProperTextNode(node) {        
@@ -198,21 +198,29 @@ class RangeMarker {
         return node.nodeType === textNodeType && node.nodeValue && node.nodeValue.trim().length > 0;
     }
 
-    _lookIntoNode(node) {
+    _lookIntoNode(node, traverseFromEnd) {
         const nodeFoundMsg = 'success';
 
         let outcome;
 
+        let childrenCount;
+
         if (this._isProperTextNode(node))
             return node;
-        else if (node.childNodes && node.childNodes.length)    
+        else if (node.childNodes && (childrenCount = node.childNodes.length))    
         {
             try 
             {
-                node.childNodes.forEach(c => {
-                    if (outcome = this._lookIntoNode(c))
+                const processNode = n => {
+                    if (outcome = this._lookIntoNode(n, traverseFromEnd))
                         throw new Error(nodeFoundMsg);
-                });
+                };
+
+                if (traverseFromEnd)
+                    for (let i = childrenCount - 1; i >= 0; --i)
+                        processNode(node.childNodes[i]);                                      
+                else
+                    node.childNodes.forEach(processNode);
             }
             catch (ex)
             {
