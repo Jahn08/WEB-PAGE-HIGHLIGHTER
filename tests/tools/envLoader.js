@@ -82,6 +82,7 @@ class Range {
         this.endContainer;
         this.endOffset = 0;
         this.startOffset = 0;
+        this.collapsed = true;
 
         this._setWindowSelection();
     }
@@ -123,6 +124,7 @@ class Range {
             while ((node = node.parentNode) && !startParents.includes(node));
 
             this.commonAncestorContainer = node;
+            this.collapsed = false;
         }
         else
             this.commonAncestorContainer = null;
@@ -136,9 +138,8 @@ class Range {
 
         global.window.getSelection = () => {
             return { 
-                getRangeAt() {
-                    return _this;
-                }
+                isCollapsed: _this.collapsed,
+                getRangeAt() { return _this; }
             };
         }
     }

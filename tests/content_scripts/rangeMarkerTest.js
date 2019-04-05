@@ -45,16 +45,35 @@ describe('content_script/rangeMarker', function () {
     );
 
     describe('#markSelectedNodes', function () {
-        
-        const testMarking = function (setRangeContainersCallback, expectedMarkersNumber,
-            expectedText) {
+        const markNodesWithRandomColour = (rangeMarker = new RangeMarker()) => {
+            const colourClass = `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
+            rangeMarker.markSelectedNodes(colourClass);
+
+            return colourClass;
+        };
+
+        const checkMarkedNodes = function (expectedMarkersNumber, expectedText) {
+            const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerContainerClass} .${RangeMarker.markerClass}`)];
+            assert.strictEqual(markedNodes.length, expectedMarkersNumber);
+            
+            const markedText = markedNodes.length ? markedNodes.reduce((p, c) => 
+                (p.textContent ? p.textContent: p) + c.textContent): '';
+
+            assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
+        };
+
+        it('should do nothing without any selected text', () => {
+            markNodesWithRandomColour();
+            checkMarkedNodes(0, '');
+        });
+
+        const markRangeAndCheckColour = function (setRangeContainersCallback) {
             const rangeMarker = new RangeMarker();
-                    
+                            
             const range = document.createRange();
             setRangeContainersCallback(range);
 
-            const colourClass = `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
-            rangeMarker.markSelectedNodes(colourClass);            
+            const colourClass = markNodesWithRandomColour(rangeMarker);
             
             setRangeContainersCallback(range);
 
@@ -63,13 +82,12 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(markColours.length, 1);
             assert.strictEqual(markColours[0], colourClass);
 
-            const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerContainerClass} .${RangeMarker.markerClass}`)];
-            assert.strictEqual(markedNodes.length, expectedMarkersNumber);
+            return colourClass;
+        };
 
-            const markedText = markedNodes.reduce((p, c) => 
-                (p.textContent ? p.textContent: p) + c.textContent);
-
-            assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
+        const testMarking = function (setRangeContainersCallback, expectedMarkersNumber, expectedText) {
+            markRangeAndCheckColour(setRangeContainersCallback);
+            checkMarkedNodes(expectedMarkersNumber, expectedText);
         };
 
         it('should mark text over entirely selected nodes', () =>
@@ -88,17 +106,37 @@ describe('content_script/rangeMarker', function () {
             }, 3, 'or Firefox are built using the WebExtensions API, a cross-browser system f')
         });
 
-        it('should mark over partly selected nodes in different paragraphs', () => {
-            testMarking(range => {
-                range.setStart(document.querySelector('.article--paragraph--sentence--italic'), 26);
-                range.setEnd(document.querySelector('#article--paragraph-last .article--paragraph--sentence'), 30);
-            }, 9, 'xtensions for Firefox are built using the WebExtensions API, ' + 
-                'a cross-browser system for developing extensions. ' + 
-                'To a large extent the system is compatible with the extension ' + 
-                'API supported by Google Chrome and Opera and the W3C ' + 
-                'Draft Community Group. Extensions written for these browsers ' + 
-                'will in most cases run in Firefox or Microsoft Edge with just')
-        });
+        const setRangeForSeveralParagraphs = range => {
+            range.setStart(document.querySelector('.article--paragraph--sentence--italic'), 26);
+            range.setEnd(document.querySelector('#article--paragraph-last .article--paragraph--sentence'), 30);
+        };
 
+        const SEVERAL_PARAGRAPHS_EXPECTED_NODES = 9;
+        const SEVERAL_PARAGRAPHS_EXPECTED_TEXT = 
+            'xtensions for Firefox are built using the WebExtensions API, ' + 
+            'a cross-browser system for developing extensions. ' + 
+            'To a large extent the system is compatible with the extension ' + 
+            'API supported by Google Chrome and Opera and the W3C ' + 
+            'Draft Community Group. Extensions written for these browsers ' + 
+            'will in most cases run in Firefox or Microsoft Edge with just';
+
+        it('should mark over partly selected nodes in different paragraphs', () =>
+            testMarking(setRangeForSeveralParagraphs, SEVERAL_PARAGRAPHS_EXPECTED_NODES, 
+                SEVERAL_PARAGRAPHS_EXPECTED_TEXT));
+
+        it('should change colour for partly selected nodes in different paragraphs', () => {
+            assert.notStrictEqual(markRangeAndCheckColour(setRangeForSeveralParagraphs), 
+                markRangeAndCheckColour(setRangeForSeveralParagraphs));
+
+            checkMarkedNodes(SEVERAL_PARAGRAPHS_EXPECTED_NODES, SEVERAL_PARAGRAPHS_EXPECTED_TEXT)
+        });
+    });
+
+    describe('#changeSelectedNodesColour', function () {
+        it('should do nothing with neither selected text or a focused node');
+        
+        it('should change colour for a selected text');
+
+        it('should change colour for a focused node');
     });
 });
