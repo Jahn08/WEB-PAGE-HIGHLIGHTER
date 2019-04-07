@@ -82,9 +82,12 @@ class Range {
         this.endContainer;
         this.endOffset = 0;
         this.startOffset = 0;
-        this.collapsed = true;
 
         this._setWindowSelection();
+    }
+
+    get collapsed() {
+        return !this.startContainer || !this.endContainer;
     }
 
     dispose() {
@@ -99,7 +102,7 @@ class Range {
         this.startOffset = 0;
 
         this.endContainer = null;
-        this.endOffset = 0;                    
+        this.endOffset = 0;
     };
 
     setStart(node, offset = 0) {
@@ -124,7 +127,6 @@ class Range {
             while ((node = node.parentNode) && !startParents.includes(node));
 
             this.commonAncestorContainer = node;
-            this.collapsed = false;
         }
         else
             this.commonAncestorContainer = null;
