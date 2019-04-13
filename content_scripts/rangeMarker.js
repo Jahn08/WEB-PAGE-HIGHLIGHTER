@@ -52,7 +52,7 @@ class RangeMarker {
         {
             [...parentNode.getElementsByClassName(RangeMarker.markerClass)]
                 .forEach(node => {
-                    node.replaceWith(document.createTextNode(node.innerText));
+                    node.replaceWith(document.createTextNode(node.textContent));
                     node.remove();
                 });
             parentNode.classList.remove(RangeMarker.markerContainerClass);
