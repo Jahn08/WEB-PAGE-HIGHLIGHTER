@@ -49,6 +49,7 @@ export class EnvLoader {
             
                 EnvLoader._cleanup = jsDom(data.toString('utf8'))
                 this._buildDocumentCreateRangeFunction();
+                this._buildDocumentContentChecker();
 
                 resolve();
             });
@@ -60,6 +61,20 @@ export class EnvLoader {
             EnvLoader._range = new Range();
             global.document.createRange = () => EnvLoader._range;
         }
+    }
+
+    static _buildDocumentContentChecker() {
+        if (global.document) {
+            const originalDocTextContent = this._getAllDocTextContent();
+
+            global.document.textContentChanged = () =>
+                this._getAllDocTextContent() !== originalDocTextContent;
+        }
+    }
+
+    static _getAllDocTextContent()
+    {
+        return document.body.textContent.replace(/\s/gm, '');
     }
 
     static unloadDomModel() {
