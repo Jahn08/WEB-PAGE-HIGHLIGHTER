@@ -101,6 +101,29 @@ class Range {
         this._setWindowSelection();
     }
 
+    surroundContents(newParent) {
+        if (this.collapsed || this.endContainer !== this.startContainer)
+            return;
+
+        const commonAncestor = this.startContainer.parentNode;
+        const removedNode = commonAncestor.removeChild(this.startContainer);
+
+        if (this.startOffset)
+            commonAncestor.appendChild(document.createTextNode(
+                removedNode.textContent.substr(0, this.startOffset)));
+   
+        const newNode = newParent.appendChild(document.createTextNode(
+            removedNode.textContent.substr(this.startOffset, this.endOffset - this.startOffset)));
+        commonAncestor.appendChild(newParent);
+
+        if (this.endOffset !== removedNode.textContent.length)
+            commonAncestor.appendChild(document.createTextNode(
+                removedNode.textContent.substr(this.endOffset)));
+
+        this.setStart(newNode);
+        this.setEnd(newNode);
+    }
+
     get collapsed() {
         return !this.startContainer || !this.endContainer;
     }
@@ -121,30 +144,61 @@ class Range {
     };
 
     setStart(node, offset = 0) {
-        this.startContainer = node;
-        this.startOffset = offset;
+        if (!node)
+            return this.collapse();
 
+        this.startOffset = offset;
+        this.startContainer = this.startOffset === 0 ? node:
+            this._getOffsetChild(node, this.startOffset);
+    
         this._setCommonAncestor();
     }
       
+    _getOffsetChild(node, startFrom) {
+        const childNodes = [...node.childNodes];
+
+        if (childNodes.length === 1)
+            return childNodes[0];
+
+        let lengthSum = 0;
+
+        for (let i = 0; i < childNodes.length; ++i)
+        {
+            const curNode = childNodes[i];
+
+            if (startFrom < (lengthSum += curNode.textContent.length))
+                return curNode;
+        }
+        
+        return node;
+    }
+
     setEnd(node, offset) {
-        this.endContainer = node;
-        this.endOffset = offset || node.textContent.length;
+        if (!node)
+            return this.collapse();
+
+        const nodeLength = node.textContent.length;
+        this.endOffset = offset || nodeLength;
+
+        this.endContainer = this.endOffset === nodeLength ? node:
+            this._getOffsetChild(node, nodeLength - this.endOffset - 1);
         
         this._setCommonAncestor();
     }
     
     _setCommonAncestor() {
-        if (this.endContainer && this.startContainer) {
-            const startParents = this._getParentsUntilRoot(this.startContainer);
+        if (!this.endContainer || !this.startContainer)
+            return this.commonAncestorContainer = null, undefined;
+            
+        if (this.endContainer === this.startContainer)
+            return this.commonAncestorContainer = this.endContainer, undefined;
+        
+        const startParents = this._getParentsUntilRoot(this.startContainer);
 
-            let node = this.endContainer;
-            while ((node = node.parentNode) && !startParents.includes(node));
+        let node = this.endContainer;
+        while ((node = node.parentNode) && !startParents.includes(node));
 
-            this.commonAncestorContainer = node;
-        }
-        else
-            this.commonAncestorContainer = null;
+        this.commonAncestorContainer = node;
     }
 
     _setWindowSelection() {
