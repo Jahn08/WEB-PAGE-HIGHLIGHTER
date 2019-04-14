@@ -55,13 +55,21 @@ class RangeMarker {
                     node.replaceWith(document.createTextNode(node.textContent));
                     node.remove();
                 });
-            parentNode.classList.remove(RangeMarker.markerContainerClass);
+            
+            if (parentNode.classList.contains(RangeMarker.markerContainerClass))
+                parentNode.classList.remove(RangeMarker.markerContainerClass)
+            else
+                [...parentNode.getElementsByClassName(RangeMarker.markerContainerClass)]
+                    .forEach(n => n.classList.remove(RangeMarker.markerContainerClass));
         }
     }
 
     _getMarkerContainer(node) {
+        if (node.querySelector && node.querySelector('.' + RangeMarker.markerContainerClass))
+            return node;
+
         let curNode = node;
-        
+
         while (curNode.classList && 
             !curNode.classList.contains(RangeMarker.markerContainerClass) && 
             (curNode = curNode.parentNode));

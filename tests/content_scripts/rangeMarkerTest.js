@@ -59,10 +59,17 @@ describe('content_script/rangeMarker', function () {
         const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerContainerClass} .${RangeMarker.markerClass}`)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
-        const markedText = markedNodes.length ? markedNodes.reduce((p, c) => 
-            (p.textContent ? p.textContent: p) + c.textContent): '';
+        let markedText = '';
+        
+        if (markedNodes.length === 1)
+            markedText = markedNodes[0].textContent;
+        else if (markedNodes.length > 1)
+            markedText = markedNodes.reduce(
+                (p, c) => (p.textContent ? p.textContent: p) + c.textContent)
 
         assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
+        assert.strictEqual(document.querySelectorAll('.' + RangeMarker.markerContainerClass).length,
+            expectedMarkersNumber ? 1: 0);
     };
 
     const setRange = setRangeContainersCallback => setRangeContainersCallback(document.createRange());
@@ -92,14 +99,22 @@ describe('content_script/rangeMarker', function () {
         range.setStart(document.querySelector('.article--paragraph--sentence--label'));
         range.setEnd(document.querySelector('.article--paragraph--sentence--bold--italic'));    
     };
+
+    const getFirstItalicSentenceNode = () => document.querySelector('.article--paragraph--sentence--italic');
     
+    const setRangeForPartlySelectedItalicSentenceNode = range => {
+        const italicNode = getFirstItalicSentenceNode();
+        range.setStart(italicNode, 29);
+        range.setEnd(italicNode, 50);
+    };
+
     const setRangeForPartlySelectedNodes = range => {
-        range.setStart(document.querySelector('.article--paragraph--sentence--italic'), 37);
+        range.setStart(getFirstItalicSentenceNode(), 37);
         range.setEnd(document.querySelector('.article--paragraph--sentence--bold--italic'), 37);   
     };
 
     const setRangeForSeveralParagraphs = range => {
-        range.setStart(document.querySelector('.article--paragraph--sentence--italic'), 26);
+        range.setStart(getFirstItalicSentenceNode(), 26);
         range.setEnd(document.querySelector('#article--paragraph-last .article--paragraph--sentence'), 30);
     };
 
@@ -113,6 +128,10 @@ describe('content_script/rangeMarker', function () {
             markRangeAndCheckColour(setRangeContainersCallback);
             checkMarkedNodes(expectedMarkersNumber, expectedText);
         };
+
+        it('should mark text over partially selected text of the same node', () =>
+            testMarking(setRangeForPartlySelectedItalicSentenceNode, 1, 'nsions for Firefox ar')
+        );
 
         it('should mark text over entirely selected nodes', () =>
             testMarking(setRangeForEntireNodes, 5, 
@@ -137,7 +156,8 @@ describe('content_script/rangeMarker', function () {
 
         it('should mark over partly selected nodes in different paragraphs', () =>
             testMarking(setRangeForSeveralParagraphs, SEVERAL_PARAGRAPHS_EXPECTED_NODES, 
-                SEVERAL_PARAGRAPHS_EXPECTED_TEXT));
+                SEVERAL_PARAGRAPHS_EXPECTED_TEXT)
+        );
 
         it('should change colour for partly selected nodes in different paragraphs', () => {
             assert.notStrictEqual(markRangeAndCheckColour(setRangeForSeveralParagraphs), 
@@ -155,8 +175,6 @@ describe('content_script/rangeMarker', function () {
     };
 
     const setRangeContainerForSentence = range => setRangeContainer(range, getFirstSentenceNode());
-
-    const getFirstItalicSentenceNode = () => document.querySelector('.article--paragraph--sentence--italic');
 
     const setRangeContainerForSentenceItalic = range => setRangeContainer(range, 
         getFirstItalicSentenceNode());
@@ -204,6 +222,21 @@ describe('content_script/rangeMarker', function () {
     
         it('should remove colour for a focused node', () =>
             testUnmarking(setRangeContainerForSentence, getFirstSentenceNode()));
+
+        it('should unmark text over partially selected text of the same node', () => {
+            testUnmarking(setRangeForPartlySelectedItalicSentenceNode)
+        });
+
+        it('should unmark text over several marked texts', () => {
+            markRangeAndCheckColour(setRangeContainerForSentence);
+            markRangeAndCheckColour(setRangeContainerForSentenceItalic);
+
+            setRange(range => 
+                setRangeContainer(range, document.getElementById('article--paragraph-first')));
+            
+            new RangeMarker().unmarkSelectedNodes();
+            checkMarkedNodes(0, '');
+        });
     });
 
     describe('#changeSelectedNodesColour', function () {
