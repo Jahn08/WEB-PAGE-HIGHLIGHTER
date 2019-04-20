@@ -24,6 +24,8 @@ browser.runtime.onMessage.addListener(msg => new Promise((resolve, reject) => {
         else
             menu.hideUnmarkingBtn();
         
+        menu.render();
+
         resolve();
     }
     catch (ex) {

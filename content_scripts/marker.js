@@ -3,28 +3,28 @@ void function() {
 
     const rangeMarker = new RangeMarker();
 
-    document.addEventListener('contextmenu', (info, isSelected) => {
-        try {            
-            if (info && info.target)
+    document.addEventListener('mousedown', info => {
+        if (info.button !== 2)
+            return true;
+
+        try {
+            let msg;
+            const curColourClasses = rangeMarker.getColourClassesForSelectedNodes();
+
+            if (curColourClasses)
             {
-                let msg;
-                const curColourClasses = rangeMarker.getColourClassesForSelectedNodes();
+                msg = MessageReceiver.setMarkMenuReady(curColourClasses);
 
-                if (curColourClasses)
-                {
-                    msg = MessageReceiver.setMarkMenuReady(curColourClasses);
-
-                    if (curColourClasses.length)
-                        msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
-                }
-                else if (rangeMarker.isNodeMarked(info.target)) 
-                {
-                    msg = MessageReceiver.setUnmarkMenuReady();
-                    activeNode = info.target;
-                }
-
-                browser.runtime.sendMessage(msg);
+                if (curColourClasses.length)
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
             }
+            else if (rangeMarker.isNodeMarked(info.target)) 
+            {
+                msg = MessageReceiver.setUnmarkMenuReady();
+                activeNode = info.target;
+            }
+
+            browser.runtime.sendMessage(msg);
         }
         catch (ex) {
             console.error('An error while trying to set menu visibility: ' + ex.toString());

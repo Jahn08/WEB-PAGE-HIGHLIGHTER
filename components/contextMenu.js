@@ -2,6 +2,9 @@ import { ButtonMenuItem, SeparatorMenuItem, RadioSubMenuItem } from './menuItem.
 
 export class ContextMenu {
     constructor() {
+        this._isDirty = false;
+        this._isRendered = false;
+
         this.onMarking = null;
         this.onUnmarking = null;
         this.onChangingColour = null;
@@ -69,17 +72,40 @@ export class ContextMenu {
         new RadioSubMenuItem('marker-orange', setColourBtn.id, 'Orange').addToMenu(changeColour);
         new RadioSubMenuItem('marker-yellow', setColourBtn.id, 'Yellow').addToMenu(changeColour);
         new RadioSubMenuItem('marker-blue', setColourBtn.id, 'Blue').addToMenu(changeColour);
+
+        browser.menus.onShown.addListener(() => {
+            if (this._shouldBeRefreshed()) {
+                browser.menus.refresh();
+                console.log('Refreshed');
+            }
+        });
+
+        browser.menus.onHidden.addListener(() => this._makePure());
     }
+
+    _shouldBeRefreshed() { return this._isDirty && !this._isRendered; }
+
+    _makePure() {
+        this._isDirty = false;
+        this._isRendered = false;
+    }
+
+    render() { this._isRendered = true; }
 
     get currentColourClass() { return this._curColourClass; }
 
-    hideMarkingBtn() { this._markBtn.hide();  }
+    hideMarkingBtn() { this._makeDirty(this._markBtn.hide()); }
 
-    showMarkingBtn() { this._markBtn.show();  }
+    _makeDirty(shouldBeDirty) {
+        if (shouldBeDirty)
+            this._isDirty = true;
+    }
 
-    hideUnmarkingBtn() { this._unmarkBtn.hide();  }
+    showMarkingBtn() { this._makeDirty(this._markBtn.show()); }
+
+    hideUnmarkingBtn() { this._makeDirty(this._unmarkBtn.hide()); }
     
-    showUnmarkingBtn() { this._unmarkBtn.show();  }
+    showUnmarkingBtn() { this._makeDirty(this._unmarkBtn.show()); }
 
     async _getCurrentTabId() {
         const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });

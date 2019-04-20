@@ -10,9 +10,15 @@ export class BrowserMocked {
     }
 
     setBrowserMenu() {
+        const eventListener = { 
+            addListener() { }
+        };
+
         global.browser.menus = {
             create: options => this._menuOptions.push(options),
-            update: (id, options) => Object.assign(this._menuOptions.find(i => i.id === id), options)
+            update: (id, options) => Object.assign(this._menuOptions.find(i => i.id === id), options),
+            onShown: eventListener,
+            onHidden: eventListener
         };
     }
 

@@ -4,6 +4,9 @@ class RangeMarker {
     }
 
     isNodeMarked(node) {
+        if (!node)
+            return false;
+
         const markerClass = RangeMarker.markerClass;
         return node.classList.contains(markerClass) || node.getElementsByClassName(markerClass).length > 0;
     }
