@@ -134,7 +134,11 @@ describe('components/ButtonMenuItem', () => {
             };
 
             const buttons = [buildRandomBtn(), buildRandomBtn(), buildRandomBtn(), buildRandomBtn()];
-            buttons.forEach((btn, index) => index % 2 ? btn.hide(): btn.show());
+            buttons.forEach(btn => btn.hide());
+            buttons.forEach((btn, index) => {
+                if (index % 2)
+                    btn.show();
+            });
             
             assert(browserMocked.menuOptions.every(b => b.visible !== undefined));
         });

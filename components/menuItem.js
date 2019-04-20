@@ -66,11 +66,20 @@ class ButtonMenuItem extends BaseMenuItem {
         super(id);
     
         this._title = title;
+        this._visible = true;
     }
 
-    hide() { this.updateVisibility(false); }
+    hide() { return this._setVisibility(false); }
 
-    show() { this.updateVisibility(true); }
+    _setVisibility(isVisible) {
+        if (isVisible === this._visible)
+            return false;
+
+        this.updateVisibility(this._visible = isVisible);
+        return true;
+    }
+
+    show() { return this._setVisibility(true); }
 
     addToMenu(onclick, icons = null) { this._addToMenu(onclick, icons); }
 
