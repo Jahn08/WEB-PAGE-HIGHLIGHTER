@@ -1,4 +1,4 @@
-.marker-container:hover .marker {
+.marker:hover {
     opacity: 0.8;
 }
 

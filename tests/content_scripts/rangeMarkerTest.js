@@ -56,7 +56,7 @@ describe('content_script/rangeMarker', function () {
     };
 
     const checkMarkedNodes = function (expectedMarkersNumber, expectedText) {
-        const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerContainerClass} .${RangeMarker.markerClass}`)];
+        const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerClass}`)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
         let markedText = '';
@@ -68,8 +68,8 @@ describe('content_script/rangeMarker', function () {
                 (p, c) => (p.textContent ? p.textContent: p) + c.textContent)
 
         assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
-        assert.strictEqual(document.querySelectorAll('.' + RangeMarker.markerContainerClass).length,
-            expectedMarkersNumber ? 1: 0);
+        assert.strictEqual(document.querySelectorAll('.' + RangeMarker.markerClass).length > 0,
+            expectedMarkersNumber ? true: false);
     };
 
     const setRange = setRangeContainersCallback => setRangeContainersCallback(document.createRange());
