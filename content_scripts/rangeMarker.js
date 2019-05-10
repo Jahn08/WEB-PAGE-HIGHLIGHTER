@@ -1,15 +1,6 @@
 class RangeMarker {    
     isNodeMarked(node) {
-        if (!node)
-            return false;
-
-        return this._getMarkerElementsFromElement(node).length > 0;
-    }
-
-    _getMarkerElementsFromElement(node) {
-        const markerClass = RangeMarker.markerClass;
-        return node.classList.contains(markerClass) ? [node] : 
-            [...node.getElementsByClassName(markerClass)];
+        return node && node.classList.contains(RangeMarker.markerClass);
     }
 
     getColourClassesForSelectedNodes() {
@@ -61,6 +52,12 @@ class RangeMarker {
         return [];
     }
     
+    _getMarkerElementsFromElement(node) {
+        const markerClass = RangeMarker.markerClass;
+        return node.classList.contains(markerClass) ? [node] : 
+            [...node.getElementsByClassName(markerClass)];
+    }
+
     changeSelectedNodesColour(colourClass, targetNode = null) {
         this._tryChangeAllMarkerNodes(this._getSelectionOrFocusedNodes(targetNode), 
             colourClass);

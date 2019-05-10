@@ -22,18 +22,29 @@ describe('content_script/rangeMarker', function () {
 
     afterEach('unloadDomModel', () => EnvLoader.unloadDomModel());
 
-    describe('#isNodeMarked', () =>
-        it('should determine if nodes are marked or not', function () {
+    describe('#isNodeMarked', function () {
+        it('should return false for all unmarked nodes', function () {
             const rangeMarker = new RangeMarker();
             
             document.querySelectorAll('.article--paragraph--sentence--label').forEach(n => 
                 assert(rangeMarker.isNodeMarked(n) === false));
+        });
 
+        it('should return true for all marked nodes', function () {
+            const rangeMarker = new RangeMarker();
+            
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
             italicNodes.forEach(n => {
                 n.classList.add(RangeMarker.markerClass);
-                assert(rangeMarker.isNodeMarked(n) === true);
+                assert(rangeMarker.isNodeMarked(n));
             });
+        });
+
+        it('should return false for nodes which contain marked children', function () {
+            const rangeMarker = new RangeMarker();
+            
+            const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
+            italicNodes.forEach(n => n.classList.add(RangeMarker.markerClass));
 
             let markedSentencesCount = 0;
 
@@ -42,9 +53,9 @@ describe('content_script/rangeMarker', function () {
                     ++markedSentencesCount;
             });
 
-            assert.strictEqual(markedSentencesCount, italicNodes.length);
-        })
-    );
+            assert.strictEqual(markedSentencesCount, 0);
+        });
+    });
 
     const createRandomColourClass = () => `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
 
