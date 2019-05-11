@@ -181,7 +181,7 @@ class Range {
         this.endOffset = offset || nodeLength;
 
         this.endContainer = this.endOffset === nodeLength ? node:
-            this._getOffsetChild(node, nodeLength - this.endOffset - 1);
+            this._getOffsetChild(node, nodeLength - this.endOffset - 3);
         
         this._setCommonAncestor();
     }

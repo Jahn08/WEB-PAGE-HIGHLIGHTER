@@ -66,8 +66,9 @@ describe('content_script/rangeMarker', function () {
         return colourClass;
     };
 
-    const checkMarkedNodes = function (expectedMarkersNumber, expectedText) {
-        const markedNodes = [...document.querySelectorAll(`.${RangeMarker.markerClass}`)];
+    const checkMarkedNodes = function (expectedMarkersNumber, expectedText, 
+        colourClass = RangeMarker.markerClass) {
+        const markedNodes = [...document.querySelectorAll(`.${colourClass}`)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
         let markedText = '';
@@ -79,7 +80,7 @@ describe('content_script/rangeMarker', function () {
                 (p, c) => (p.textContent ? p.textContent: p) + c.textContent)
 
         assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
-        assert.strictEqual(document.querySelectorAll('.' + RangeMarker.markerClass).length > 0,
+        assert.strictEqual(document.querySelectorAll('.' + colourClass).length > 0,
             expectedMarkersNumber ? true: false);
     };
 
@@ -156,6 +157,38 @@ describe('content_script/rangeMarker', function () {
                 'or Firefox are built using the WebExtensions API, a cross-browser system f')
         });
 
+        const testMarkingPartiallyOverMarkedNode = (expectedText, startOffset = 5, endOffset = 14) => {
+            const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
+                    
+            const newColour = markRangeAndCheckColour(range => {
+                const markedNodes = document.querySelectorAll('.' + RangeMarker.markerClass);
+                
+                let targetNode;
+
+                if (markedNodes.length === 1)
+                    targetNode = markedNodes[0];
+                else
+                    targetNode = [...markedNodes]
+                        .filter(n => !n.classList.contains(curColour))[0];
+
+                assert(targetNode);
+
+                range.setStart(targetNode, startOffset);
+                range.setEnd(targetNode, endOffset);
+            });
+
+            checkMarkedNodes(1, expectedText, newColour);
+        };
+
+        it('should partially change colour over in the middle of already marked text', () =>
+            testMarkingPartiallyOverMarkedNode('s for Fir'));
+
+        it('should partially change colour over the first half of already marked text', () =>
+            testMarkingPartiallyOverMarkedNode('nsions for Fir', null));
+
+        it('should partially change colour over the last half of already marked text', () =>
+            testMarkingPartiallyOverMarkedNode('s for Firefox ar', undefined, null));
+            
         const SEVERAL_PARAGRAPHS_EXPECTED_NODES = 9;
         const SEVERAL_PARAGRAPHS_EXPECTED_TEXT = 
             'xtensions for Firefox are built using the WebExtensions API, ' + 

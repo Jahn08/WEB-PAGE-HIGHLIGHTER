@@ -83,46 +83,8 @@ class RangeMarker {
         if (!selectedNodes.length)
             return range.collapse();
 
-        if (this._tryChangeAllMarkerNodes(this._getMarkerElementsFromTextNodes(selectedNodes), 
-            colourClass))
-            return range.collapse();
-
-        if (selectedNodes.length === 1)
-        {
-            range.surroundContents(this._createMarkedSpan(colourClass));
-            return range.collapse();
-        }
-
-        if (range.startOffset)
-        {
-            const firstNode = selectedNodes.shift();
-
-            const val = firstNode.nodeValue;
-            const newNode = this._createMarkedSpan(colourClass);
-            newNode.innerHTML = val.substring(range.startOffset);
-
-            firstNode.nodeValue = val.substring(0, range.startOffset);
-            firstNode.parentNode.insertBefore(newNode, firstNode.nextSibling);
-        }
-
-        const lastNode = selectedNodes[selectedNodes.length - 1];
-
-        if (range.endOffset && range.endOffset !== lastNode.length)
-        {
-            selectedNodes.pop();
-
-            const val = lastNode.nodeValue;
-            const newNode = this._createMarkedSpan(colourClass);
-            newNode.innerHTML = val.substring(0, range.endOffset);
-
-            lastNode.nodeValue = val.substring(range.endOffset);
-            lastNode.parentNode.insertBefore(newNode, lastNode);
-        }
-        else if (!range.endOffset)
-            selectedNodes.pop();
-
-        selectedNodes.forEach(n => n.parentNode.insertBefore(this._createMarkedSpan(colourClass), n).appendChild(n));
-        range.collapse();
+        this._markTextNodes(selectedNodes, range, colourClass);
+        return range.collapse();
     }
 
     _getSelectionRange() {
@@ -218,6 +180,99 @@ class RangeMarker {
 
             return node ? node.nextSibling: null;
         }
+    }
+
+    _markTextNodes(nodes, range, colour) {
+        const markerClass = RangeMarker.markerClass;
+        const lastNodeIndex = nodes.length - 1;
+
+        const isSingleNode = !lastNodeIndex;
+        
+        let lastError;
+
+        nodes.forEach((node, index) => {
+            try {
+                const startOffset = range.startOffset;
+                const markFirstNodePartially = !index && startOffset;
+                
+                const endOffset = range.endOffset;
+                const isLastNode = index === lastNodeIndex;
+                const skipLastNode = isLastNode && !endOffset;
+                const markLastNodePartially = isLastNode && (endOffset && endOffset !== node.length);
+
+                let markerNode = node.parentElement;
+
+                if (markerNode.classList.contains(markerClass)) {
+                    let curColour;
+                    
+                    if ((curColour = this._obtainMarkerColourClass(markerNode.classList)) === colour)
+                        return;
+
+                    const nodeValue = node.nodeValue;
+
+                    let _startOffsetForEnd = 0;
+
+                    if (markFirstNodePartially) {
+                        const newNode = this._createMarkedSpan(colour);
+                        newNode.innerHTML = nodeValue.substring(startOffset);
+            
+                        node.nodeValue = nodeValue.substring(0, startOffset);
+                        markerNode.parentNode.insertBefore(newNode, markerNode.nextSibling);
+
+                        markerNode = newNode;
+                        node = newNode.firstChild;
+
+                        _startOffsetForEnd = startOffset;
+                    }
+                    
+                    if (markLastNodePartially) {
+                        const newNode = this._createMarkedSpan(colour);
+                        newNode.innerHTML = nodeValue.substring(_startOffsetForEnd, endOffset);
+
+                        node.nodeValue = nodeValue.substring(endOffset);
+                        
+                        markerNode.classList.replace(colour, curColour);
+                        markerNode.parentNode.insertBefore(newNode, markerNode);
+                    }
+                    else if (skipLastNode)
+                        return;
+                    else
+                        markerNode.classList.replace(curColour, colour);
+                }
+                else {
+                    if (isSingleNode)
+                        return range.surroundContents(this._createMarkedSpan(colour));
+
+                    if (markFirstNodePartially) {
+                        const val = node.nodeValue;
+                        const newNode = this._createMarkedSpan(colour);
+                        newNode.innerHTML = val.substring(startOffset);
+            
+                        node.nodeValue = val.substring(0, startOffset);
+                        node.parentNode.insertBefore(newNode, node.nextSibling);
+                    }
+                    else if (markLastNodePartially) {
+                        const val = node.nodeValue;
+                        const newNode = this._createMarkedSpan(colour);
+                        newNode.innerHTML = val.substring(0, endOffset);
+            
+                        node.nodeValue = val.substring(endOffset);
+                        node.parentNode.insertBefore(newNode, node);
+                    }
+                    else if (skipLastNode)
+                        return;
+                    else
+                        markerNode.insertBefore(this._createMarkedSpan(colour), node).appendChild(node);
+                }
+            }
+            catch (e) {
+                debugger
+                lastError = e;
+            }
+        });
+
+        if (lastError)
+            throw lastError;
     }
 
     _createMarkedSpan(colourClass) {
