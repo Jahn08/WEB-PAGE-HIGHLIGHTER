@@ -133,6 +133,29 @@ describe('content_script/rangeMarker', function () {
         range.setEnd(getLastParagraphSentenceNode(), 30);
     };
 
+    const getRangeSetterForRemarkingPartially = (colour, startOffset, endOffset) => {
+        return (range) => {
+            let markedNodes = document.querySelectorAll('.' + RangeMarker.markerClass);
+            
+            const newColourNodes = [...markedNodes].filter(n => !n.classList.contains(colour));
+
+            if (newColourNodes.length) 
+                markedNodes = newColourNodes;
+            
+            const firstTargetNode = markedNodes[0];
+            const lastTargetNode = markedNodes[markedNodes.length - 1];
+                
+            assert(firstTargetNode);
+            assert(lastTargetNode);
+
+            range.setStart(firstTargetNode, startOffset);
+            range.setEnd(lastTargetNode, endOffset);
+        };
+    };
+
+    const PARTIAL_REMARKING_START_OFFSET = 5;
+    const PARTIAL_REMARKING_END_OFFSET = 14;
+
     describe('#markSelectedNodes', function () {
         it('should do nothing without any selected text', () => {
             markCurSelectionWithRandomColour();
@@ -181,44 +204,29 @@ describe('content_script/rangeMarker', function () {
             checkMarkedNodes(SEVERAL_PARAGRAPHS_EXPECTED_NODES, SEVERAL_PARAGRAPHS_EXPECTED_TEXT);
         });
 
-        const remarkRangeAndCheckColourForColour = 
-            (colour, startOffset, endOffset) => markRangeAndCheckColour(range => {
-                let markedNodes = document.querySelectorAll('.' + RangeMarker.markerClass);
-                
-                const newColourNodes = [...markedNodes].filter(n => !n.classList.contains(colour));
-
-                if (newColourNodes.length) 
-                    markedNodes = newColourNodes;
-                
-                const firstTargetNode = markedNodes[0];
-                const lastTargetNode = markedNodes[markedNodes.length - 1];
-                    
-                assert(firstTargetNode);
-                assert(lastTargetNode);
-
-                range.setStart(firstTargetNode, startOffset);
-                range.setEnd(lastTargetNode, endOffset);
-            });
-
-        const testMarkingPartiallyOverMarkedNode = (expectedText, startOffset = 5, endOffset = 14) => {
+        const testMarkingPartiallyOverMarkedNode = (expectedText, 
+            startOffset = PARTIAL_REMARKING_START_OFFSET, 
+            endOffset = PARTIAL_REMARKING_END_OFFSET) => {
             const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
-            const newColour = remarkRangeAndCheckColourForColour(curColour, startOffset, endOffset);
+            const newColour = markRangeAndCheckColour(getRangeSetterForRemarkingPartially(
+                curColour, startOffset, endOffset));
 
             checkMarkedNodes(1, expectedText, newColour);
         };
 
-        it('should partially change colour over in the middle of already marked text', () =>
+        it('should partially remark in the middle of already marked text', () =>
             testMarkingPartiallyOverMarkedNode('s for Fir'));
 
-        it('should partially change colour over the first half of already marked text', () =>
+        it('should partially remark over the first half of already marked text', () =>
             testMarkingPartiallyOverMarkedNode('nsions for Fir', null));
 
-        it('should partially change colour over the last half of already marked text', () =>
+        it('should partially remark over the last half of already marked text', () =>
             testMarkingPartiallyOverMarkedNode('s for Firefox ar', undefined, null));
 
-        it('should partially change colour over marked text in different paragraphs', () => {
+        it('should partially remark over marked text in different paragraphs', () => {
             const curColour = markRangeAndCheckColour(setRangeForSeveralParagraphs);
-            const newColour = remarkRangeAndCheckColourForColour(curColour, 15, 25);
+            const newColour = markRangeAndCheckColour(getRangeSetterForRemarkingPartially(
+                curColour, 15, 25));
 
             checkMarkedNodes(SEVERAL_PARAGRAPHS_EXPECTED_NODES, 
                 'irefox are built using the WebExtensions API, ' + 
@@ -308,12 +316,18 @@ describe('content_script/rangeMarker', function () {
             checkMarkedNodes(0, '');
         });
         
+        const changeColourOverRange = (setRangeContainersCallback, 
+            colour = createRandomColourClass()) => {
+            setRange(setRangeContainersCallback);
+            new RangeMarker().changeSelectedNodesColour(colour);
+
+            return colour;
+        };
+
         it('should do nothing with a selected unmarked text', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
-            setRange(setRangeContainerForSentenceItalic);
-            new RangeMarker().changeSelectedNodesColour(createRandomColourClass());
-
+            changeColourOverRange(setRangeContainerForSentenceItalic);
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
@@ -329,9 +343,8 @@ describe('content_script/rangeMarker', function () {
         it('should change colour for a selected text', () => {
             const expectedColour = createRandomColourClass();
             assert.notStrictEqual(markRangeAndCheckColour(setRangeForSeveralParagraphs), expectedColour);
-            
-            setRange(setRangeForSeveralParagraphs);
-            new RangeMarker().changeSelectedNodesColour(expectedColour);
+           
+            changeColourOverRange(setRangeForSeveralParagraphs, expectedColour);
             assertRangeColour(setRangeForSeveralParagraphs, expectedColour);
         });
 
@@ -343,6 +356,14 @@ describe('content_script/rangeMarker', function () {
 
             new RangeMarker().changeSelectedNodesColour(expectedColour, getFirstSentenceNode());
             assertRangeColour(setRangeContainerForSentence, expectedColour);
+        });
+
+        it('should partially change colour in the middle of already marked text', () => {
+            const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
+            const newColour = changeColourOverRange(getRangeSetterForRemarkingPartially(
+                curColour, PARTIAL_REMARKING_START_OFFSET, PARTIAL_REMARKING_END_OFFSET));
+
+            checkMarkedNodes(1, 's for Fir', newColour);
         });
     });
 });

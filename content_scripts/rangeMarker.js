@@ -204,11 +204,10 @@ class RangeMarker {
                     let _startOffsetForEnd = 0;
 
                     if (markFirstNodePartially) {
-                        const newNode = this._createMarkedSpan(colour);
-                        newNode.innerHTML = nodeValue.substring(startOffset);
-            
                         node.nodeValue = nodeValue.substring(0, startOffset);
-                        markerNode.parentNode.insertBefore(newNode, markerNode.nextSibling);
+
+                        const newNode = this._createMarkerNode(colour, nodeValue, startOffset);
+                        this._insertNodeAfter(newNode, markerNode);
 
                         markerNode = newNode;
                         node = newNode.firstChild;
@@ -217,13 +216,13 @@ class RangeMarker {
                     }
                     
                     if (markLastNodePartially) {
-                        const newNode = this._createMarkedSpan(colour);
-                        newNode.innerHTML = nodeValue.substring(_startOffsetForEnd, endOffset);
-
                         node.nodeValue = nodeValue.substring(endOffset);
                         
+                        const newNode = this._createMarkerNode(colour, nodeValue, _startOffsetForEnd, 
+                            endOffset);
+                        this._insertNodeBefore(newNode, markerNode);
+
                         markerNode.classList.replace(colour, curColour);
-                        markerNode.parentNode.insertBefore(newNode, markerNode);
                     }
                     else if (skipLastNode)
                         return;
@@ -235,20 +234,19 @@ class RangeMarker {
                         return range.surroundContents(this._createMarkedSpan(colour));
 
                     if (markFirstNodePartially) {
+                        debugger
                         const val = node.nodeValue;
-                        const newNode = this._createMarkedSpan(colour);
-                        newNode.innerHTML = val.substring(startOffset);
-            
                         node.nodeValue = val.substring(0, startOffset);
-                        node.parentNode.insertBefore(newNode, node.nextSibling);
+
+                        const newNode = this._createMarkerNode(colour, val, startOffset);
+                        this._insertNodeAfter(newNode, node);
                     }
                     else if (markLastNodePartially) {
                         const val = node.nodeValue;
-                        const newNode = this._createMarkedSpan(colour);
-                        newNode.innerHTML = val.substring(0, endOffset);
-            
                         node.nodeValue = val.substring(endOffset);
-                        node.parentNode.insertBefore(newNode, node);
+
+                        const newNode = this._createMarkerNode(colour, val, 0, endOffset);
+                        this._insertNodeBefore(newNode, node);
                     }
                     else if (skipLastNode)
                         return;
@@ -264,6 +262,21 @@ class RangeMarker {
 
         if (lastError)
             throw lastError;
+    }
+
+    _createMarkerNode(colour, innerHtml, substrStart, substrEnd) {
+        const newNode = this._createMarkedSpan(colour);
+        newNode.innerHTML = innerHtml.substring(substrStart, substrEnd);
+
+        return newNode;
+    }
+
+    _insertNodeAfter(newNode, referenceNode) { 
+        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling); 
+    }
+
+    _insertNodeBefore(newNode, referenceNode) { 
+        referenceNode.parentNode.insertBefore(newNode, referenceNode);
     }
 
     _createMarkedSpan(colourClass) {
