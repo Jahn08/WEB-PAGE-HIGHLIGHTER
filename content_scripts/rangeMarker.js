@@ -31,45 +31,34 @@ class RangeMarker {
     }
 
     unmarkSelectedNodes(targetNode = null) {
-        this._getSelectionOrFocusedNodes(targetNode).forEach(node => {
+        const range = this._getSelectionRange();
+
+        this._getSelectionOrFocusedNodes(range, targetNode).forEach(node => {
             node.replaceWith(document.createTextNode(node.textContent));
             node.remove();
         });
+
+        this._collapseRange(range);
     }
 
-    _getSelectionOrFocusedNodes(targetNode) {
-        const range = this._getSelectionRange();
-
-        if (range) {
-            const nodes = this._getMarkerElementsFromSelection(range);
-            range.collapse();
-            
-            return nodes;
-        }
+    _getSelectionOrFocusedNodes(range, targetNode) {
+        if (range)
+            return this._getMarkerElementsFromSelection(range);
         else if (targetNode)
             return this._getMarkerElementsFromElement(targetNode);
 
         return [];
     }
     
+    _collapseRange(range) { 
+        if (range) 
+            range.collapse(); 
+    }
+
     _getMarkerElementsFromElement(node) {
         const markerClass = RangeMarker.markerClass;
         return node.classList.contains(markerClass) ? [node] : 
             [...node.getElementsByClassName(markerClass)];
-    }
-
-    changeSelectedNodesColour(colourClass, targetNode = null) {
-        this._tryChangeAllMarkerNodes(this._getSelectionOrFocusedNodes(targetNode), 
-            colourClass);
-    }
-
-    _tryChangeAllMarkerNodes(markedElems, colourClass) {
-        if (!markedElems || !markedElems.length)
-            return false;
-
-        markedElems.forEach(el => el.classList.replace(
-            this._obtainMarkerColourClass(el.classList), colourClass));
-        return true;
     }
 
     markSelectedNodes(colourClass) {
@@ -81,10 +70,10 @@ class RangeMarker {
         const selectedNodes = this._getSelectedTextNodes(range);
 
         if (!selectedNodes.length)
-            return range.collapse();
+            return this._collapseRange(range);
 
         this._markTextNodes(selectedNodes, range, colourClass);
-        return range.collapse();
+        return this._collapseRange(range);
     }
 
     _getSelectionRange() {
@@ -188,17 +177,19 @@ class RangeMarker {
 
         const isSingleNode = !lastNodeIndex;
         
+        const rangeIsAvailable = range;
+        const startOffset = rangeIsAvailable && range.startOffset;
+        const endOffset = rangeIsAvailable && range.endOffset;
+
         let lastError;
 
         nodes.forEach((node, index) => {
             try {
-                const startOffset = range.startOffset;
                 const markFirstNodePartially = !index && startOffset;
                 
-                const endOffset = range.endOffset;
                 const isLastNode = index === lastNodeIndex;
-                const skipLastNode = isLastNode && !endOffset;
-                const markLastNodePartially = isLastNode && (endOffset && endOffset !== node.length);
+                const skipLastNode = rangeIsAvailable && isLastNode && !endOffset;
+                const markLastNodePartially = isLastNode && endOffset && endOffset !== node.length;
 
                 let markerNode = node.parentElement;
 
@@ -240,7 +231,7 @@ class RangeMarker {
                         markerNode.classList.replace(curColour, colour);
                 }
                 else {
-                    if (isSingleNode)
+                    if (rangeIsAvailable && isSingleNode)
                         return range.surroundContents(this._createMarkedSpan(colour));
 
                     if (markFirstNodePartially) {
@@ -280,6 +271,16 @@ class RangeMarker {
         node.classList.add(RangeMarker.markerClass, colourClass);
         return node;
     };
+
+    changeSelectedNodesColour(colourClass, targetNode = null) {
+        const range = this._getSelectionRange();
+        const nodes = this._getSelectionOrFocusedNodes(range, targetNode);
+
+        this._markTextNodes(nodes.map(n => n.firstChild).filter(n => this._isProperTextNode(n)), 
+            range, colourClass);
+
+        this._collapseRange(range);
+    }
 
     static get markerClass() { return 'marker'; }
 };
