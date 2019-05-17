@@ -2,6 +2,7 @@ import assert from 'assert';
 import { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem } from '../../components/menuItem';
 import { Randomiser } from '../tools/randomiser';
 import { BrowserMocked } from '../tools/browserMocked';
+import { MenuIcon } from '../../components/menuIcon';
 
 describe('components/SeparatorMenuItem', () => {
     describe('#addToMenu', () => {
@@ -46,28 +47,29 @@ describe('components/RadioSubMenuItem', () => {
                     parentId: Randomiser.getRandomNumberUpToMax(), 
                     title: Randomiser.getRandomNumberUpToMax(),
                     onclick: () => {},
-                    icons: [],
+                    icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()),
                     checked: Randomiser.getRandomNumberUpToMax()
                 };
             };
             
             const radio1 = buildRandomRadioItem();
             new RadioSubMenuItem(radio1.id, radio1.parentId, radio1.title)
-                .addToMenu(radio1.onclick, radio1.icons, radio1.checked);
+                .addToMenu(radio1.onclick, radio1.icon, radio1.checked);
             
             const radio2 = buildRandomRadioItem();
             new RadioSubMenuItem(radio2.id, radio2.parentId, radio2.title)
-                .addToMenu(radio2.onclick, radio2.icons, radio2.checked);
+                .addToMenu(radio2.onclick, radio2.icon, radio2.checked);
 
             const testRadios = [radio1, radio2];
             const radioOptions = browserMocked.menuOptions;
             assert(radioOptions.every(o => o.type === 'radio'));
 
             assert.strictEqual(radioOptions.length, testRadios.length);
+
             assert(radioOptions.every(r => testRadios.some(tr => tr.id === r.id && 
                 tr.parentId === r.parentId && tr.title === r.title && 
-                tr.icons === r.icons && tr.onclick === r.onclick && 
-                tr.checked === r.checked)));
+                JSON.stringify(tr.icon.getSettings()) === JSON.stringify(r.icons) && 
+                tr.onclick === r.onclick && tr.checked === r.checked)));
         });
     });
 });
@@ -82,7 +84,7 @@ describe('components/ButtonMenuItem', () => {
                 id: Randomiser.getRandomNumberUpToMax(), 
                 title: Randomiser.getRandomNumberUpToMax(),
                 onclick: () => {},
-                icons: []
+                icon: new MenuIcon(Randomiser.getRandomNumberUpToMax())
             };
         };
 
@@ -92,7 +94,7 @@ describe('components/ButtonMenuItem', () => {
             const btnOptions = buildRandomBtnOptions();
             const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title);
             buttons.push(newBtn);
-            newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icons);
+            newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icon);
 
             return btnOptions;
         };
@@ -103,7 +105,8 @@ describe('components/ButtonMenuItem', () => {
         assert(newBtnOptions.every(o => o.type === 'normal'));
         assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
             tr.parentId === r.parentId && tr.title === r.title && 
-            tr.onclick === r.onclick && tr.icons === r.icons)));
+            tr.onclick === r.onclick &&
+            JSON.stringify(tr.icon.getSettings()) === JSON.stringify(r.icons))));
 
         return newBtnOptions;
     };

@@ -1,3 +1,5 @@
+import { MenuIcon } from './menuIcon';
+
 class BaseMenuItem {
     constructor(id, type = 'normal') {
         this._id = id;
@@ -50,9 +52,9 @@ class RadioSubMenuItem extends BaseMenuItem {
         this._title = title;
     }
 
-    addToMenu(onchange, icons = null, checked = false) {
+    addToMenu(onchange, icon = new MenuIcon(), checked = false) {
         super.addToMenu({
-            icons,
+            icons : icon ? icon.getSettings() : [],
             checked,
             parentId: this._parentId,
             title: this._title,
@@ -81,23 +83,23 @@ class ButtonMenuItem extends BaseMenuItem {
 
     show() { return this._setVisibility(true); }
 
-    addToMenu(onclick, icons = null) { this._addToMenu(onclick, icons); }
+    addToMenu(onclick, icon = new MenuIcon()) { this._addToMenu(onclick, icon); }
 
-    _addToMenu(onclick, icons, forSelection = false) { 
+    _addToMenu(onclick, icon, forSelection = false) { 
         const contexts = [];
 
         if (forSelection)
             contexts.push('selection');
 
         super.addToMenu({
-            icons,
+            icons : icon ? icon.getSettings() : [],
             onclick,
             contexts,
             title: this._title
         });
     }
 
-    addToSelectionMenu(onclick, icons = null) { this._addToMenu(onclick, icons, true); }
+    addToSelectionMenu(onclick, icon = new MenuIcon()) { this._addToMenu(onclick, icon, true); }
 }
 
 export { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem };
