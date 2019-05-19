@@ -1,4 +1,4 @@
-import { MenuIcon } from './menuIcon';
+import { MenuIcon } from './menuIcon.js';
 
 class BaseMenuItem {
     constructor(id, type = 'normal') {
@@ -54,7 +54,7 @@ class RadioSubMenuItem extends BaseMenuItem {
 
     addToMenu(onchange, icon = new MenuIcon(), checked = false) {
         super.addToMenu({
-            icons : icon ? icon.getSettings() : [],
+            icons : icon ? icon.getSettings() : null,
             checked,
             parentId: this._parentId,
             title: this._title,
@@ -92,7 +92,7 @@ class ButtonMenuItem extends BaseMenuItem {
             contexts.push('selection');
 
         super.addToMenu({
-            icons : icon ? icon.getSettings() : [],
+            icons : icon ? icon.getSettings() : null,
             onclick,
             contexts,
             title: this._title
