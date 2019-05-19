@@ -234,7 +234,6 @@ class RangeMarker {
                         return range.surroundContents(this._createMarkedSpan(colour));
 
                     if (markFirstNodePartially) {
-                        debugger
                         const val = node.nodeValue;
                         node.nodeValue = val.substring(0, startOffset);
 
@@ -255,7 +254,6 @@ class RangeMarker {
                 }
             }
             catch (e) {
-                debugger
                 lastError = e;
             }
         });
