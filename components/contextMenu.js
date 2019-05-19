@@ -1,4 +1,5 @@
 import { ButtonMenuItem, SeparatorMenuItem, RadioSubMenuItem } from './menuItem.js';
+import { MenuIcon } from './menuIcon.js';
 
 export class ContextMenu {
     constructor() {
@@ -66,12 +67,17 @@ export class ContextMenu {
         setColourBtn.addToMenu();
 
         new RadioSubMenuItem(defaultColourClass, setColourBtn.id, 'Green')
-            .addToMenu(changeColour, null, true);
-        new RadioSubMenuItem('marker-red', setColourBtn.id, 'Red').addToMenu(changeColour);
-        new RadioSubMenuItem('marker-pink', setColourBtn.id, 'Pink').addToMenu(changeColour);
-        new RadioSubMenuItem('marker-orange', setColourBtn.id, 'Orange').addToMenu(changeColour);
-        new RadioSubMenuItem('marker-yellow', setColourBtn.id, 'Yellow').addToMenu(changeColour);
-        new RadioSubMenuItem('marker-blue', setColourBtn.id, 'Blue').addToMenu(changeColour);
+            .addToMenu(changeColour, new MenuIcon('green'), true);
+        new RadioSubMenuItem('marker-red', setColourBtn.id, 'Red')
+            .addToMenu(changeColour, new MenuIcon('red'));
+        new RadioSubMenuItem('marker-pink', setColourBtn.id, 'Pink')
+            .addToMenu(changeColour, new MenuIcon('pink'));
+        new RadioSubMenuItem('marker-orange', setColourBtn.id, 'Orange')
+            .addToMenu(changeColour, new MenuIcon('orange'));
+        new RadioSubMenuItem('marker-yellow', setColourBtn.id, 'Yellow')
+            .addToMenu(changeColour, new MenuIcon('yellow'));
+        new RadioSubMenuItem('marker-blue', setColourBtn.id, 'Blue')
+            .addToMenu(changeColour, new MenuIcon('blue'));
 
         browser.menus.onShown.addListener(() => {
             if (this._shouldBeRefreshed()) {
