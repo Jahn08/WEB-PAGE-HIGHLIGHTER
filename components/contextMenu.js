@@ -29,7 +29,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to mark: ' + ex.toString());
             }
-        });
+        }, new MenuIcon('colourful-brush'));
     
         this._unmarkBtn.addToMenu(async () => { 
             try {
@@ -42,7 +42,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to unmark: ' + ex.toString());
             }
-        });
+        }, new MenuIcon('white-brush'));
     
         this._unmarkBtn.hide();
         
@@ -63,8 +63,9 @@ export class ContextMenu {
 
         new SeparatorMenuItem().addToMenu();
 
-        const setColourBtn = new ButtonMenuItem('palette', 'Set mark colour');
-        setColourBtn.addToMenu();
+        const paletteMenuItemId = 'palette';
+        const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set mark colour');
+        setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId));
 
         new RadioSubMenuItem(defaultColourClass, setColourBtn.id, 'Green')
             .addToMenu(changeColour, new MenuIcon('green'), true);
