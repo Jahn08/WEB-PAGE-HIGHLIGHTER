@@ -27,6 +27,10 @@ class MessageReceiver {
 
     static setUnmarkMenuReady() { return MessageReceiver.msgEvent.createUnmarkReadyEvent(); }
 
+    static setSaveMenuReady() { return MessageReceiver.msgEvent.createSaveReadyEvent(); }
+
+    shouldSave() { return MessageReceiver.msgEvent.isSaveEvent(this._msg); }
+
     static combineEvents(...msgs) { return MessageReceiver.msgEvent.combineEvents(msgs); }
 }
 

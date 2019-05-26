@@ -9,22 +9,21 @@ export class ContextMenu {
         this.onMarking = null;
         this.onUnmarking = null;
         this.onChangingColour = null;
+        this.onSaving = null;
 
         new SeparatorMenuItem().addToMenu();
     
         this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
+        this._saveBtn = new ButtonMenuItem('save', 'Save HTML contents');
 
         const defaultColourClass = 'marker-green';
         this._curColourClass = defaultColourClass;
 
         this._markBtn.addToSelectionMenu(async () => {
             try {
-                if (!this.onMarking)
-                    return;
-
-                const tabId = await this._getCurrentTabId();
-                await this.onMarking({ tabId, colourClass: this._curColourClass });
+                await this._passTabInfoToCallback(this.onMarking, 
+                    {colourClass: this._curColourClass });
             }
             catch (ex) {
                 console.error('Error while trying to mark: ' + ex.toString());
@@ -33,11 +32,7 @@ export class ContextMenu {
     
         this._unmarkBtn.addToMenu(async () => { 
             try {
-                if (!this.onUnmarking)
-                    return;
-
-                const tabId = await this._getCurrentTabId();
-                await this.onUnmarking({ tabId });
+                await this._passTabInfoToCallback(this.onUnmarking);
             }
             catch (ex) {
                 console.error('Error while trying to unmark: ' + ex.toString());
@@ -45,16 +40,24 @@ export class ContextMenu {
         }, new MenuIcon('white-brush'));
     
         this._unmarkBtn.hide();
+
+        this._saveBtn.addToMenu(async () => { 
+            try {
+                await this._passTabInfoToCallback(this.onSaving);
+            }
+            catch (ex) {
+                console.error('Error while trying to save: ' + ex.toString());
+            }
+        });
+    
+        this._saveBtn.hide();
         
         const changeColour = async (info) => {
             try {
                 this._curColourClass = info.menuItemId;
 
-                if (!this.onChangingColour)
-                    return;
-
-                const tabId = await this._getCurrentTabId();
-                await this.onChangingColour({ tabId, colourClass: this._curColourClass });
+                await this._passTabInfoToCallback(this.onChangingColour, 
+                    { colourClass: this._curColourClass });
             }
             catch (ex) {
                 console.error('Error while trying to change mark colour: ' + ex.toString());
@@ -88,6 +91,17 @@ export class ContextMenu {
         });
 
         browser.menus.onHidden.addListener(() => this._makePure());
+    }
+
+    _passTabInfoToCallback(callback, options = {}) {
+        return new Promise((resolve, reject) => {
+            if (!callback)
+                return resolve();
+
+            this._getCurrentTabId().then(tabId =>
+                resolve(callback(Object.assign({ tabId }, options))))
+            .catch(err => reject(err));
+        });
     }
 
     _shouldBeRefreshed() { return this._isDirty && !this._isRendered; }

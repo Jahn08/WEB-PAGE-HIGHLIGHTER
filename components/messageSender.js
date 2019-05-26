@@ -26,4 +26,8 @@ export class MessageSender {
     static startChangingColour(colourClass) { return msgEvent.createChangeColourEvent(colourClass); }
 
     static startUnmarking() { return msgEvent.createUnmarkEvent(); }
+
+    shouldSetSaveMenuReady() { return msgEvent.isSetSaveReadyEvent(this._msg); }
+
+    static startSaving() { return msgEvent.createSaveEvent(); }
 }
