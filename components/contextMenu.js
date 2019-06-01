@@ -10,12 +10,14 @@ export class ContextMenu {
         this.onUnmarking = null;
         this.onChangingColour = null;
         this.onSaving = null;
+        this.onLoading = null;
 
         new SeparatorMenuItem().addToMenu();
     
         this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
         this._saveBtn = new ButtonMenuItem('save', 'Save HTML contents');
+        this._loadBtn = new ButtonMenuItem('load', 'Load HTML contents');
 
         const defaultColourClass = 'marker-green';
         this._curColourClass = defaultColourClass;
@@ -41,17 +43,6 @@ export class ContextMenu {
     
         this._unmarkBtn.hide();
 
-        this._saveBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onSaving);
-            }
-            catch (ex) {
-                console.error('Error while trying to save: ' + ex.toString());
-            }
-        });
-    
-        this._saveBtn.hide();
-        
         const changeColour = async (info) => {
             try {
                 this._curColourClass = info.menuItemId;
@@ -89,6 +80,26 @@ export class ContextMenu {
                 console.log('Refreshed');
             }
         });
+
+        this._saveBtn.addToMenu(async () => { 
+            try {
+                await this._passTabInfoToCallback(this.onSaving);
+            }
+            catch (ex) {
+                console.error('Error while trying to save: ' + ex.toString());
+            }
+        });
+        //this._saveBtn.hide();
+
+        this._loadBtn.addToMenu(async () => { 
+            try {
+                await this._passTabInfoToCallback(this.onLoading);
+            }
+            catch (ex) {
+                console.error('Error while trying to load: ' + ex.toString());
+            }
+        });
+        //this._loadBtn.hide();
 
         browser.menus.onHidden.addListener(() => this._makePure());
     }

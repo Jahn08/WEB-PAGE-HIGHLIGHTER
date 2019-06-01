@@ -30,4 +30,8 @@ export class MessageSender {
     shouldSetSaveMenuReady() { return msgEvent.isSetSaveReadyEvent(this._msg); }
 
     static startSaving() { return msgEvent.createSaveEvent(); }
+
+    shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
+
+    static startLoading() { return msgEvent.createLoadEvent(); }
 }

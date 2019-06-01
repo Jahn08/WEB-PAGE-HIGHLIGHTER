@@ -10,6 +10,9 @@ class MenuMessageEvent {
         this._saveReadyEvent = 'setSaveReady';
         this._saveEvent = 'save';
 
+        this._loadReadyEvent = 'setLoadReady';
+        this._loadEvent = 'load';
+
         this._colourClassField = 'colourClass';
     }
 
@@ -66,4 +69,10 @@ class MenuMessageEvent {
 
     createSaveEvent() { return this._createEvent(this._saveEvent); }
     isSaveEvent(msg) { return this._isEvent(msg, this._saveEvent); }   
+
+    createLoadReadyEvent() { return this._createEvent(this._loadReadyEvent); }
+    isSetLoadReadyEvent(msg) { return this._isEvent(msg, this._loadReadyEvent); }
+
+    createLoadEvent() { return this._createEvent(this._loadEvent); }
+    isLoadEvent(msg) { return this._isEvent(msg, this._loadEvent); }   
 }

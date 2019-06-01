@@ -3,16 +3,22 @@ import { MessageSender } from '../components/messageSender.js';
 
 const menu = new ContextMenu();
 
-menu.onMarking = (info) => browser.tabs.sendMessage(info.tabId, MessageSender.startMarking(info.colourClass));
+const sendMessageToTab = (tabId, msgBody) => browser.tabs.sendMessage(tabId, msgBody);
 
-menu.onChangingColour = (info) => browser.tabs.sendMessage(info.tabId, MessageSender.startChangingColour(info.colourClass));
+menu.onMarking = (info) => sendMessageToTab(info.tabId, MessageSender.startMarking(info.colourClass));
 
-menu.onUnmarking = (info) => browser.tabs.sendMessage(info.tabId, MessageSender.startUnmarking());
+menu.onChangingColour = (info) => sendMessageToTab(info.tabId, MessageSender.startChangingColour(info.colourClass));
+
+menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
+
+menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving());
+
+menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
 browser.runtime.onMessage.addListener(msg => new Promise((resolve, reject) => {
     try {
         const sender = new MessageSender(msg);
-        
+    
         if (sender.shouldSetMarkMenuReady() && (sender.currentColourClasses.length !== 1 || 
             sender.currentColourClasses[0] !== menu.currentColourClass))
             menu.showMarkingBtn();

@@ -31,6 +31,10 @@ class MessageReceiver {
 
     shouldSave() { return MessageReceiver.msgEvent.isSaveEvent(this._msg); }
 
+    static setLoadMenuReady() { return MessageReceiver.msgEvent.createLoadReadyEvent(); }
+
+    shouldLoad() { return MessageReceiver.msgEvent.isLoadEvent(this._msg); }
+
     static combineEvents(...msgs) { return MessageReceiver.msgEvent.combineEvents(msgs); }
 }
 
