@@ -4,10 +4,10 @@ void function() {
     const rangeMarker = new RangeMarker();
 
     document.addEventListener('mousedown', info => {
-        if (info.button !== 2)
-            return true;
-
         try {
+            if (info.button !== 2)
+                return true;
+        
             let msg;
             const curColourClasses = rangeMarker.getColourClassesForSelectedNodes();
 
@@ -32,31 +32,40 @@ void function() {
     });
 
     const processMessage = msg => {
-        return new Promise((resolve, reject) => {
-            const receiver = new MessageReceiver(msg);
+        return new Promise(async (resolve, reject) => {
+            try {
+                const receiver = new MessageReceiver(msg);
 
-            const curNode = activeNode;
-            activeNode = null;
+                const curNode = activeNode;
+                activeNode = null;
+    
+                let isSaving;
 
-            if (receiver.shouldMark())
-            {
-                rangeMarker.markSelectedNodes(receiver.markColourClass);
-            }
-            else if (receiver.shouldUnmark())
-            {
-                rangeMarker.unmarkSelectedNodes(curNode);
-            }
-            else if (receiver.shouldChangeColour())
-            {
-                rangeMarker.changeSelectedNodesColour(receiver.markColourClass, curNode);
-            }
-            else 
-            {
-                reject(new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`));
-                return;
-            }
+                if (receiver.shouldMark())
+                    rangeMarker.markSelectedNodes(receiver.markColourClass);
+                else if (receiver.shouldUnmark())
+                    rangeMarker.unmarkSelectedNodes(curNode);
+                else if (receiver.shouldChangeColour())
+                    rangeMarker.changeSelectedNodesColour(receiver.markColourClass, curNode);
+                else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad()) {
+                    const pageInfo = new PageInfo();
 
-            resolve();
+                    if (isSaving)
+                        await pageInfo.save();
+                    else
+                        await pageInfo.load();
+
+                    alert(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
+                }
+                else
+                    throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
+    
+                resolve();
+            }
+            catch (err) {
+                console.log(err.toString());
+                reject(err);
+            }
         });
     };
 
