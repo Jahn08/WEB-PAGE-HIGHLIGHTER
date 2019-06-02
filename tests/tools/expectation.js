@@ -1,18 +1,13 @@
 import assert from 'assert';
 
 class Expectation {
-    static expectRejection (asyncFn, errorObj, assertionFn = null) {
+    static expectRejection (asyncFn, expectedProps, assertionFn = null) {
         return new Promise((resolve, reject) => {
             asyncFn.catch(resultErr => {
                 try {
                     assert(resultErr);
-    
-                    if (errorObj) {
-                        for (const prop in errorObj)
-                            assert.strictEqual(resultErr[prop], errorObj[prop], 
-                                `ActualError[${prop}] is '${resultErr[prop]}', ExpectedError[${prop}]` +
-                                ` is '${errorObj[prop]}'. ActualError: '${resultErr.toString()}'`);
-                    }
+
+                    Expectation._assertExpectedProps(resultErr, expectedProps);
                     
                     return Expectation._processCallback(assertionFn, resultErr, resolve, reject);
                 }
@@ -22,6 +17,16 @@ class Expectation {
             })
             .then(res => reject(new Error('The callback should\'ve been rejected')))
         });
+    }
+
+    static _assertExpectedProps(actualObj, expectedProps) {
+        if (!expectedProps)
+            return;
+
+        for (const prop in expectedProps)
+            assert.strictEqual(actualObj[prop], expectedProps[prop], 
+                `Actual[${prop}] is '${actualObj[prop]}', Expected[${prop}]` +
+                ` is '${expectedProps[prop]}'. Actual: '${JSON.stringify(actualObj)}'`);
     }
 
     static _processCallback(callback, result, resolve, reject) {

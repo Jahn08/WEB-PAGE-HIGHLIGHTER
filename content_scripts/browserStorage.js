@@ -25,7 +25,7 @@ class BrowserStorage {
     }
 
     contains() {
-        return this._find(key).then(obj => obj != null);
+        return this._find().then(obj => obj != null);
     }
 
     _find() {
