@@ -15,7 +15,6 @@ describe('MenuIcon', () => {
         it('should build MenuIcon with a passed argument and only a 16-pixel icon', () => {
             const fileName = Randomiser.getRandomNumber(100);
             
-            debugger
             const settings = new MenuIcon(fileName).getSettings();
 
             assert.strictEqual(Object.getOwnPropertyNames(settings).length, 1);
