@@ -42,7 +42,10 @@ class PageInfo {
     }
 
     _throwNoContentError() {
-        throw new Error('There is no HTML contents to write');
+        const error = new Error('There is no HTML contents to write');
+        error.name = 'WrongHtmlError';
+
+        throw error;
     }
 
     _deserialiseHtml(serialisedHtml) {

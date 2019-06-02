@@ -3,10 +3,17 @@ class BrowserStorage {
         this._storage = localStorage; //browser.storage.sync;
 
         if (!this._storage)
-            throw new Error('The sync storage is unavailable. ' + 
+            throw this._buildStorageError('The sync storage is unavailable. ' + 
                 'Make sure the Add-ons option in Sync Settings is turned on');
 
         this._key = key;
+    }
+
+    _buildStorageError(msg, name = 'StorageError') {
+        const err = new Error(msg);
+        err.name = name;
+
+        return err;
     }
 
     set(object) {
@@ -28,7 +35,8 @@ class BrowserStorage {
     get() {
         return this._find().then(obj => {
             if (!obj)
-                throw new Error('No data has been found for the current uri');
+                throw this._buildStorageError('No data has been found for the current uri', 
+                    'NotFoundError');
 
             return JSON.parse(obj);
         });
