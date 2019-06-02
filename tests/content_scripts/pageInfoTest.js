@@ -7,7 +7,10 @@ import { Expectation } from '../tools/expectation.js';
 describe('content_script/pageInfo', function () {
     this.timeout(0);
 
-    beforeEach('loadDomModel', done => {
+    let storage;
+
+    beforeEach('loadResources', done => {
+        storage = new StorageMocked();
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });
     
@@ -18,38 +21,38 @@ describe('content_script/pageInfo', function () {
             ).catch(done);
     });
     
-    afterEach('unloadDomModel', () => EnvLoader.unloadDomModel());
+    afterEach('releaseResources', () => {
+        if (storage)
+            storage.dispose();
+        
+        EnvLoader.unloadDomModel();
+    });
 
     describe('#load', function () {
 
-        it('should throw an error while loading a page absent from the storage', () => {
-            const storage = new StorageMocked();
-            
-            return Expectation.expectRejection(new PageInfo().load(), 
-                { name: 'NotFoundError' }, () => assert(storage.isEmpty()));
-        });
+        it('should throw an error while loading a page absent from the storage', () =>
+            Expectation.expectRejection(new PageInfo().load(), 
+                { name: 'NotFoundError' }, () => assert(storage.isEmpty()))
+        );
 
         it('should throw an error while loading a page of a wrong format', () => {
-            const storage = new StorageMocked();
-
             const itemKey = document.location.href;
             const browserStorage = new BrowserStorage(itemKey);
 
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
-            browserStorage.set(expectedObj);
+            
+            return Expectation.expectResolution(browserStorage.set(expectedObj), () =>
+                Expectation.expectRejection(new PageInfo().load(), { name: 'WrongHtmlError' }, 
+                    () => {
+                        assert.strictEqual(storage.length, 1);
 
-            return Expectation.expectRejection(new PageInfo().load(), 
-                { name: 'WrongHtmlError' }, () => {
-                    assert(!storage.isEmpty());
-
-                    return browserStorage.get().then(res =>
-                        assert.deepStrictEqual(res, expectedObj));
-                });
+                        return browserStorage.get().then(res =>
+                            assert.deepStrictEqual(res, expectedObj));
+                    })
+            );
         });
 
         it('should load a page previously saved in the storage', () => {
-            const storage = new StorageMocked();
-            
             const parentDiv = document.createElement('div');
             parentDiv.id = Randomiser.getRandomNumberUpToMax();
 
@@ -67,7 +70,7 @@ describe('content_script/pageInfo', function () {
 
             return Expectation.expectResolution(new PageInfo().load(),
                 () => {
-                    assert(!storage.isEmpty());
+                    assert.strictEqual(storage.length, 1);
 
                     const loadedDiv = document.getElementById(parentDiv.id);
                     assert(loadedDiv);

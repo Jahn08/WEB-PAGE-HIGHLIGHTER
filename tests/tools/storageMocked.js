@@ -9,6 +9,14 @@ export class StorageMocked {
     }
 
     isEmpty() {
-        return Object.getOwnPropertyNames(this._items).length === 0;
+        return this.length === 0;
+    }
+
+    get length() {
+        return Object.getOwnPropertyNames(this._items).length;
+    }
+
+    dispose() {
+        global.localStorage = undefined;
     }
 }
