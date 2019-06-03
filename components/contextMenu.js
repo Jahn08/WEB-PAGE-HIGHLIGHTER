@@ -88,7 +88,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to save: ' + ex.toString());
             }
-        });
+        }, new MenuIcon('save'));
         //this._saveBtn.hide();
 
         this._loadBtn.addToMenu(async () => { 
@@ -98,7 +98,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to load: ' + ex.toString());
             }
-        });
+        }, new MenuIcon('load'));
         //this._loadBtn.hide();
 
         browser.menus.onHidden.addListener(() => this._makePure());
