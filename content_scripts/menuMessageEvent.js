@@ -29,15 +29,20 @@ class MenuMessageEvent {
 
     combineEvents(msgs = [])
     {
-        if (!msgs.length)
+        const validMsgs = msgs.filter(m => m);
+
+        if (!validMsgs.length)
             return null;
 
-        return msgs.reduce((p, c) => {
+        if (validMsgs.length === 1)
+            return validMsgs[0];
+
+        return validMsgs.reduce((p, c) => {
             c.event.push(...p.event);
 
             if (!c.colourClass)
                 c.colourClass = p.colourClass;
-            else
+            else if (p.colourClass)
                 c.colourClass.push(...p.colourClass);
             
             return c;

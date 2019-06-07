@@ -89,7 +89,7 @@ export class ContextMenu {
                 console.error('Error while trying to save: ' + ex.toString());
             }
         }, new MenuIcon('save'));
-        //this._saveBtn.hide();
+        this._saveBtn.hide();
 
         this._loadBtn.addToMenu(async () => { 
             try {
@@ -99,7 +99,7 @@ export class ContextMenu {
                 console.error('Error while trying to load: ' + ex.toString());
             }
         }, new MenuIcon('load'));
-        //this._loadBtn.hide();
+        this._loadBtn.hide();
 
         browser.menus.onHidden.addListener(() => this._makePure());
     }
@@ -138,6 +138,14 @@ export class ContextMenu {
     hideUnmarkingBtn() { this._makeDirty(this._unmarkBtn.hide()); }
     
     showUnmarkingBtn() { this._makeDirty(this._unmarkBtn.show()); }
+
+    hideSaveBtn() { this._saveBtn.hide(); }
+    
+    showSaveBtn() { this._saveBtn.show(); }
+
+    hideLoadBtn() { this._loadBtn.hide(); }
+    
+    showLoadBtn() { this._loadBtn.show(); }
 
     async _getCurrentTabId() {
         const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });

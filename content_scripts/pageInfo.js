@@ -30,6 +30,10 @@ class PageInfo {
         return btoa(unescape(encodeURIComponent(document.documentElement.innerHTML)));
     }
 
+    async canLoad() {
+        return await this._browserStorage.contains();
+    }
+
     async load() {
         const pageData = await this._browserStorage.get();
 

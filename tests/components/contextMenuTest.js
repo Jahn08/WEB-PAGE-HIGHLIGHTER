@@ -83,16 +83,20 @@ describe('components/ContextMenu', () => {
 
             contextMenu.hideMarkingBtn();
             contextMenu.hideUnmarkingBtn();
+            contextMenu.hideSaveBtn();
+            contextMenu.hideLoadBtn();
 
             const btnOptions = browserMocked.menuOptions
                 .filter(i => i.type === 'normal' && i.visible !== undefined);
-            assert.strictEqual(btnOptions.length, 2);
+            assert.strictEqual(btnOptions.length, 4);
             
             const assertItemsVisibility = (visible) => assert(btnOptions.every(b => b.visible === visible));
             assertItemsVisibility(false);
 
             contextMenu.showMarkingBtn();
             contextMenu.showUnmarkingBtn();
+            contextMenu.showLoadBtn();
+            contextMenu.showSaveBtn();
             assertItemsVisibility(true);
         });
     });

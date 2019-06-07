@@ -33,12 +33,15 @@ class RangeMarker {
     unmarkSelectedNodes(targetNode = null) {
         const range = this._getSelectionRange();
 
-        this._getSelectionOrFocusedNodes(range, targetNode).forEach(node => {
+        const activeNodes = this._getSelectionOrFocusedNodes(range, targetNode);
+        activeNodes.forEach(node => {
             node.replaceWith(document.createTextNode(node.textContent));
             node.remove();
         });
 
         this._collapseRange(range);
+
+        return activeNodes.length > 0;
     }
 
     _getSelectionOrFocusedNodes(range, targetNode) {
@@ -65,15 +68,17 @@ class RangeMarker {
         const range = this._getSelectionRange();
 
         if (!range)
-            return;
+            return false;
 
         const selectedNodes = this._getSelectedTextNodes(range);
 
         if (!selectedNodes.length)
-            return this._collapseRange(range);
+            return this._collapseRange(range), false;
 
         this._markTextNodes(selectedNodes, range, colourClass);
-        return this._collapseRange(range);
+        this._collapseRange(range);
+
+        return true;
     }
 
     _getSelectionRange() {
@@ -285,12 +290,14 @@ class RangeMarker {
 
     changeSelectedNodesColour(colourClass, targetNode = null) {
         const range = this._getSelectionRange();
-        const nodes = this._getSelectionOrFocusedNodes(range, targetNode);
-
-        this._markTextNodes(nodes.map(n => n.firstChild).filter(n => this._isProperTextNode(n)), 
-            range, colourClass);
+        const activeNodes = this._getSelectionOrFocusedNodes(range, targetNode)
+            .map(n => n.firstChild)
+            .filter(n => this._isProperTextNode(n));
+        this._markTextNodes(activeNodes, range, colourClass);
 
         this._collapseRange(range);
+
+        return activeNodes.length > 0;
     }
 
     static get markerClass() { return 'marker'; }

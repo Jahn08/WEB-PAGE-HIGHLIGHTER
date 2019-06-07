@@ -5,9 +5,11 @@ const menu = new ContextMenu();
 
 const sendMessageToTab = (tabId, msgBody) => browser.tabs.sendMessage(tabId, msgBody);
 
-menu.onMarking = (info) => sendMessageToTab(info.tabId, MessageSender.startMarking(info.colourClass));
+menu.onMarking = (info) => sendMessageToTab(info.tabId,
+    MessageSender.startMarking(info.colourClass));
 
-menu.onChangingColour = (info) => sendMessageToTab(info.tabId, MessageSender.startChangingColour(info.colourClass));
+menu.onChangingColour = (info) => sendMessageToTab(info.tabId, 
+    MessageSender.startChangingColour(info.colourClass));
 
 menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
 
@@ -19,6 +21,16 @@ browser.runtime.onMessage.addListener(msg => new Promise((resolve, reject) => {
     try {
         const sender = new MessageSender(msg);
     
+        if (sender.shouldSetSaveMenuReady())
+            menu.showSaveBtn();
+        else
+            menu.hideSaveBtn();
+
+        if (sender.shouldSetLoadMenuReady())
+            menu.showLoadBtn();
+        else
+            menu.hideLoadBtn();
+
         if (sender.shouldSetMarkMenuReady() && (sender.currentColourClasses.length !== 1 || 
             sender.currentColourClasses[0] !== menu.currentColourClass))
             menu.showMarkingBtn();

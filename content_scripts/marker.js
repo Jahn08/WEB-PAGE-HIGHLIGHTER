@@ -3,6 +3,11 @@ void function() {
 
     const rangeMarker = new RangeMarker();
 
+    let domIsPure;
+    let canLoad;
+
+    new PageInfo().canLoad().then(resp => canLoad = resp);
+
     document.addEventListener('mousedown', info => {
         try {
             if (info.button !== 2)
@@ -24,6 +29,15 @@ void function() {
                 activeNode = info.target;
             }
 
+            if (!domIsPure) {
+                // TODO: if msg is undefined there is no way to combine safely
+                if (domIsPure === false)
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setSaveMenuReady());
+
+                if (canLoad)
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setLoadMenuReady());
+            }
+            
             browser.runtime.sendMessage(msg);
         }
         catch (ex) {
@@ -38,15 +52,17 @@ void function() {
 
                 const curNode = activeNode;
                 activeNode = null;
-    
+
                 let isSaving;
+                let domWasChanged = false;
 
                 if (receiver.shouldMark())
-                    rangeMarker.markSelectedNodes(receiver.markColourClass);
+                    domWasChanged = rangeMarker.markSelectedNodes(receiver.markColourClass);
                 else if (receiver.shouldUnmark())
-                    rangeMarker.unmarkSelectedNodes(curNode);
+                    domWasChanged = rangeMarker.unmarkSelectedNodes(curNode);
                 else if (receiver.shouldChangeColour())
-                    rangeMarker.changeSelectedNodesColour(receiver.markColourClass, curNode);
+                    domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
+                        curNode);
                 else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad()) {
                     const pageInfo = new PageInfo();
 
@@ -55,11 +71,15 @@ void function() {
                     else
                         await pageInfo.load();
 
+                    domIsPure = true;
                     alert(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
                 }
                 else
                     throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
     
+                if (domWasChanged)
+                    domIsPure = false;
+
                 resolve();
             }
             catch (err) {
