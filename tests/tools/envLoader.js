@@ -12,7 +12,7 @@ export class EnvLoader {
                     throw err;
 
                 const globalInitialiser = `global.${className}=${className};`;
-                eval(data.toString('utf8') + globalInitialiser);
+                eval(data.toString('utf8').replace('export class', 'class') + globalInitialiser);
 
                 resolve();
             });
