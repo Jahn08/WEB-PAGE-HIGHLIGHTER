@@ -30,7 +30,6 @@ void function() {
             }
 
             if (!domIsPure) {
-                // TODO: if msg is undefined there is no way to combine safely
                 if (domIsPure === false)
                     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setSaveMenuReady());
 

@@ -87,7 +87,29 @@ describe('content_script/messageReceiver', function () {
         it('should return null when combining undefined events', () =>
             assert.strictEqual(MessageReceiver.combineEvents(undefined, undefined), null));
 
-        // it('should return null when combining undefined events', () =>
-        //     assert.strictEqual(MessageReceiver.combineEvents(undefined, undefined), null));
+        it('should filter out null events and combine the rest correctly', () => {
+            const expectedColours = [Randomiser.getRandomNumberUpToMax(),
+                Randomiser.getRandomNumberUpToMax()];
+
+            const msg =  MessageReceiver.combineEvents(undefined, 
+                MessageReceiver.setLoadMenuReady(), undefined, 
+                MessageReceiver.setSaveMenuReady(), null, 
+                MessageReceiver.setMarkMenuReady(expectedColours));
+
+            assert(msg);
+
+            assert(msg.event);
+            assert.strictEqual(msg.event.length, 3);
+            
+            assert(msg.colourClass);
+            assert.deepStrictEqual(msg.colourClass, expectedColours);
+
+            const sender = new MessageSender(msg);
+            assert(sender.shouldSetSaveMenuReady());
+            assert(sender.shouldSetLoadMenuReady());
+
+            assert(sender.shouldSetMarkMenuReady());
+            assert.deepStrictEqual(sender.currentColourClasses, expectedColours);
+        });
     });
 });
