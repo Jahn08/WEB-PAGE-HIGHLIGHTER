@@ -20,7 +20,8 @@
             "matches": ["*://*/*"],
             "js": ["content_scripts/browserStorage.js", "content_scripts/pageInfo.js", 
                 "content_scripts/menuMessageEvent.js", "content_scripts/messageReceiver.js", 
-                "content_scripts/rangeMarker.js", "content_scripts/marker.js"],
+                "content_scripts/rangeMarker.js", "content_scripts/messageControl.js",
+                "content_scripts/marker.js"],
             "css": ["content/marker.css"]
         }
     ],

@@ -27,7 +27,7 @@ class PageInfo {
     }
 
     get _serialisedHtml() {
-        return btoa(unescape(encodeURIComponent(document.documentElement.innerHTML)));
+        return btoa(unescape(encodeURIComponent(document.body.innerHTML)));
     }
 
     async canLoad() {
@@ -60,6 +60,6 @@ class PageInfo {
         if (!html)
             this._throwNoContentError();
 
-        document.documentElement.innerHTML = html;
+        document.body.innerHTML = html;
     }
 }

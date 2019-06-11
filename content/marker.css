@@ -25,3 +25,39 @@
 .marker-yellow {
     background-color: rgba(238, 255, 0, 0.5) !important;
 }
+
+#blanket {
+	position: fixed;
+	width: 100vw;
+	height: 100%;
+	left: 0px;
+	top: 0px;
+	z-index: 1000;
+    background: gray;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.blanket-disappear {
+    opacity: 0 !important;
+    transition: opacity 2s ease-out;
+    -webkit-transition: opacity 2s, position 3s;
+}
+
+.blanket-leave {
+	position: relative !important;
+    transition: position 2s linear;
+    transition-delay: 1s;
+    -webkit-transition: position 2s linear;
+    -webkit-transition-delay: 1s;
+}
+
+#blanket--paragraph {
+	position: inherit;
+	top: 50%;
+    left: 35%;
+    width: 30vw;
+    word-wrap: break-word;
+	font-size: xx-large;
+    color: white;
+}
