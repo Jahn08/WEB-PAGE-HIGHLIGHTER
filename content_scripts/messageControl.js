@@ -1,71 +1,65 @@
 class MessageControl {
-    constructor () {
-        this._blanket = null;
-        this._paragraph = null;
+    static get BLANKET_PARAGRAPH_ELEM_ID() {
+        return MessageControl.BLANKET_ELEM_ID + '--paragraph';
     }
 
-    get BLANKET_PARAGRAPH_ELEM_ID() {
-        return this.BLANKET_ELEM_ID + '--paragraph';
-    }
-
-    get BLANKET_ELEM_ID() {
+    static get BLANKET_ELEM_ID() {
         return 'blanket';
     }
 
-    show(text) {
+    static show(text) {
         if (!text)
             return;
 
         let blanket;
         let paragraph;
 
-        if (blanket = this._existentBlanket)
+        if (blanket = MessageControl._existentBlanket)
             blanket.className = '';
         else
-            document.documentElement.append(this._constructBlanket(text));
+            document.documentElement.append(MessageControl._constructBlanket(text));
             
-        if (!(paragraph = this._existentParagraph))
-            blanket.append(this._appendParagraph(text));
+        if (!(paragraph = MessageControl._existentParagraph))
+            blanket.append(MessageControl._appendParagraph(text));
 
         paragraph.innerHTML = text;
     }
 
-    get _existentBlanket() {
-        return this._blanket || (this._blanket = document.getElementById(this.BLANKET_ELEM_ID));    
+    static get _existentBlanket() {
+        return document.getElementById(MessageControl.BLANKET_ELEM_ID);    
     }
 
-    _constructBlanket(text) {
+    static _constructBlanket(text) {
         const blanket = document.createElement('div');
-        blanket.id = this.BLANKET_ELEM_ID;
+        blanket.id = MessageControl.BLANKET_ELEM_ID;
 
-        blanket.append(this._appendParagraph(text));
-        return this._blanket = blanket;
+        blanket.append(MessageControl._appendParagraph(text));
+        return blanket;
     }
 
-    _appendParagraph(text) {
+    static _appendParagraph(text) {
         const paragraph = document.createElement('p');
-        paragraph.id = this.BLANKET_PARAGRAPH_ELEM_ID;
+        paragraph.id = MessageControl.BLANKET_PARAGRAPH_ELEM_ID;
         paragraph.innerHTML = text;
         
-        return this._paragraph = paragraph;
+        return paragraph;
     }
 
-    get _existentParagraph() {
-        return this._paragraph || 
-            (this._paragraph = document.getElementById(this.BLANKET_PARAGRAPH_ELEM_ID));
+    static get _existentParagraph() {
+        return document.getElementById(MessageControl.BLANKET_PARAGRAPH_ELEM_ID);
     }
 
-    hide() {
-        const blanket = this._existentBlanket;
+    static hide() {
+        const blanket = MessageControl._existentBlanket;
 
-        if (!blanket)
-            return;
+        if (!blanket || blanket.className !== '')
+            return Promise.resolve();
 
-        this._applyAnimation(blanket, 'disappear')
-            .then(ctrl => this._applyAnimation(ctrl, 'leave'));
+        return MessageControl._applyAnimation(blanket, 'disappear')
+            .then(ctrl => MessageControl._applyAnimation(ctrl, 'leave'));
     }
 
-    _applyAnimation(elem, animationName) {
+    static _applyAnimation(elem, animationName) {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 if (!elem)

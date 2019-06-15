@@ -46,8 +46,6 @@ void function() {
 
     const processMessage = msg => {
         return new Promise(async (resolve, reject) => {
-            let msgControl;
-
             try {
                 const receiver = new MessageReceiver(msg);
 
@@ -67,17 +65,15 @@ void function() {
                 else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad()) {
                     const pageInfo = new PageInfo();
 
-                    msgControl = new MessageControl();
-
                     if (isSaving)
                         await pageInfo.save();
                     else {
-                        msgControl.show('Page is loading');
+                        MessageControl.show('Page is loading');
                         await pageInfo.load();
                     }
 
                     domIsPure = true;
-                    msgControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
+                    MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
                 }
                 else
                     throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
@@ -92,8 +88,7 @@ void function() {
                 reject(err);
             }
             finally {
-                if (msgControl)
-                    msgControl.hide();
+                MessageControl.hide();
             }
         });
     };

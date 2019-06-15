@@ -40,15 +40,15 @@
 
 .blanket-disappear {
     opacity: 0 !important;
-    transition: opacity 2s ease-out;
-    -webkit-transition: opacity 2s, position 3s;
+    transition: opacity 1s ease-out;
+    -webkit-transition: opacity 1s, position 2s;
 }
 
 .blanket-leave {
 	position: relative !important;
-    transition: position 2s linear;
+    transition: position 1s linear;
     transition-delay: 1s;
-    -webkit-transition: position 2s linear;
+    -webkit-transition: position 1s linear;
     -webkit-transition-delay: 1s;
 }
 
