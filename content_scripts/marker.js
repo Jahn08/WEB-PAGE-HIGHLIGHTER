@@ -8,6 +8,13 @@ void function() {
 
     new PageInfo().canLoad().then(resp => canLoad = resp);
 
+    window.addEventListener('beforeunload', _event => {
+        if (domIsPure === false)
+            return _event.returnValue = 'You discard all unsaved changes on this page when leaving.';
+    
+        return;
+    });
+
     document.addEventListener('mousedown', info => {
         try {
             if (info.button !== 2)
