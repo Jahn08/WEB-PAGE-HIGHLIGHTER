@@ -1,9 +1,9 @@
 import assert from 'assert';
 
 class Expectation {
-    static expectRejection (asyncFn, expectedProps, assertionFn = null) {
+    static expectRejection (promise, expectedProps, assertionFn = null) {
         return new Promise((resolve, reject) => {
-            asyncFn.catch(resultErr => {
+            promise.catch(resultErr => {
                 try {
                     assert(resultErr);
 
@@ -43,9 +43,9 @@ class Expectation {
 
     static _isFunction (fn) { return typeof fn === 'function'; }
 
-    static expectResolution (asyncFn, assertionFn = null) {
+    static expectResolution (promise, assertionFn = null) {
         return new Promise((resolve, reject) => {
-            asyncFn.then(result => {
+            promise.then(result => {
                 try {
                     return Expectation._processCallback(assertionFn, result, resolve, reject);
                 }

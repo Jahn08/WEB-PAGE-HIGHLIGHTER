@@ -26,27 +26,27 @@ describe('content_script/messageReceiver', function () {
     };
 
     describe('#shouldMark', () => 
-        it('recognising an event as marking', () =>
+        it('should recognise an event as marking', () =>
             testReceivingEvents('startMarking', 'shouldMark', true))
     );
 
     describe('#shouldChangeColour', () => 
-        it('recognising an event as changing colour', () =>
+        it('should recognise an event as changing colour', () =>
             testReceivingEvents('startChangingColour', 'shouldChangeColour', true))
     );
 
     describe('#shouldUnmark', () => 
-        it('recognising an event as unmarking', () =>
+        it('should recognise an event as unmarking', () =>
             testReceivingEvents('startUnmarking', 'shouldUnmark'))
     );
 
     describe('#shouldSave', () => 
-        it('recognising an event as saving', () =>
+        it('should recognise an event as saving', () =>
             testReceivingEvents('startSaving', 'shouldSave'))
     );
 
     describe('#shouldLoad', () => 
-        it('recognising an event as loading', () =>
+        it('should recognise an event as loading', () =>
             testReceivingEvents('startLoading', 'shouldLoad'))
     );
 
@@ -64,22 +64,22 @@ describe('content_script/messageReceiver', function () {
     };
 
     describe('#setMarkMenuReady', () => 
-        it('recognising an event as setting mark menu ready', () =>
+        it('should recognise an event as setting mark menu ready', () =>
             testSendingEvents('setMarkMenuReady', 'shouldSetMarkMenuReady', true))
     );
 
     describe('#setUnmarkMenuReady', () =>
-        it('recognising an event as setting unmark menu ready', () =>
+        it('should recognise an event as setting unmark menu ready', () =>
             testSendingEvents('setUnmarkMenuReady', 'shouldSetUnmarkMenuReady'))
     );
 
     describe('#setSaveMenuReady', () =>
-        it('recognising an event as setting save menu ready', () =>
+        it('should recognise an event as setting save menu ready', () =>
             testSendingEvents('setSaveMenuReady', 'shouldSetSaveMenuReady'))
     );
 
     describe('#setLoadMenuReady', () =>
-        it('recognising an event as setting load menu ready', () =>
+        it('should recognise an event as setting load menu ready', () =>
             testSendingEvents('setLoadMenuReady', 'shouldSetLoadMenuReady'))
     );
 
