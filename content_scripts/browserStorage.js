@@ -33,12 +33,6 @@ class BrowserStorage {
     }
 
     get() {
-        return this._find().then(obj => {
-            if (!obj)
-                throw this._buildStorageError('No data has been found for the current uri', 
-                    'NotFoundError');
-
-            return JSON.parse(obj);
-        });
+        return this._find().then(obj => obj ? JSON.parse(obj) : null);
     }
 }

@@ -29,9 +29,12 @@ describe('content_script/browserStorage', function () {
 
     describe('#get', function () {
 
-        it('should throw an error while trying to get a non-existent object from the storage', () =>
-            Expectation.expectRejection(new BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
-                { name: 'NotFoundError' }, () => assert(storage.isEmpty()))
+        it('should return null while trying to get a non-existent object from the storage', () =>
+            Expectation.expectResolution(new BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
+                outcome => { 
+                    assert(!outcome);
+                    assert(storage.isEmpty());
+                })
         );
 
         it('should get an object previously set in the storage', () => {

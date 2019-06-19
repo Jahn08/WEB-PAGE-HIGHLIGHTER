@@ -30,9 +30,11 @@ describe('content_script/pageInfo', function () {
 
     describe('#load', function () {
 
+        const WRONG_HTML_ERROR = { name: 'WrongHtmlError' };
+
         it('should throw an error while loading a page absent from the storage', () =>
             Expectation.expectRejection(new PageInfo().load(), 
-                { name: 'NotFoundError' }, () => assert(storage.isEmpty()))
+                WRONG_HTML_ERROR, () => assert(storage.isEmpty()))
         );
 
         it('should throw an error while loading a page of a wrong format', () => {
@@ -42,7 +44,7 @@ describe('content_script/pageInfo', function () {
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
             
             return Expectation.expectResolution(browserStorage.set(expectedObj), () =>
-                Expectation.expectRejection(new PageInfo().load(), { name: 'WrongHtmlError' }, 
+                Expectation.expectRejection(new PageInfo().load(), WRONG_HTML_ERROR, 
                     () => {
                         assert.strictEqual(storage.length, 1);
 
