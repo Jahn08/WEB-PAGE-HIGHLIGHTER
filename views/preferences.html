@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link href="../content/preferences.css" rel="stylesheet" />
+    </head>
+    <body>
+        <script src="../content_scripts/browserStorage.js"></script>
+        <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
+
+        <form>
+            <div>
+                <input id="option--checkbox-warning" type="checkbox" checked="checked" />
+                <label>Warning about unsaved changes</label>
+            </div>
+            <div>
+                <input id="option--checkbox-loading" type="checkbox" />
+                <label>Loading a page automatically from the storage</label>
+            </div>
+            <div>
+                <label>Default colour</label>
+                <div id="colours"></div>
+            </div>
+            <hr />
+            <button type="submit">Save</button>
+        </form>
+    </body>
+</html>

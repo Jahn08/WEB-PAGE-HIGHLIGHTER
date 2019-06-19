@@ -28,5 +28,10 @@
 
     "background": {
         "page": "views/background-loader.html"
+    },
+
+    "options_ui": {
+        "page": "views/preferences.html",
+        "browser_style": true
     }
 }

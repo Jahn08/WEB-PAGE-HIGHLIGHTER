@@ -16,6 +16,14 @@ class MenuIcon {
         return Object.getOwnPropertyNames(icons).length ? icons : null;
     }
 
+    get relativeFilePath() {
+        if (this._standardIconFileName)
+            return this._getFullPathToFile(this._standardIconFileName);
+
+        return this._highDensityIconFileName ?
+            this._getFullPathToFile(this._highDensityIconFileName, true) : '';
+    }
+
     _getFullPathToFile(fileName, isHighDensity = false) {
         const _fileNameStr = '' + fileName;
         const extension = _fileNameStr.indexOf('.') === -1 ? '.png' : '';
