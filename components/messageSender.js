@@ -34,4 +34,6 @@ export class MessageSender {
     shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
 
     static startLoading() { return msgEvent.createLoadEvent(); }
+
+    shouldReturnPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
 }

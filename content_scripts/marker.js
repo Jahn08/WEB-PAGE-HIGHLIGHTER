@@ -6,14 +6,56 @@ void function() {
     let domIsPure;
     let canLoad;
 
-    new PageInfo().canLoad().then(resp => canLoad = resp);
+    const preferences = {};
 
-    window.addEventListener('beforeunload', _event => {
+    const BEFORE_UNLOAD_EVENT = 'beforeunload';
+
+    const beforeUnloadEventListener = _event => {
         if (domIsPure === false)
             return _event.returnValue = 'You discard all unsaved changes on this page when leaving.';
     
         return;
-    });
+    };
+
+    window.addEventListener(BEFORE_UNLOAD_EVENT, beforeUnloadEventListener);
+
+    const saveOrLoad = async (isSaving) => {
+        try {
+            const pageInfo = new PageInfo();
+
+            if (isSaving)
+                await pageInfo.save();
+            else {
+                MessageControl.show('Page is loading');
+                await pageInfo.load();
+            }
+    
+            domIsPure = true;
+            MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
+        }
+        finally {
+            MessageControl.hide();
+        }
+    };
+
+    browser.runtime.sendMessage(MessageReceiver.loadPreferences()).then(async settings => {
+        try {
+            Object.assign(preferences, settings);
+
+            if (preferences.shouldWarn === false)
+                window.removeEventListener(BEFORE_UNLOAD_EVENT, beforeUnloadEventListener);
+
+            const resp = await new PageInfo().canLoad();
+
+            canLoad = resp;
+
+            if (canLoad && preferences.shouldLoad)
+                await saveOrLoad(false);
+        }
+        catch (ex) {
+            console.error('An error while trying to apply the extension preferences: ' + ex.toString());
+        }
+    });    
 
     document.addEventListener('mousedown', info => {
         try {
@@ -69,19 +111,8 @@ void function() {
                 else if (receiver.shouldChangeColour())
                     domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                         curNode);
-                else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad()) {
-                    const pageInfo = new PageInfo();
-
-                    if (isSaving)
-                        await pageInfo.save();
-                    else {
-                        MessageControl.show('Page is loading');
-                        await pageInfo.load();
-                    }
-
-                    domIsPure = true;
-                    MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
-                }
+                else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad())
+                    saveOrLoad(isSaving);
                 else
                     throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
     
@@ -93,9 +124,6 @@ void function() {
             catch (err) {
                 console.log(err.toString());
                 reject(err);
-            }
-            finally {
-                MessageControl.hide();
             }
         });
     };

@@ -36,6 +36,8 @@ class MessageReceiver {
     shouldLoad() { return MessageReceiver.msgEvent.isLoadEvent(this._msg); }
 
     static combineEvents(...msgs) { return MessageReceiver.msgEvent.combineEvents(msgs); }
+
+    static loadPreferences() { return MessageReceiver.msgEvent.createLoadPreferencesEvent(); }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

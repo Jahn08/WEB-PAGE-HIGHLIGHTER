@@ -13,6 +13,8 @@ class MenuMessageEvent {
         this._loadReadyEvent = 'setLoadReady';
         this._loadEvent = 'load';
 
+        this._loadPreferencesEvent = 'loadPreferences';
+
         this._colourClassField = 'colourClass';
     }
 
@@ -79,5 +81,8 @@ class MenuMessageEvent {
     isSetLoadReadyEvent(msg) { return this._isEvent(msg, this._loadReadyEvent); }
 
     createLoadEvent() { return this._createEvent(this._loadEvent); }
-    isLoadEvent(msg) { return this._isEvent(msg, this._loadEvent); }   
+    isLoadEvent(msg) { return this._isEvent(msg, this._loadEvent); }
+
+    createLoadPreferencesEvent() { return this._createEvent(this._loadPreferencesEvent); }
+    isLoadPreferencesEvent(msg) { return this._isEvent(msg, this._loadPreferencesEvent); } 
 }

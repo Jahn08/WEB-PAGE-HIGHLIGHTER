@@ -1,5 +1,6 @@
 import { ContextMenu } from '../components/contextMenu.js';
 import { MessageSender } from '../components/messageSender.js';
+import { Preferences } from '../components/preferences.js';
 
 const menu = new ContextMenu();
 
@@ -17,10 +18,19 @@ menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving
 
 menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
-browser.runtime.onMessage.addListener(msg => new Promise((resolve, reject) => {
+browser.runtime.onMessage.addListener(msg => new Promise(async (resolve, reject) => {
     try {
         const sender = new MessageSender(msg);
     
+        if (sender.shouldReturnPreferences()) {
+            const preferences = await Preferences.loadFromStorage();
+
+            if (preferences && preferences.defaultColourToken)
+                menu.checkColourRadio(preferences.defaultColourToken);
+
+            return resolve(preferences);
+        }
+
         if (sender.shouldSetSaveMenuReady())
             menu.showSaveBtn();
         else
