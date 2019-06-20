@@ -91,15 +91,16 @@ describe('content_script/preferences', function () {
             const preferences = new Preferences();
             
             const colourRadios = getColourRadios();
-            
+            colourRadios.find(r => r.checked).checked = false;
+
             const expectedColourRadio = colourRadios[Randomiser.getRandomNumber(colourRadios.length - 1)];
             expectedColourRadio.checked = true;
 
             const expectedWarnCheck = Randomiser.getRandomBoolean();
-            getLoadCheck().checked = expectedWarnCheck;
-
+            getWarnCheck().checked = expectedWarnCheck;
+            
             const expectedLoadCheck = Randomiser.getRandomBoolean();
-            getWarnCheck().checked = expectedLoadCheck;
+            getLoadCheck().checked = expectedLoadCheck;
 
             return Expectation.expectResolution(preferences.save(), 
                 () => {
