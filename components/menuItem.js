@@ -29,9 +29,13 @@ class BaseMenuItem {
     }
 
     updateVisibility(visible) {
-        browser.menus.update(this._id, {
+        this.updateItem({
             visible: visible === true
         });
+    }
+
+    updateItem(options) {
+        browser.menus.update(this._id, options);
     }
 }
 
@@ -50,17 +54,34 @@ class RadioSubMenuItem extends BaseMenuItem {
 
         this._parentId = parentId;
         this._title = title;
+
+        this._isChecked = false;
     }
 
     addToMenu(onchange, icon = new MenuIcon(), checked = false) {
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
-            checked,
+            checked: this._isChecked = checked,
             parentId: this._parentId,
             title: this._title,
             onclick: onchange
         });
-    } 
+    }
+
+    get isChecked() { return this._isChecked; }
+
+    check() {
+        this._updateCheckedState(true);
+    }
+
+    _updateCheckedState(checked) {
+        if (checked === this._isChecked)
+            return;
+
+        this.updateItem({
+            checked: this._isChecked = checked
+        });
+    }
 }
 
 class ButtonMenuItem extends BaseMenuItem {

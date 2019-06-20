@@ -2,6 +2,7 @@ import assert from 'assert';
 import { ContextMenu } from '../../components/contextMenu';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser';
+import { ColourList } from '../../components/colourList.js';
 
 describe('components/ContextMenu', () => {
     const mockBrowser = () => {
@@ -98,6 +99,31 @@ describe('components/ContextMenu', () => {
             contextMenu.showLoadBtn();
             contextMenu.showSaveBtn();
             assertItemsVisibility(true);
+        });
+    });
+
+    describe('checkColourRadio', function () {
+        
+        it('should make a radio item checked in a context menu', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const colourInfos = ColourList.colours;
+            const expectedColour = colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)];
+            
+            contextMenu.checkColourRadio(expectedColour.token);
+
+            const actualColourRadio = browserMocked.menuOptions.find(i => i.type === 'radio' && i.id === expectedColour.token);
+            assert(actualColourRadio);
+            assert.deepStrictEqual(actualColourRadio.checked, true);
+        });
+
+        it('should do nothing while checking a non-existent radio item in a context menu', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+            
+            contextMenu.checkColourRadio(Randomiser.getRandomNumberUpToMax());
+            assert.strictEqual(browserMocked.menuOptions.filter(i => i.type === 'radio' && i.checked).length, 1);
         });
     });
 });

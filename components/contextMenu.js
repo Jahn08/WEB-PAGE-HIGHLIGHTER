@@ -62,10 +62,14 @@ export class ContextMenu {
         const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set mark colour');
         setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId));
 
-        ColourList.colours.forEach((v, index) =>
-            new RadioSubMenuItem(v.className, setColourBtn.id, v.title)
-                .addToMenu(changeColour, v.icon, index === 0)
-        );
+        this._colourRadios = [];
+
+        ColourList.colours.forEach((v, index) => {
+            const radio = new RadioSubMenuItem(v.token, setColourBtn.id, v.title);
+            this._colourRadios.push(radio);
+            
+            radio.addToMenu(changeColour, v.icon, index === 0)
+        });
         
         browser.menus.onShown.addListener(() => {
             if (this._shouldBeRefreshed()) {
@@ -107,6 +111,15 @@ export class ContextMenu {
             .catch(err => reject(err));
         });
     }
+    
+    async _getCurrentTabId() {
+        const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+
+        if (!activeTabs || !activeTabs.length)
+            throw new Error('No active tab was obtained');
+
+        return activeTabs[0].id;
+    }
 
     _shouldBeRefreshed() { return this._isDirty && !this._isRendered; }
 
@@ -140,12 +153,17 @@ export class ContextMenu {
     
     showLoadBtn() { this._loadBtn.show(); }
 
-    async _getCurrentTabId() {
-        const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+    checkColourRadio(colourClass) {
+        const colourRadio = this._getColourRadio(colourClass);
 
-        if (!activeTabs || !activeTabs.length)
-            throw new Error('No active tab was obtained');
+        if (!colourRadio)
+            return;
 
-        return activeTabs[0].id;
+        this._curColourClass = colourClass;
+        colourRadio.check();
+    }
+
+    _getColourRadio(colourClass) {
+        return this._colourRadios.find(r => r.id === colourClass);
     }
 };

@@ -1,12 +1,11 @@
 import { MenuIcon } from './menuIcon.js';
 
 export class ColourList {
-    static _buildColourOption(colourToken) {
+    static _buildColourOption(colourName) {
         return { 
-            token: colourToken,
-            icon: new MenuIcon(colourToken),
-            title: colourToken[0].toUpperCase() + colourToken.substr(1).toLowerCase(),
-            className: 'marker-' + colourToken
+            token: 'marker-' + colourName,
+            icon: new MenuIcon(colourName),
+            title: colourName[0].toUpperCase() + colourName.substr(1).toLowerCase()
         };
     }
 

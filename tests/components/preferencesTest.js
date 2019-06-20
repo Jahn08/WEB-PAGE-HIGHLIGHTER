@@ -69,10 +69,12 @@ describe('content_script/preferences', function () {
         );
 
         it('should load preferences from  the storage and update the form', () => {
+            const colourInfos = ColourList.colours;
+            
             const expectedValues = { 
-                shouldWarn: false,
-                shouldLoad: true,
-                defaultColourToken: 'blue'
+                shouldWarn: Randomiser.getRandomBoolean(),
+                shouldLoad: Randomiser.getRandomBoolean(),
+                defaultColourToken: colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)].token
             };
 
             new BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
