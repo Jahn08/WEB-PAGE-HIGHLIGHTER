@@ -4,9 +4,13 @@ export class Preferences {
 	constructor() {
 		this._appendColourList();
 		
-		this._storage = new BrowserStorage('preferences');
+		this._storage = new BrowserStorage(Preferences.STORAGE_KEY);
 	}
-    
+	
+	static get STORAGE_KEY() {
+		return 'preferences';
+	}
+
 	_appendColourList() {
 		const colourListEl = document.getElementById('colours');
 		
@@ -32,19 +36,19 @@ export class Preferences {
 	}
 	
 	load() {
-		return new Promise(resolve => {
-			this._storage.get().then(loadedForm => {
-				if (loadedForm) {
-                    this._shouldWarn = loadedForm.shouldWarn;
-                    this._shouldLoad = loadedForm.shouldLoad;
-                    this._defaultColourToken = loadedForm.defaultColourToken;
-                }
-
-                resolve();
-			});
+		return Preferences.loadFromStorage().then(loadedForm => {
+			if (loadedForm) {
+				this._shouldWarn = loadedForm.shouldWarn;
+				this._shouldLoad = loadedForm.shouldLoad;
+				this._defaultColourToken = loadedForm.defaultColourToken;
+			}
 		});
 	}
 	
+	static loadFromStorage() {
+		return new BrowserStorage(Preferences.STORAGE_KEY).get();
+	}
+
 	save() {
 		return this._storage.set({
 			shouldWarn: this._shouldWarn,
