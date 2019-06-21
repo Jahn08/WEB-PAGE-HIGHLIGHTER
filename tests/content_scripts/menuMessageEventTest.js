@@ -19,12 +19,13 @@ describe('content_script/menuMessageEvent', function () {
     const IS_SAVE_EVENT_METHOD_NAME = 'isSaveEvent';
     const IS_SET_SAVE_READY_EVENT_METHOD_NAME = 'isSetSaveReadyEvent';
     const IS_LOAD_PREFERENCES_EVENT_METHOD_NAME = 'isLoadPreferencesEvent';
+    const IS_LOAD_TAB_STATE_METHOD_NAME = 'isLoadTabStateEvent';
     
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME, IS_LOAD_EVENT_METHOD_NAME, IS_SAVE_EVENT_METHOD_NAME,
         IS_SET_LOAD_READY_EVENT_METHOD_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME, 
-        IS_LOAD_PREFERENCES_EVENT_METHOD_NAME];
+        IS_LOAD_PREFERENCES_EVENT_METHOD_NAME, IS_LOAD_TAB_STATE_METHOD_NAME];
 
     const createEventWithColourAndCheckIt = function (createEventMethodName, checkEventMethodName,
         useSeveralColours = false) {
@@ -94,6 +95,8 @@ describe('content_script/menuMessageEvent', function () {
     
     createTestForCheckingEvent('createLoadPreferencesEvent', IS_LOAD_PREFERENCES_EVENT_METHOD_NAME);
 
+    createTestForCheckingEvent('createLoadTabStateEvent', IS_LOAD_TAB_STATE_METHOD_NAME);
+
     describe('#combineEvents', function () {
         it('should combine several events correctly', function () {
             const msgEvent = new MenuMessageEvent();
@@ -117,6 +120,7 @@ describe('content_script/menuMessageEvent', function () {
             assert(!msgEvent.isLoadEvent(_events));
             assert(!msgEvent.isSetLoadReadyEvent(_events));
             assert(!msgEvent.isLoadPreferencesEvent(_events));
+            assert(!msgEvent.isLoadTabStateEvent(_events));
             assert(msgEvent.isSetMarkReadyEvent(_events));
             assert(msgEvent.isChangeColourEvent(_events));
             assert(msgEvent.isUnmarkEvent(_events));

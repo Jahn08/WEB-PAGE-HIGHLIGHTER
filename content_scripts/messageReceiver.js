@@ -38,6 +38,8 @@ class MessageReceiver {
     static combineEvents(...msgs) { return MessageReceiver.msgEvent.combineEvents(msgs); }
 
     static loadPreferences() { return MessageReceiver.msgEvent.createLoadPreferencesEvent(); }
+
+    shouldReturnTabState() { return MessageReceiver.msgEvent.isLoadTabStateEvent(this._msg); }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

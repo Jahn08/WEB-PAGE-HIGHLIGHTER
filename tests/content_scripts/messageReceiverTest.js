@@ -19,7 +19,7 @@ describe('content_script/messageReceiver', function () {
 
         assert.strictEqual(receiver[receiverEvent](), true);
         assert.strictEqual([receiver.shouldChangeColour(), receiver.shouldLoad(),
-            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark()]
+            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark(), receiver.shouldReturnTabState()]
                 .filter(e => e).length, 1);
 
         assert.strictEqual(receiver.markColourClass, expectedColour);
@@ -48,6 +48,11 @@ describe('content_script/messageReceiver', function () {
     describe('#shouldLoad', () => 
         it('should recognise an event as loading', () =>
             testReceivingEvents('startLoading', 'shouldLoad'))
+    );
+    
+    describe('#shouldReturnTabState', () =>
+        it('should recognise an event as loading a current tab state', () =>
+            testReceivingEvents('startLoadingTabState', 'shouldReturnTabState'))
     );
 
     const testSendingEvents = (receiverEvent, senderEvent, useColoursArg = false) => {

@@ -14,6 +14,7 @@ class MenuMessageEvent {
         this._loadEvent = 'load';
 
         this._loadPreferencesEvent = 'loadPreferences';
+        this._loadTabStateEvent = 'loadTabState';
 
         this._colourClassField = 'colourClass';
     }
@@ -31,6 +32,8 @@ class MenuMessageEvent {
 
     combineEvents(msgs = [])
     {
+        msgs = msgs || [];
+
         const validMsgs = msgs.filter(m => m);
 
         if (!validMsgs.length)
@@ -85,4 +88,7 @@ class MenuMessageEvent {
 
     createLoadPreferencesEvent() { return this._createEvent(this._loadPreferencesEvent); }
     isLoadPreferencesEvent(msg) { return this._isEvent(msg, this._loadPreferencesEvent); } 
+
+    createLoadTabStateEvent() { return this._createEvent(this._loadTabStateEvent); }
+    isLoadTabStateEvent(msg) { return this._isEvent(msg, this._loadTabStateEvent); } 
 }
