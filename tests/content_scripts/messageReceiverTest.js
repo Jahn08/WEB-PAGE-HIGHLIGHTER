@@ -57,7 +57,7 @@ describe('content_script/messageReceiver', function () {
 
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
-            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady()]
+            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldReturnPreferences()]
                 .filter(e => e).length, 1);
 
         assert.deepStrictEqual(sender.currentColourClasses, expectedColours);
@@ -81,6 +81,11 @@ describe('content_script/messageReceiver', function () {
     describe('#setLoadMenuReady', () =>
         it('should recognise an event as setting load menu ready', () =>
             testSendingEvents('setLoadMenuReady', 'shouldSetLoadMenuReady'))
+    );
+
+    describe('#loadPreferences', () =>
+        it('should recognise an event as loading preferences', () =>
+            testSendingEvents('loadPreferences', 'shouldReturnPreferences'))
     );
 
     describe('#combineEvents', function () {

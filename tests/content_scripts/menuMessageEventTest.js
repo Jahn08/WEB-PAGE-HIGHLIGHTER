@@ -18,11 +18,13 @@ describe('content_script/menuMessageEvent', function () {
     const IS_SET_LOAD_READY_EVENT_METHOD_NAME = 'isSetLoadReadyEvent';
     const IS_SAVE_EVENT_METHOD_NAME = 'isSaveEvent';
     const IS_SET_SAVE_READY_EVENT_METHOD_NAME = 'isSetSaveReadyEvent';
+    const IS_LOAD_PREFERENCES_EVENT_METHOD_NAME = 'isLoadPreferencesEvent';
     
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME, IS_LOAD_EVENT_METHOD_NAME, IS_SAVE_EVENT_METHOD_NAME,
-        IS_SET_LOAD_READY_EVENT_METHOD_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME];
+        IS_SET_LOAD_READY_EVENT_METHOD_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME, 
+        IS_LOAD_PREFERENCES_EVENT_METHOD_NAME];
 
     const createEventWithColourAndCheckIt = function (createEventMethodName, checkEventMethodName,
         useSeveralColours = false) {
@@ -50,20 +52,18 @@ describe('content_script/menuMessageEvent', function () {
         }
     };
    
-    const CREATE_MARK_EVENT_NAME = 'createMarkEvent';
-    describe('#' + CREATE_MARK_EVENT_NAME, () =>
-        it('should create a mark event with a passed colour class', () => 
-            createEventWithColourAndCheckIt(CREATE_MARK_EVENT_NAME, IS_MARK_EVENT_METHOD_NAME)));
+    const createTestForCheckingEventWithColour = (createEventMethodName, checkEventMethodName, 
+        useSeveralColours = false) => {
+            describe('#' + createEventMethodName, () =>
+                it('should build a certain type of an event with a passed colour class', () => 
+                createEventWithColourAndCheckIt(createEventMethodName, checkEventMethodName, useSeveralColours)));
+    }
 
-    const CREATE_CHANGE_COLOUR_EVENT_NAME = 'createChangeColourEvent';
-    describe('#' + CREATE_CHANGE_COLOUR_EVENT_NAME, () =>
-        it('should create a change colour event with a passed colour class', () => 
-            createEventWithColourAndCheckIt(CREATE_CHANGE_COLOUR_EVENT_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME)));
+    createTestForCheckingEventWithColour('createMarkEvent', IS_MARK_EVENT_METHOD_NAME);
 
-    const CREATE_MARK_READY_EVENT_NAME = 'createMarkReadyEvent';
-    describe('#' + CREATE_MARK_READY_EVENT_NAME, () =>
-        it('should create a markReady event', () => 
-            createEventWithColourAndCheckIt(CREATE_MARK_READY_EVENT_NAME, IS_SET_MARK_READY_EVENT_METHOD_NAME, true)));
+    createTestForCheckingEventWithColour('createChangeColourEvent', IS_CHANGE_COLOUR_EVENT_METHOD_NAME);
+
+    createTestForCheckingEventWithColour('createMarkReadyEvent', IS_SET_MARK_READY_EVENT_METHOD_NAME, true);
 
     const createEventAndCheckIt = (createEventMethodName, checkEventMethodName) => {
         const msgEvent = new MenuMessageEvent();
@@ -74,35 +74,25 @@ describe('content_script/menuMessageEvent', function () {
             assert.strictEqual(msgEvent[m](event), m === checkEventMethodName));
     };
     
-    const CREATE_UNMARK_READY_EVENT_NAME = 'createUnmarkReadyEvent';
-    describe('#' + CREATE_UNMARK_READY_EVENT_NAME, () =>
-        it('should create an unmarkReady event', () => 
-            createEventAndCheckIt(CREATE_UNMARK_READY_EVENT_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME)));
+    const createTestForCheckingEvent = (createEventMethodName, checkEventMethodName) => {
+        describe('#' + createEventMethodName, () =>
+            it('should build a certain type of an event', () => 
+                createEventAndCheckIt(createEventMethodName, checkEventMethodName)));
+    }
 
-    const CREATE_UNMARK_EVENT_NAME = 'createUnmarkEvent';
-    describe('#' + CREATE_UNMARK_EVENT_NAME, () =>
-        it('should create an unmark event', () => 
-            createEventAndCheckIt(CREATE_UNMARK_EVENT_NAME, IS_UNMARK_EVENT_METHOD_NAME)));
+    createTestForCheckingEvent('createUnmarkReadyEvent', IS_SET_UNMARK_READY_EVENT_METHOD_NAME);
 
-    const CREATE_LOAD_READY_EVENT_NAME = 'createLoadReadyEvent';
-    describe('#' + CREATE_LOAD_READY_EVENT_NAME, () =>
-        it('should create a loadReady event', () => 
-            createEventAndCheckIt(CREATE_LOAD_READY_EVENT_NAME, IS_SET_LOAD_READY_EVENT_METHOD_NAME)));
+    createTestForCheckingEvent('createUnmarkEvent', IS_UNMARK_EVENT_METHOD_NAME);
 
-    const CREATE_LOAD_EVENT_NAME = 'createLoadEvent';
-    describe('#' + CREATE_LOAD_EVENT_NAME, () =>
-        it('should create a load event', () => 
-            createEventAndCheckIt(CREATE_LOAD_EVENT_NAME, IS_LOAD_EVENT_METHOD_NAME)));
+    createTestForCheckingEvent('createLoadReadyEvent', IS_SET_LOAD_READY_EVENT_METHOD_NAME);
 
-    const CREATE_SAVE_READY_EVENT_NAME = 'createSaveReadyEvent';
-    describe('#' + CREATE_SAVE_READY_EVENT_NAME, () =>
-        it('should create a saveReady event', () => 
-            createEventAndCheckIt(CREATE_SAVE_READY_EVENT_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME)));
+    createTestForCheckingEvent('createLoadEvent', IS_LOAD_EVENT_METHOD_NAME);
 
-    const CREATE_SAVE_EVENT_NAME = 'createSaveEvent';
-    describe('#' + CREATE_SAVE_EVENT_NAME, () =>
-        it('should create a save event', () => 
-            createEventAndCheckIt(CREATE_SAVE_EVENT_NAME, IS_SAVE_EVENT_METHOD_NAME)));
+    createTestForCheckingEvent('createSaveReadyEvent', IS_SET_SAVE_READY_EVENT_METHOD_NAME);
+
+    createTestForCheckingEvent('createSaveEvent', IS_SAVE_EVENT_METHOD_NAME);
+    
+    createTestForCheckingEvent('createLoadPreferencesEvent', IS_LOAD_PREFERENCES_EVENT_METHOD_NAME);
 
     describe('#combineEvents', function () {
         it('should combine several events correctly', function () {
@@ -126,6 +116,7 @@ describe('content_script/menuMessageEvent', function () {
             assert(!msgEvent.isMarkEvent(_events));
             assert(!msgEvent.isLoadEvent(_events));
             assert(!msgEvent.isSetLoadReadyEvent(_events));
+            assert(!msgEvent.isLoadPreferencesEvent(_events));
             assert(msgEvent.isSetMarkReadyEvent(_events));
             assert(msgEvent.isChangeColourEvent(_events));
             assert(msgEvent.isUnmarkEvent(_events));
