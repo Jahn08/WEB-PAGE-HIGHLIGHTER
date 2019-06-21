@@ -41,6 +41,8 @@ class RangeMarker {
 
         this._collapseRange(range);
 
+        this._removeEmptyMarkers();
+
         return activeNodes.length > 0;
     }
 
@@ -62,6 +64,12 @@ class RangeMarker {
         const markerClass = RangeMarker.markerClass;
         return node.classList.contains(markerClass) ? [node] : 
             [...node.getElementsByClassName(markerClass)];
+    }
+
+    _removeEmptyMarkers() {
+        for (const node of document.getElementsByClassName(RangeMarker.markerClass))
+            if (!node.childNodes.length)
+                node.remove();
     }
 
     markSelectedNodes(colourClass) {
@@ -298,6 +306,10 @@ class RangeMarker {
         this._collapseRange(range);
 
         return activeNodes.length > 0;
+    }
+
+    static domContainsMarkers() {
+        return document.getElementsByClassName(RangeMarker.markerClass).length > 0;
     }
 
     static get markerClass() { return 'marker'; }

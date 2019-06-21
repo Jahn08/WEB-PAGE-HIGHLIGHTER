@@ -111,8 +111,14 @@ void function() {
 
                 if (receiver.shouldMark())
                     domWasChanged = rangeMarker.markSelectedNodes(receiver.markColourClass);
-                else if (receiver.shouldUnmark())
+                else if (receiver.shouldUnmark()) {
                     domWasChanged = rangeMarker.unmarkSelectedNodes(curNode);
+                    
+                    if (!RangeMarker.domContainsMarkers()) {
+                        domWasChanged = false;
+                        domIsPure = true;
+                    }
+                }
                 else if (receiver.shouldChangeColour())
                     domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                         curNode);
