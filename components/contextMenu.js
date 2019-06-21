@@ -12,8 +12,6 @@ export class ContextMenu {
         this.onChangingColour = null;
         this.onSaving = null;
         this.onLoading = null;
-
-        new SeparatorMenuItem().addToMenu();
     
         this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
@@ -56,8 +54,6 @@ export class ContextMenu {
             }
         };
 
-        new SeparatorMenuItem().addToMenu();
-
         const paletteMenuItemId = 'palette';
         const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set mark colour');
         setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId));
@@ -77,6 +73,8 @@ export class ContextMenu {
                 console.log('Refreshed');
             }
         });
+
+        new SeparatorMenuItem().addToMenu();
 
         this._saveBtn.addToMenu(async () => { 
             try {

@@ -17,8 +17,8 @@ describe('components/ContextMenu', () => {
             new ContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
-            assert.strictEqual(itemOptions.length, 13);
-            assert.strictEqual(itemOptions.filter(i => i.type === 'separator').length, 2);
+            assert.strictEqual(itemOptions.length, 12);
+            assert.strictEqual(itemOptions.filter(i => i.type === 'separator').length, 1);
             assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 5);
             assert.strictEqual(itemOptions.filter(i => i.type === 'radio').length, 6);
         });
