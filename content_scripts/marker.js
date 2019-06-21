@@ -57,6 +57,19 @@ void function() {
         }
     });    
 
+    const includeLoadSaveEvents = (msg = null) => {
+        if (domIsPure)
+            return msg;
+
+        if (domIsPure === false)
+            msg = MessageReceiver.combineEvents(msg, MessageReceiver.setSaveMenuReady());
+
+        if (canLoad)
+            msg = MessageReceiver.combineEvents(msg, MessageReceiver.setLoadMenuReady());
+
+        return msg;
+    };
+
     document.addEventListener('mousedown', info => {
         try {
             if (info.button !== 2)
@@ -77,16 +90,8 @@ void function() {
                 msg = MessageReceiver.setUnmarkMenuReady();
                 activeNode = info.target;
             }
-
-            if (!domIsPure) {
-                if (domIsPure === false)
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setSaveMenuReady());
-
-                if (canLoad)
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setLoadMenuReady());
-            }
             
-            browser.runtime.sendMessage(msg);
+            browser.runtime.sendMessage(includeLoadSaveEvents(msg));
         }
         catch (ex) {
             console.error('An error while trying to set menu visibility: ' + ex.toString());
@@ -113,6 +118,8 @@ void function() {
                         curNode);
                 else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad())
                     saveOrLoad(isSaving);
+                else if (receiver.shouldReturnTabState())
+                    return resolve(includeLoadSaveEvents());
                 else
                     throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
     
@@ -133,8 +140,7 @@ void function() {
             const resp = await processMessage(msg);
             resolve(resp);
         }
-        catch (ex)
-        {
+        catch (ex) {
             reject(ex);
         }
     }));
