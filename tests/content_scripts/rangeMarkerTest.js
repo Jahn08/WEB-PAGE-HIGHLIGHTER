@@ -319,8 +319,6 @@ describe('content_script/rangeMarker', function () {
 
             setRangeForFirstParagraph();
 
-            debugger
-
             const expectedTokens = [];
 
             for (let i = 0; i < 5; ++i) {
@@ -334,8 +332,6 @@ describe('content_script/rangeMarker', function () {
                 
                 document.body.append(emptyMarker);
             }
-
-            debugger
 
             new RangeMarker().unmarkSelectedNodes();
             
