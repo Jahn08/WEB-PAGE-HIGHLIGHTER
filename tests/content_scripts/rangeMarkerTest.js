@@ -59,9 +59,9 @@ describe('content_script/rangeMarker', function () {
 
     const createRandomColourClass = () => `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
 
-    const markCurSelectionWithRandomColour = (rangeMarker = new RangeMarker()) => {
+    const markCurSelectionWithRandomColour = (shouldMark = true) => {
         const colourClass = createRandomColourClass();
-        rangeMarker.markSelectedNodes(colourClass);
+        assert.strictEqual(new RangeMarker().markSelectedNodes(colourClass), shouldMark);
 
         return colourClass;
     };
@@ -158,7 +158,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#markSelectedNodes', function () {
         it('should do nothing without any selected text', () => {
-            markCurSelectionWithRandomColour();
+            markCurSelectionWithRandomColour(false);
             checkMarkedNodes(0, '');
         });
 
@@ -252,7 +252,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#unmarkSelectedNodes', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            new RangeMarker().unmarkSelectedNodes();
+            assert.strictEqual(new RangeMarker().unmarkSelectedNodes(), false);
             checkMarkedNodes(0, '');
         });
 
@@ -260,14 +260,15 @@ describe('content_script/rangeMarker', function () {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
             setRange(setRangeContainerForSentenceItalic);
-            new RangeMarker().unmarkSelectedNodes();
+            assert.strictEqual(new RangeMarker().unmarkSelectedNodes(), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
-            new RangeMarker().unmarkSelectedNodes(getFirstItalicSentenceNode());
+            assert.strictEqual(new RangeMarker().unmarkSelectedNodes(getFirstItalicSentenceNode()), 
+                false);
             
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
@@ -278,7 +279,7 @@ describe('content_script/rangeMarker', function () {
             if (!targetNode)
                 setRange(setRangeContainersCallback);
             
-            new RangeMarker().unmarkSelectedNodes(targetNode);
+            assert.strictEqual(new RangeMarker().unmarkSelectedNodes(targetNode), true);
             checkMarkedNodes(0, '');
         };
 
@@ -298,28 +299,65 @@ describe('content_script/rangeMarker', function () {
             testUnmarking(setRangeForPartlySelectedItalicSentenceNode)
         });
 
+        const setRangeForFirstParagraph = () => {
+            setRange(range => 
+                setRangeContainer(range, document.getElementById('article--paragraph-first')));
+        };
+
         it('should unmark text over several marked texts', () => {
             markRangeAndCheckColour(setRangeContainerForSentence);
             markRangeAndCheckColour(setRangeContainerForSentenceItalic);
 
-            setRange(range => 
-                setRangeContainer(range, document.getElementById('article--paragraph-first')));
-            
+            setRangeForFirstParagraph();
+
             new RangeMarker().unmarkSelectedNodes();
             checkMarkedNodes(0, '');
+        });
+
+        it('should remove all empty marker containers while unmarking', () => {
+            markRangeAndCheckColour(setRangeContainerForSentence);
+
+            setRangeForFirstParagraph();
+
+            debugger
+
+            const expectedTokens = [];
+
+            for (let i = 0; i < 5; ++i) {
+                const emptyMarker = document.createElement('div');
+                emptyMarker.className = RangeMarker.markerClass;
+
+                if (i % 2 === 0) {
+                    emptyMarker.innerHTML = Randomiser.getRandomNumberUpToMax();
+                    expectedTokens.push(emptyMarker.innerHTML);
+                }
+                
+                document.body.append(emptyMarker);
+            }
+
+            debugger
+
+            new RangeMarker().unmarkSelectedNodes();
+            
+            const markers = [...document.getElementsByClassName(RangeMarker.markerClass)];
+            assert.strictEqual(markers.length, expectedTokens.length);
+            assert(markers.every(m => expectedTokens.includes(m.innerHTML)));
+
+            markers.forEach(m => m.remove());
         });
     });
 
     describe('#changeSelectedNodesColour', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            new RangeMarker().changeSelectedNodesColour(createRandomColourClass());
+            assert.strictEqual(new RangeMarker().changeSelectedNodesColour(createRandomColourClass()), 
+                false);
             checkMarkedNodes(0, '');
         });
         
         const changeColourOverRange = (setRangeContainersCallback, 
-            colour = createRandomColourClass()) => {
+            colour = createRandomColourClass(), shouldChangeColour = true) => {
             setRange(setRangeContainersCallback);
-            new RangeMarker().changeSelectedNodesColour(colour);
+            assert.strictEqual(new RangeMarker().changeSelectedNodesColour(colour), shouldChangeColour);
 
             return colour;
         };
@@ -327,15 +365,15 @@ describe('content_script/rangeMarker', function () {
         it('should do nothing with a selected unmarked text', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
-            changeColourOverRange(setRangeContainerForSentenceItalic);
+            changeColourOverRange(setRangeContainerForSentenceItalic, undefined, false);
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
             
-            new RangeMarker().changeSelectedNodesColour(createRandomColourClass(),
-                getFirstItalicSentenceNode());
+            assert.strictEqual(new RangeMarker().changeSelectedNodesColour(createRandomColourClass(),
+                getFirstItalicSentenceNode()), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
@@ -354,7 +392,9 @@ describe('content_script/rangeMarker', function () {
             
             assert.notStrictEqual(initialColour, expectedColour);
 
-            new RangeMarker().changeSelectedNodesColour(expectedColour, getFirstSentenceNode());
+            assert.strictEqual(
+                new RangeMarker().changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
+                true);
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
