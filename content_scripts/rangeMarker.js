@@ -74,10 +74,6 @@ class RangeMarker {
 
     markSelectedNodes(colourClass) {
         const range = this._getSelectionRange();
-
-        if (!range)
-            return false;
-
         const selectedNodes = this._getSelectedTextNodes(range);
 
         if (!selectedNodes.length)
@@ -298,14 +294,21 @@ class RangeMarker {
 
     changeSelectedNodesColour(colourClass, targetNode = null) {
         const range = this._getSelectionRange();
-        const activeNodes = this._getSelectionOrFocusedNodes(range, targetNode)
+        let activeNodes = this._getSelectionOrFocusedNodes(range, targetNode)
             .map(n => n.firstChild)
             .filter(n => this._isProperTextNode(n));
-        this._markTextNodes(activeNodes, range, colourClass);
 
+        if (!activeNodes.length) {
+            activeNodes = this._getSelectedTextNodes(range);
+            
+            if (!activeNodes.length)
+                return this._collapseRange(range), false;
+        }
+
+        this._markTextNodes(activeNodes, range, colourClass);
         this._collapseRange(range);
 
-        return activeNodes.length > 0;
+        return true;
     }
 
     static domContainsMarkers() {

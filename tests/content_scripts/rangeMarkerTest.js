@@ -358,11 +358,12 @@ describe('content_script/rangeMarker', function () {
             return colour;
         };
 
-        it('should do nothing with a selected unmarked text', () => {
-            const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
+        it('should mark selected unmarked text with a changed colour', () => {
+            const oldColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
-            changeColourOverRange(setRangeContainerForSentenceItalic, undefined, false);
-            assertRangeColour(setRangeContainerForSentence, expectedColour);
+            const newColour = changeColourOverRange(setRangeContainerForSentenceItalic, undefined, true);
+            assertRangeColour(setRangeContainerForSentence, oldColour);
+            assertRangeColour(setRangeContainerForSentenceItalic, newColour);
         });
 
         it('should do nothing with a selected unmarked node', () => {
