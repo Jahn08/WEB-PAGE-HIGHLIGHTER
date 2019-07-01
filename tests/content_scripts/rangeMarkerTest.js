@@ -299,6 +299,29 @@ describe('content_script/rangeMarker', function () {
             testUnmarking(setRangeForPartlySelectedItalicSentenceNode)
         });
 
+        const testUnmarkingPartiallyOverMarkedNode = (
+            expectedResidualMarkedText, 
+            startOffset = PARTIAL_REMARKING_START_OFFSET, 
+            endOffset = PARTIAL_REMARKING_END_OFFSET) => {
+            
+            const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
+            setRange(getRangeSetterForRemarkingPartially(curColour, startOffset, endOffset));
+            
+            assert.strictEqual(new RangeMarker().unmarkSelectedNodes(), true);
+
+            checkMarkedNodes(startOffset && endOffset ? 2 : 1, 
+                expectedResidualMarkedText, curColour);
+        };
+
+        it('should partially unmark in the middle of already marked text', () =>
+            testUnmarkingPartiallyOverMarkedNode('nsionefox ar'));
+
+        it('should partially unmark over the first half of already marked text', () =>
+            testUnmarkingPartiallyOverMarkedNode('efox ar', null));
+
+        it('should partially unmark over the last half of already marked text', () =>
+            testUnmarkingPartiallyOverMarkedNode('nsion', undefined, null));
+
         const setRangeForFirstParagraph = () => {
             setRange(range => 
                 setRangeContainer(range, document.getElementById('article--paragraph-first')));

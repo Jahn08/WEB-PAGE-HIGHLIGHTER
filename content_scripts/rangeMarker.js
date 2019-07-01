@@ -32,26 +32,23 @@ class RangeMarker {
 
     unmarkSelectedNodes(targetNode = null) {
         const range = this._getSelectionRange();
-
-        const activeNodes = this._getSelectionOrFocusedNodes(range, targetNode);
-        activeNodes.forEach(node => {
-            node.replaceWith(document.createTextNode(node.textContent));
-            node.remove();
-        });
-
+        const affectedNodes = this._markTextNodes(this._getActiveTextNodes(range, targetNode), range);
+   
         this._collapseRange(range);
 
         this._removeEmptyMarkers();
 
-        return activeNodes.length > 0;
+        return affectedNodes.length > 0;
     }
-
-    _getSelectionOrFocusedNodes(range, targetNode) {
+    
+    _getActiveTextNodes(range, targetNode) {
         if (range)
-            return this._getMarkerElementsFromSelection(range);
+            return this._getSelectedTextNodes(range);
         else if (targetNode)
-            return this._getMarkerElementsFromElement(targetNode);
-
+            return this._getMarkerElementsFromElement(targetNode)
+                .map(n => n.firstChild)
+                .filter(n => this._isProperTextNode(n));
+    
         return [];
     }
     
@@ -180,7 +177,7 @@ class RangeMarker {
         }
     }
 
-    _markTextNodes(nodes, range, colour) {
+    _markTextNodes(nodes, range, colour = null) {
         const markerClass = RangeMarker.markerClass;
         const lastNodeIndex = nodes.length - 1;
 
@@ -192,12 +189,16 @@ class RangeMarker {
 
         let lastError;
 
-        nodes.forEach((node, index) => {
+        const affectedNodes = nodes.filter((node, index) => {
             try {
                 const markFirstNodePartially = !index && startOffset;
                 
                 const isLastNode = index === lastNodeIndex;
                 const skipLastNode = rangeIsAvailable && isLastNode && !endOffset;
+
+                if (skipLastNode)
+                    return false;
+                
                 const markLastNodePartially = isLastNode && endOffset && endOffset !== node.length;
 
                 let markerNode = node.parentElement;
@@ -206,7 +207,7 @@ class RangeMarker {
                     let curColour;
                     
                     if ((curColour = this._obtainMarkerColourClass(markerNode.classList)) === colour)
-                        return;
+                        return false;
 
                     const nodeValue = node.nodeValue;
 
@@ -219,7 +220,7 @@ class RangeMarker {
                         this._insertNodeAfter(newNode, markerNode);
 
                         markerNode = newNode;
-                        node = newNode.firstChild;
+                        node = newNode.firstChild || newNode;
 
                         _startOffsetForEnd = startOffset;
                     }
@@ -231,16 +232,25 @@ class RangeMarker {
                             endOffset);
                         this._insertNodeBefore(newNode, markerNode);
 
-                        markerNode.classList.replace(colour, curColour);
+                        if (markerNode.classList)
+                            markerNode.classList.replace(colour, curColour);
+                        else
+                            markerNode.replaceWith(
+                                this._createMarkerNode(curColour, markerNode.nodeValue));
                     }
-                    else if (skipLastNode)
-                        return;
-                    else
+                    else if (colour)
                         markerNode.classList.replace(curColour, colour);
+                    else {
+                        markerNode.replaceWith(document.createTextNode(markerNode.textContent));
+                        markerNode.remove();
+                    }
                 }
                 else {
+                    if (!colour)
+                        return false;
+
                     if (rangeIsAvailable && isSingleNode)
-                        return range.surroundContents(this._createMarkedSpan(colour));
+                        return range.surroundContents(this._createMarkedSpan(colour)), true;
 
                     if (markFirstNodePartially) {
                         const val = node.nodeValue;
@@ -256,11 +266,11 @@ class RangeMarker {
                         const newNode = this._createMarkerNode(colour, val, 0, endOffset);
                         this._insertNodeBefore(newNode, node);
                     }
-                    else if (skipLastNode)
-                        return;
                     else
                         markerNode.insertBefore(this._createMarkedSpan(colour), node).appendChild(node);
                 }
+
+                return true;
             }
             catch (e) {
                 lastError = e;
@@ -269,11 +279,21 @@ class RangeMarker {
 
         if (lastError)
             throw lastError;
+
+        return affectedNodes;
     }
 
-    _createMarkerNode(colour, innerHtml, substrStart, substrEnd) {
-        const newNode = this._createMarkedSpan(colour);
-        newNode.innerHTML = innerHtml.substring(substrStart, substrEnd);
+    _createMarkerNode(colour, innerHtml, substrStart = 0, substrEnd = innerHtml.length) {
+        const contents = innerHtml.substring(substrStart, substrEnd);
+
+        let newNode;
+        
+        if (colour) {
+            newNode = this._createMarkedSpan(colour);
+            newNode.innerHTML = contents;
+        }
+        else
+            newNode = document.createTextNode(contents);
 
         return newNode;
     }
@@ -294,21 +314,12 @@ class RangeMarker {
 
     changeSelectedNodesColour(colourClass, targetNode = null) {
         const range = this._getSelectionRange();
-        let activeNodes = this._getSelectionOrFocusedNodes(range, targetNode)
-            .map(n => n.firstChild)
-            .filter(n => this._isProperTextNode(n));
+        const affectedNodes = this._markTextNodes(this._getActiveTextNodes(range, targetNode), 
+            range, colourClass);
 
-        if (!activeNodes.length) {
-            activeNodes = this._getSelectedTextNodes(range);
-            
-            if (!activeNodes.length)
-                return this._collapseRange(range), false;
-        }
-
-        this._markTextNodes(activeNodes, range, colourClass);
         this._collapseRange(range);
 
-        return true;
+        return affectedNodes.length > 0;
     }
 
     static domContainsMarkers() {
