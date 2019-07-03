@@ -1,34 +1,28 @@
 class MenuIcon {
-    constructor(stDensityIcon, highDensityIcon = null) {
-        this._standardIconFileName = stDensityIcon;
-        this._highDensityIconFileName = highDensityIcon;
+    constructor(iconName) {
+        this._iconName = iconName;
     }
 
     getSettings() {
-        const icons = {};
+        const iconFullPath = this._getFullPathToFile();
 
-        if (this._standardIconFileName)
-            icons[MenuIcon.STANDARD_DENSITY] = this._getFullPathToFile(this._standardIconFileName);
-
-        if (this._highDensityIconFileName)
-            icons[MenuIcon.HIGH_DENSITY] = this._getFullPathToFile(this._highDensityIconFileName, true);
-
-        return Object.getOwnPropertyNames(icons).length ? icons : null;
+        return iconFullPath ? {
+            [MenuIcon.STANDARD_DENSITY]: iconFullPath,
+            [MenuIcon.HIGH_DENSITY]: iconFullPath
+        } : null;
     }
 
     get relativeFilePath() {
-        if (this._standardIconFileName)
-            return this._getFullPathToFile(this._standardIconFileName);
-
-        return this._highDensityIconFileName ?
-            this._getFullPathToFile(this._highDensityIconFileName, true) : '';
+        return this._getFullPathToFile() || '';
     }
 
-    _getFullPathToFile(fileName, isHighDensity = false) {
-        const _fileNameStr = '' + fileName;
-        const extension = _fileNameStr.indexOf('.') === -1 ? '.png' : '';
-        const density = isHighDensity ? MenuIcon.HIGH_DENSITY : MenuIcon.STANDARD_DENSITY;
-        return 'icons/' + _fileNameStr + density + extension;
+    _getFullPathToFile() {
+        if (!this._iconName)
+            return null;
+
+        const _fileNameStr = '' + this._iconName;
+        const extension = _fileNameStr.indexOf('.') === -1 ? '.svg' : '';
+        return 'icons/' + _fileNameStr + extension;
     }
 
     static get STANDARD_DENSITY() { return 16; }

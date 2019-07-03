@@ -14,7 +14,8 @@
     ],
 
     "icons": {
-        "48" : "icons/highlighter48.png"
+        "48" : "icons/highlighter.svg",
+        "96" : "icons/highlighter.svg"
     },
 
     "content_scripts": [
@@ -41,7 +42,7 @@
         "browser_style": true,
         "default_title": "Highlighter",
         "default_popup": "views/popup.html",
-        "default_icon": "icons/highlighter48.png"
+        "default_icon": "icons/highlighter.svg"
     },
 
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER"
