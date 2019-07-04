@@ -15,8 +15,8 @@ export class ContextMenu {
     
         this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
-        this._saveBtn = new ButtonMenuItem('save', 'Save HTML contents');
-        this._loadBtn = new ButtonMenuItem('load', 'Load HTML contents');
+        this._saveBtn = new ButtonMenuItem('save', 'Save Page');
+        this._loadBtn = new ButtonMenuItem('load', 'Load Page');
 
         const defaultColourClass = 'marker-green';
         this._curColourClass = defaultColourClass;
