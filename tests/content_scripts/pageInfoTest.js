@@ -1,16 +1,19 @@
 import assert from 'assert';
 import { Randomiser } from '../tools/randomiser.js';
 import { EnvLoader } from '../tools/envLoader.js';
-import { StorageMocked } from '../tools/storageMocked.js';
+import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
 
+    const browser = new BrowserMocked();
+
     let storage;
 
     beforeEach('loadResources', done => {
-        storage = new StorageMocked();
+        storage = browser.resetBrowserStorage();
+
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });
     
@@ -21,10 +24,7 @@ describe('content_script/pageInfo', function () {
             ).catch(done);
     });
     
-    afterEach('releaseResources', () => {
-        if (storage)
-            storage.dispose();
-        
+    afterEach('releaseResources', () => {        
         EnvLoader.unloadDomModel();
     });
 

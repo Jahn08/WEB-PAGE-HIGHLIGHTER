@@ -1,12 +1,22 @@
-import { Randomiser } from '../tools/randomiser';
+import { Randomiser } from '../tools/randomiser.js';
+import { StorageMocked } from '../tools/storageMocked.js';
 
 export class BrowserMocked {
     constructor() {
         global.browser = {};
-
+        
         this._menuOptions = [];
 
         this._tabQueries = [];
+    }
+
+    resetBrowserStorage() {
+        const syncStorage = { 
+            sync: new StorageMocked() 
+        };
+        global.browser.storage = syncStorage;
+        
+        return syncStorage.sync;
     }
 
     setBrowserMenu() {

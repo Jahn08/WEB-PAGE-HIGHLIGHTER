@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { EnvLoader } from '../tools/envLoader.js';
 import { Randomiser } from '../tools/randomiser';
-import { StorageMocked } from '../tools/storageMocked.js';
+import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
@@ -9,10 +9,11 @@ import { ColourList } from '../../components/colourList.js';
 describe('content_script/preferences', function () {
     this.timeout(0);
 
-    let storage;
+    const browserMocked = new BrowserMocked();
 
     beforeEach('loadResources', done => {
-        storage = new StorageMocked();
+        browserMocked.resetBrowserStorage();
+        
         EnvLoader.loadDomModel('./views/preferences.html').then(() => done()).catch(done);
     });
     
@@ -22,10 +23,7 @@ describe('content_script/preferences', function () {
             .catch(done);
     });
 
-    afterEach('releaseResources', () => {
-        if (storage)
-            storage.dispose();
-        
+    afterEach('releaseResources', () => {        
         EnvLoader.unloadDomModel();
     });
 

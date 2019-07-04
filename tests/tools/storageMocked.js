@@ -1,11 +1,19 @@
 export class StorageMocked {
     constructor () {
         this._items = {};
+    }
 
-        global.localStorage = {
-            getItem: (key) => this._items[key],
-            setItem: (key, value) => this._items[key] = value
-        }
+    get(key) {
+        return new Promise(resolve => resolve({ [key] : this._items[key] }));
+    }
+
+    set(keys) {
+        return new Promise(resolve => {
+            for (const key in keys)
+                this._items[key] = keys[key];
+            
+            resolve(); 
+        });
     }
 
     isEmpty() {
@@ -14,9 +22,5 @@ export class StorageMocked {
 
     get length() {
         return Object.getOwnPropertyNames(this._items).length;
-    }
-
-    dispose() {
-        global.localStorage = undefined;
     }
 }

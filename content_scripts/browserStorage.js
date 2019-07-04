@@ -1,6 +1,6 @@
 class BrowserStorage {
     constructor(key) {
-        this._storage = localStorage; //browser.storage.sync;
+        this._storage = browser.storage.sync;
 
         if (!this._storage)
             throw this._buildStorageError('The sync storage is unavailable. ' + 
@@ -17,11 +17,7 @@ class BrowserStorage {
     }
 
     set(object) {
-        return new Promise(resolve => {
-            this._storage.setItem(this._key, JSON.stringify(object));
-            resolve();
-        });
-        // return PageStorage._storage.set(new PageInfo().serialise());
+        return this._storage.set({ [this._key]: object });
     }
 
     contains() {
@@ -29,10 +25,18 @@ class BrowserStorage {
     }
 
     _find() {
-        return new Promise(resolve => resolve(this._storage.getItem(this._key)));
+        return new Promise(resolve => this._storage.get(this._key).
+            then(obj => {
+                let defaultObj = obj || {};
+
+                if (defaultObj.length)
+                    defaultObj = defaultObj[0];                
+
+                resolve(defaultObj[this._key]);
+            }));
     }
 
     get() {
-        return this._find().then(obj => obj ? JSON.parse(obj) : null);
+        return this._find();
     }
 }
