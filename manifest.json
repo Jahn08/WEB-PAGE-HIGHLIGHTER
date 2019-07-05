@@ -1,28 +1,22 @@
 {
-    "manifest_version": 2,
-    "name": "Highlighter",
-    "version": "1.0",
+    "author": "Jahn08",
 
-    "description": "Adds a items to the context menu of your browser in order to highlight pieces of text on a web page to keep such marks after saving the page",
-    
-    "permissions": [
-        "activeTab",
-        "menus",
-        "storage",
-        "tabs",
-        "management"
-    ],
+    "background": {
+        "page": "views/background-loader.html"
+    },
+
+    "browser_action": {
+        "browser_style": true,
+        "default_title": "Highlighter",
+        "default_popup": "views/popup.html",
+        "default_icon": "icons/highlighter.svg"
+    },
 
     "browser_specific_settings": {
         "gecko": {
             "id": "highlighter@mail.com",
             "strict_min_version": "42.0"
         }
-    },
-
-    "icons": {
-        "48" : "icons/highlighter.svg",
-        "96" : "icons/highlighter.svg"
     },
 
     "content_scripts": [
@@ -36,8 +30,21 @@
         }
     ],
 
-    "background": {
-        "page": "views/background-loader.html"
+    "description": "Adds items to the context menu of your browser in order to highlight pieces of text on a web page to keep such marks after saving the page",
+
+    "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
+
+    "icons": {
+        "48" : "icons/highlighter.svg",
+        "96" : "icons/highlighter.svg"
+    },
+
+    "manifest_version": 2,
+
+    "name": "Highlighter",
+    
+    "omnibox": {
+        "keyword": "highlighter"
     },
 
     "options_ui": {
@@ -45,12 +52,13 @@
         "browser_style": true
     },
 
-    "browser_action": {
-        "browser_style": true,
-        "default_title": "Highlighter",
-        "default_popup": "views/popup.html",
-        "default_icon": "icons/highlighter.svg"
-    },
+    "permissions": [
+        "activeTab",
+        "menus",
+        "storage",
+        "tabs",
+        "management"
+    ],
 
-    "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER"
+    "version": "1.0"
 }
