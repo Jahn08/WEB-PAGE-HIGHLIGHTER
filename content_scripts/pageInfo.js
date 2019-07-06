@@ -63,3 +63,5 @@ class PageInfo {
         document.body.innerHTML = html;
     }
 }
+
+window.PageInfo = PageInfo;

@@ -92,3 +92,5 @@ class MenuMessageEvent {
     createLoadTabStateEvent() { return this._createEvent(this._loadTabStateEvent); }
     isLoadTabStateEvent(msg) { return this._isEvent(msg, this._loadTabStateEvent); } 
 }
+
+window.MenuMessageEvent = MenuMessageEvent;

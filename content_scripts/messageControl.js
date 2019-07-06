@@ -72,3 +72,5 @@ class MessageControl {
         });
     }
 }
+
+window.MessageControl = MessageControl;

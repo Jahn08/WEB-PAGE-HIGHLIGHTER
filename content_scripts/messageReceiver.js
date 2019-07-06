@@ -43,3 +43,5 @@ class MessageReceiver {
 }
 
 MessageReceiver.msgEvent = new window.MenuMessageEvent();
+
+window.MessageReceiver = MessageReceiver;

@@ -40,3 +40,5 @@ class BrowserStorage {
         return this._find();
     }
 }
+
+window.BrowserStorage = BrowserStorage;

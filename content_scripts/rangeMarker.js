@@ -330,3 +330,5 @@ class RangeMarker {
 
     static get markerClass() { return 'marker'; }
 }
+
+window.RangeMarker = RangeMarker;
