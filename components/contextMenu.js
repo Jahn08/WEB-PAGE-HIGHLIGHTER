@@ -97,15 +97,12 @@ export class ContextMenu {
         browser.menus.onHidden.addListener(() => this._makePure());
     }
 
-    _passTabInfoToCallback(callback, options = {}) {
-        return new Promise((resolve, reject) => {
-            if (!callback)
-                return resolve();
+    async _passTabInfoToCallback(callback, options = {}) {
+        if (!callback)
+            return;
 
-            this._getCurrentTabId().then(tabId =>
-                resolve(callback(Object.assign({ tabId }, options))))
-                .catch(err => reject(err));
-        });
+        const tabId = await this._getCurrentTabId();
+        callback(Object.assign({ tabId }, options));
     }
     
     async _getCurrentTabId() {

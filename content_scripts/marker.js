@@ -19,23 +19,31 @@ void function() {
 
     window.addEventListener(BEFORE_UNLOAD_EVENT, beforeUnloadEventListener);
 
-    const saveOrLoad = async (isSaving) => {
+    const performStorageAction = async callback => {
         try {
-            const pageInfo = new window.PageInfo();
+            await callback();
 
-            if (isSaving)
-                await pageInfo.save();
-            else {
-                window.MessageControl.show('Page is loading');
-                await pageInfo.load();
-            }
-    
+            canLoad = await pageInfo.canLoad();
+
             domIsPure = true;
-            window.MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
         }
         finally {
             window.MessageControl.hide();
         }
+    };
+
+    const pageInfo = new window.PageInfo();
+
+    const save = async () => {
+        await pageInfo.save();
+        window.MessageControl.show('The page has been saved successfully');
+    };
+
+    const load = async () => {
+        window.MessageControl.show('Page is loading');
+        await pageInfo.load();
+
+        window.MessageControl.show('The page has been loaded successfully');
     };
 
     browser.runtime.sendMessage(window.MessageReceiver.loadPreferences()).then(async settings => {
@@ -45,12 +53,10 @@ void function() {
             if (preferences.shouldWarn === false)
                 window.removeEventListener(BEFORE_UNLOAD_EVENT, beforeUnloadEventListener);
 
-            const resp = await new window.PageInfo().canLoad();
-
-            canLoad = resp;
+            canLoad = await pageInfo.canLoad();
 
             if (canLoad && preferences.shouldLoad)
-                await saveOrLoad(false);
+                await performStorageAction(load);
         }
         catch (ex) {
             console.error('An error while trying to apply the extension preferences: ' + ex.toString());
@@ -107,7 +113,6 @@ void function() {
             const curNode = activeNode;
             activeNode = null;
 
-            let isSaving;
             let domWasChanged = false;
 
             if (receiver.shouldMark())
@@ -123,8 +128,10 @@ void function() {
             else if (receiver.shouldChangeColour())
                 domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
-            else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad())
-                saveOrLoad(isSaving);
+            else if (receiver.shouldSave())
+                await performStorageAction(save);
+            else if (receiver.shouldLoad())
+                await performStorageAction(load);
             else if (receiver.shouldReturnTabState())
                 return includeLoadSaveEvents();
             else
@@ -139,5 +146,5 @@ void function() {
         }
     };
 
-    browser.runtime.onMessage.addListener(async msg => await processMessage(msg));
+    browser.runtime.onMessage.addListener(processMessage);
 }();
