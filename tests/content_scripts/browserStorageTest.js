@@ -30,7 +30,7 @@ describe('content_script/browserStorage', function () {
     describe('#get', function () {
 
         it('should return null while trying to get a non-existent object from the storage', () =>
-            Expectation.expectResolution(new BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
+            Expectation.expectResolution(new global.BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
                 outcome => { 
                     assert(!outcome);
                     assert(storage.isEmpty());
@@ -41,8 +41,8 @@ describe('content_script/browserStorage', function () {
             const itemKey = Randomiser.getRandomNumberUpToMax();
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
 
-            return Expectation.expectResolution(new BrowserStorage(itemKey).set(expectedObj), () =>
-                Expectation.expectResolution(new BrowserStorage(itemKey).get(), 
+            return Expectation.expectResolution(new global.BrowserStorage(itemKey).set(expectedObj), () =>
+                Expectation.expectResolution(new global.BrowserStorage(itemKey).get(), 
                     result => {
                         assert(result);
                         assert.deepStrictEqual(result, expectedObj);
@@ -56,11 +56,10 @@ describe('content_script/browserStorage', function () {
     describe('#contains', function () {
 
         const testContaining = (savedKey, loadedKey, shouldContain = false) => {
-            const itemKey = Randomiser.getRandomNumberUpToMax();
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
 
-            return Expectation.expectResolution(new BrowserStorage(savedKey).set(expectedObj), () =>
-                Expectation.expectResolution(new BrowserStorage(loadedKey).contains(), 
+            return Expectation.expectResolution(new global.BrowserStorage(savedKey).set(expectedObj), () =>
+                Expectation.expectResolution(new global.BrowserStorage(loadedKey).contains(), 
                     result => {
                         assert.strictEqual(result, shouldContain);
                         assert.strictEqual(storage.length, 1);

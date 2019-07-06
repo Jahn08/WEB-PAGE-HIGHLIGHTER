@@ -6,7 +6,7 @@ import { ColourList } from '../../components/colourList.js';
 
 describe('components/ContextMenu', () => {
     const mockBrowser = () => {
-        const browserMocked = new BrowserMocked()
+        const browserMocked = new BrowserMocked();
         browserMocked.setBrowserMenu();
         return browserMocked;
     };
@@ -41,20 +41,14 @@ describe('components/ContextMenu', () => {
             return Promise.all(foundItems.map(item => {
                 assert(item.onclick);
                 
-                return new Promise(async (resolve, reject) => {
+                return (async () => {
                     const tabItemInfo = { menuItemId: Randomiser.getRandomNumberUpToMax() };
-                    try {
-                        await item.onclick(tabItemInfo);
 
-                        if (onClickedCallback)
-                            onClickedCallback(tabItemInfo, menu);
-    
-                        resolve();
-                    }
-                    catch (ex) {
-                        reject(ex);
-                    }
-                }).then(() => {
+                    await item.onclick(tabItemInfo);
+
+                    if (onClickedCallback)
+                        onClickedCallback(tabItemInfo, menu);
+                })().then(() => {
                     const tabQueries = browserMocked.tabQueries;
                     assert.strictEqual(tabQueries.length, foundItems.length);
                     assert(tabQueries.every(t => t.active && t.currentWindow));
@@ -65,7 +59,7 @@ describe('components/ContextMenu', () => {
         it('should run event callbacks while marking and unmarking', () =>
             Promise.all([{ id: 'mark', callbackName: 'onMarking' }, 
                 { id: 'unmark', callbackName: 'onUnmarking' }]
-                    .map(o => testClickingOnMenuItem(o.callbackName, i => i.id === o.id))));
+                .map(o => testClickingOnMenuItem(o.callbackName, i => i.id === o.id))));
 
         it('should run event callbacks and change the marker colour while clicking on menu radio items', () => { 
             const menuColourIds = [];

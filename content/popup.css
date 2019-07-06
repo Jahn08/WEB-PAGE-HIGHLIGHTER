@@ -1,15 +1,15 @@
 html, body {
-  width: 270px;
+    width: 270px;
 }
 
 .panel {
-  margin: 5px;
+    margin: 5px;
 }
 
 .icon img {
-	margin-right: 5px;	
+    margin-right: 5px;	
 }
 
 .hidden {
-  display: none;
+    display: none;
 }

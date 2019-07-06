@@ -33,18 +33,18 @@ describe('content_script/pageInfo', function () {
         const WRONG_HTML_ERROR = { name: 'WrongHtmlError' };
 
         it('should throw an error while loading a page absent from the storage', () =>
-            Expectation.expectRejection(new PageInfo().load(), 
+            Expectation.expectRejection(new global.PageInfo().load(), 
                 WRONG_HTML_ERROR, () => assert(storage.isEmpty()))
         );
 
         it('should throw an error while loading a page of a wrong format', () => {
             const itemKey = document.location.href;
-            const browserStorage = new BrowserStorage(itemKey);
+            const browserStorage = new global.BrowserStorage(itemKey);
 
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
             
             return Expectation.expectResolution(browserStorage.set(expectedObj), () =>
-                Expectation.expectRejection(new PageInfo().load(), WRONG_HTML_ERROR, 
+                Expectation.expectRejection(new global.PageInfo().load(), WRONG_HTML_ERROR, 
                     () => {
                         assert.strictEqual(storage.length, 1);
 
@@ -63,14 +63,14 @@ describe('content_script/pageInfo', function () {
 
             document.body.appendChild(parentDiv);
 
-            const pageInfo = new PageInfo();
+            const pageInfo = new global.PageInfo();
             pageInfo.save();
 
             parentDiv.remove();
 
             assert.strictEqual(document.getElementById(parentDiv.id), null);
 
-            return Expectation.expectResolution(new PageInfo().load(),
+            return Expectation.expectResolution(new global.PageInfo().load(),
                 () => {
                     assert.strictEqual(storage.length, 1);
 

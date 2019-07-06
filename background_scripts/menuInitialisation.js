@@ -18,7 +18,7 @@ menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving
 
 menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
-browser.runtime.onMessage.addListener(msg => new Promise(async (resolve, reject) => {
+browser.runtime.onMessage.addListener(async msg => {
     try {
         const sender = new MessageSender(msg);
     
@@ -28,7 +28,7 @@ browser.runtime.onMessage.addListener(msg => new Promise(async (resolve, reject)
             if (preferences && preferences.defaultColourToken)
                 menu.checkColourRadio(preferences.defaultColourToken);
 
-            return resolve(preferences);
+            return preferences;
         }
 
         if (sender.shouldSetSaveMenuReady())
@@ -53,11 +53,9 @@ browser.runtime.onMessage.addListener(msg => new Promise(async (resolve, reject)
             menu.hideUnmarkingBtn();
         
         menu.render();
-
-        resolve();
     }
     catch (ex) {
         console.error('Error while trying to set menu visibility: ' + ex.toString());
-        reject(ex);
+        throw ex;
     }
-}));
+});

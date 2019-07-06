@@ -141,7 +141,9 @@ class RangeMarker {
             try 
             {
                 const processNode = n => {
-                    if (outcome = this._lookIntoNode(n, traverseFromEnd))
+                    outcome = this._lookIntoNode(n, traverseFromEnd);
+
+                    if (outcome)
                         throw new Error(nodeFoundMsg);
                 };
 
@@ -310,7 +312,7 @@ class RangeMarker {
         const node = document.createElement('span');
         node.classList.add(RangeMarker.markerClass, colourClass);
         return node;
-    };
+    }
 
     changeSelectedNodesColour(colourClass, targetNode = null) {
         const range = this._getSelectionRange();
@@ -327,4 +329,4 @@ class RangeMarker {
     }
 
     static get markerClass() { return 'marker'; }
-};
+}

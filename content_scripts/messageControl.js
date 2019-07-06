@@ -11,10 +11,11 @@ class MessageControl {
         if (!text)
             return;
 
-        let blanket;
         let paragraph;
 
-        if (blanket = MessageControl._existentBlanket)
+        const blanket = MessageControl._existentBlanket;
+
+        if (blanket)
             blanket.className = '';
         else
             document.documentElement.append(MessageControl._constructBlanket(text));

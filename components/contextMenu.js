@@ -64,14 +64,12 @@ export class ContextMenu {
             const radio = new RadioSubMenuItem(v.token, setColourBtn.id, v.title);
             this._colourRadios.push(radio);
             
-            radio.addToMenu(changeColour, v.icon, index === 0)
+            radio.addToMenu(changeColour, v.icon, index === 0);
         });
         
         browser.menus.onShown.addListener(() => {
-            if (this._shouldBeRefreshed()) {
+            if (this._shouldBeRefreshed())
                 browser.menus.refresh();
-                console.log('Refreshed');
-            }
         });
 
         new SeparatorMenuItem().addToMenu();
@@ -106,7 +104,7 @@ export class ContextMenu {
 
             this._getCurrentTabId().then(tabId =>
                 resolve(callback(Object.assign({ tabId }, options))))
-            .catch(err => reject(err));
+                .catch(err => reject(err));
         });
     }
     
@@ -164,4 +162,4 @@ export class ContextMenu {
     _getColourRadio(colourClass) {
         return this._colourRadios.find(r => r.id === colourClass);
     }
-};
+}

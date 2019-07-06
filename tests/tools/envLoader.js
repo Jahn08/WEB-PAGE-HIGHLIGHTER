@@ -2,6 +2,20 @@ import jsDom from 'jsdom-global';
 import fs from 'fs';
 import _path from 'path';
 
+class GlobalClassCache {
+    constructor() {
+        this._cache = new Set();
+    }
+
+    add(className) {
+        this._cache.add('' + className);
+    }
+
+    transitClassesToObject(target) {
+        this._cache.forEach(cl => target[cl] = global[cl]);
+    }
+}
+
 export class EnvLoader {
     static loadClass(scriptPath, className) {
         return this._wrapWithPromise(resolve => {
@@ -13,6 +27,8 @@ export class EnvLoader {
 
                 const globalInitialiser = `global.${className}=${className};`;
                 eval(data.toString('utf8').replace('export class', 'class') + globalInitialiser);
+
+                this._classCache.add(className);
 
                 resolve();
             });
@@ -35,6 +51,11 @@ export class EnvLoader {
             throw new Error(`A file ${_path.resolve(path)} does not exist`);
     }
 
+    static get _classCache() {
+        return EnvLoader._classCacheObj ? EnvLoader._classCacheObj : 
+            EnvLoader._classCacheObj = new GlobalClassCache();
+    }
+
     static loadDomModel(path = './tests/resources/testPage.html') {
         return this._wrapWithPromise(resolve => {
             if (EnvLoader._cleanup)
@@ -47,9 +68,11 @@ export class EnvLoader {
                 if (err)
                     throw err;
             
-                EnvLoader._cleanup = jsDom(data.toString('utf8'))
+                EnvLoader._cleanup = jsDom(data.toString('utf8'));
                 this._buildDocumentCreateRangeFunction();
                 this._buildDocumentContentChecker();
+
+                this._classCache.transitClassesToObject(global.window);
 
                 resolve();
             });
@@ -80,13 +103,19 @@ export class EnvLoader {
     static unloadDomModel() {
         if (EnvLoader._cleanup) {
             EnvLoader._cleanup();
-            EnvLoader._cleanup = null;   
+            EnvLoader._cleanup = null;
         }
 
         if (EnvLoader._range) {
             EnvLoader._range.dispose();
             EnvLoader._range = null;
         }
+
+        this.defineWindow();
+    }
+
+    static defineWindow() {
+        global.window = global;
     }
 }
 
@@ -141,7 +170,7 @@ class Range {
 
         this.endContainer = null;
         this.endOffset = 0;
-    };
+    }
 
     setStart(node, offset = 0) {
         if (!node)
@@ -212,7 +241,7 @@ class Range {
                 isCollapsed: _this.collapsed,
                 getRangeAt() { return _this; }
             };
-        }
+        };
     }
 
     _getParentsUntilRoot(node) {

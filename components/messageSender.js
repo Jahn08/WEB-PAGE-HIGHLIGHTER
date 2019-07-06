@@ -1,4 +1,4 @@
-const msgEvent = new MenuMessageEvent();
+const msgEvent = new window.MenuMessageEvent();
 
 export class MessageSender {
     constructor (msg) {

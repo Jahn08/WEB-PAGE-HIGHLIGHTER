@@ -1,7 +1,7 @@
 void function() {
     let activeNode;
 
-    const rangeMarker = new RangeMarker();
+    const rangeMarker = new window.RangeMarker();
 
     let domIsPure;
     let canLoad;
@@ -21,31 +21,31 @@ void function() {
 
     const saveOrLoad = async (isSaving) => {
         try {
-            const pageInfo = new PageInfo();
+            const pageInfo = new window.PageInfo();
 
             if (isSaving)
                 await pageInfo.save();
             else {
-                MessageControl.show('Page is loading');
+                window.MessageControl.show('Page is loading');
                 await pageInfo.load();
             }
     
             domIsPure = true;
-            MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
+            window.MessageControl.show(`The page has been ${isSaving ? 'saved' : 'loaded'} successfully`);
         }
         finally {
-            MessageControl.hide();
+            window.MessageControl.hide();
         }
     };
 
-    browser.runtime.sendMessage(MessageReceiver.loadPreferences()).then(async settings => {
+    browser.runtime.sendMessage(window.MessageReceiver.loadPreferences()).then(async settings => {
         try {
             Object.assign(preferences, settings);
 
             if (preferences.shouldWarn === false)
                 window.removeEventListener(BEFORE_UNLOAD_EVENT, beforeUnloadEventListener);
 
-            const resp = await new PageInfo().canLoad();
+            const resp = await new window.PageInfo().canLoad();
 
             canLoad = resp;
 
@@ -62,10 +62,12 @@ void function() {
             return msg;
 
         if (domIsPure === false)
-            msg = MessageReceiver.combineEvents(msg, MessageReceiver.setSaveMenuReady());
+            msg = window.MessageReceiver.combineEvents(msg, 
+                window.MessageReceiver.setSaveMenuReady());
 
         if (canLoad)
-            msg = MessageReceiver.combineEvents(msg, MessageReceiver.setLoadMenuReady());
+            msg = window.MessageReceiver.combineEvents(msg, 
+                window.MessageReceiver.setLoadMenuReady());
 
         return msg;
     };
@@ -80,14 +82,14 @@ void function() {
 
             if (curColourClasses)
             {
-                msg = MessageReceiver.setMarkMenuReady(curColourClasses);
+                msg = window.MessageReceiver.setMarkMenuReady(curColourClasses);
 
                 if (curColourClasses.length)
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
+                    msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setUnmarkMenuReady());
             }
             else if (rangeMarker.isNodeMarked(info.target)) 
             {
-                msg = MessageReceiver.setUnmarkMenuReady();
+                msg = window.MessageReceiver.setUnmarkMenuReady();
                 activeNode = info.target;
             }
             
@@ -98,56 +100,44 @@ void function() {
         }
     });
 
-    const processMessage = msg => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const receiver = new MessageReceiver(msg);
+    const processMessage = async msg => {
+        try {
+            const receiver = new window.MessageReceiver(msg);
 
-                const curNode = activeNode;
-                activeNode = null;
+            const curNode = activeNode;
+            activeNode = null;
 
-                let isSaving;
-                let domWasChanged = false;
+            let isSaving;
+            let domWasChanged = false;
 
-                if (receiver.shouldMark())
-                    domWasChanged = rangeMarker.markSelectedNodes(receiver.markColourClass);
-                else if (receiver.shouldUnmark()) {
-                    domWasChanged = rangeMarker.unmarkSelectedNodes(curNode);
-                    
-                    if (!RangeMarker.domContainsMarkers()) {
-                        domWasChanged = false;
-                        domIsPure = true;
-                    }
+            if (receiver.shouldMark())
+                domWasChanged = rangeMarker.markSelectedNodes(receiver.markColourClass);
+            else if (receiver.shouldUnmark()) {
+                domWasChanged = rangeMarker.unmarkSelectedNodes(curNode);
+                
+                if (!window.RangeMarker.domContainsMarkers()) {
+                    domWasChanged = false;
+                    domIsPure = true;
                 }
-                else if (receiver.shouldChangeColour())
-                    domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
-                        curNode);
-                else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad())
-                    saveOrLoad(isSaving);
-                else if (receiver.shouldReturnTabState())
-                    return resolve(includeLoadSaveEvents());
-                else
-                    throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
-    
-                if (domWasChanged)
-                    domIsPure = false;
+            }
+            else if (receiver.shouldChangeColour())
+                domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
+                    curNode);
+            else if ((isSaving = receiver.shouldSave()) || receiver.shouldLoad())
+                saveOrLoad(isSaving);
+            else if (receiver.shouldReturnTabState())
+                return includeLoadSaveEvents();
+            else
+                throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
 
-                resolve();
-            }
-            catch (err) {
-                console.log(err.toString());
-                reject(err);
-            }
-        });
+            if (domWasChanged)
+                domIsPure = false;
+        }
+        catch (err) {
+            console.error(err.toString());
+            throw err;
+        }
     };
 
-    browser.runtime.onMessage.addListener(msg => new Promise(async (resolve, reject) => {
-        try {
-            const resp = await processMessage(msg);
-            resolve(resp);
-        }
-        catch (ex) {
-            reject(ex);
-        }
-    }));
+    browser.runtime.onMessage.addListener(async msg => await processMessage(msg));
 }();

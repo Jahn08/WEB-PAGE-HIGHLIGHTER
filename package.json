@@ -15,10 +15,11 @@
   "homepage": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER#readme",
   "dependencies": {},
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-es2015": "^6.24.1",
-    "jsdom": "^14.0.0",
-    "jsdom-global": "^3.0.2",
-    "mocha": "^6.1.4"
+    "babel-core": "~6.26.3",
+    "babel-preset-es2015": "~6.24.1",
+    "eslint": "~6.0.1",
+    "jsdom": "~14.0.0",
+    "jsdom-global": "~3.0.2",
+    "mocha": "~6.1.4"
   }
 }

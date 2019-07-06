@@ -130,7 +130,7 @@ describe('components/ButtonMenuItem', () => {
             browserMocked.setBrowserMenu();
         
             const buildRandomBtn = () => { 
-                const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax())
+                const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax());
                 btn.addToMenu();
 
                 return btn;

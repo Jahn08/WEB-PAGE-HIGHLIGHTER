@@ -14,7 +14,7 @@ class PageInfo {
 
     get _browserStorage() {
         if (!this._storage)
-            this._storage = new BrowserStorage(this._uri);
+            this._storage = new window.BrowserStorage(this._uri);
 
         return this._storage;
     }

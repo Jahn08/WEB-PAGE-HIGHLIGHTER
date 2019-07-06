@@ -15,7 +15,7 @@ class Expectation {
                     reject(err);
                 }
             })
-            .then(res => reject(new Error('The callback should\'ve been rejected')))
+                .then(() => reject(new Error('The callback should\'ve been rejected')));
         });
     }
 
@@ -52,8 +52,7 @@ class Expectation {
                 catch (err) {
                     reject(err);
                 }
-            })
-            .catch(err => reject(err))
+            }).catch(err => reject(err));
         });
     }
 }

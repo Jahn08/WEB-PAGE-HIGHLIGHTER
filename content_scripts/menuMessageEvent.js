@@ -26,7 +26,7 @@ class MenuMessageEvent {
         event[this._colourClassField] = colourClasses;
 
         return event; 
-    };
+    }
 
     _createEvent(eventName) { return { event: [eventName] }; }
 

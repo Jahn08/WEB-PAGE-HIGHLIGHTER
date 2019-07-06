@@ -31,7 +31,7 @@ describe('content_script/preferences', function () {
 
     const getLoadCheck = () => document.getElementById('option--checkbox-loading');
 
-    const getColourRadios = () => [...document.querySelectorAll(`input[type='radio']`)];
+    const getColourRadios = () => [...document.querySelectorAll('input[type=\'radio\']')];
 
     const assertFormValues = (expectedColourToken = null, expectedWarnCheck = true, expectedLoadCheck = false) => {
         const colourDivs = getColourRadios();
@@ -55,7 +55,7 @@ describe('content_script/preferences', function () {
     describe('#constructor', () => 
      
         it('should create a form with default values', () => {
-            const preferences = new Preferences();
+            new Preferences();
             assertFormValues();
         })
     );
@@ -75,7 +75,7 @@ describe('content_script/preferences', function () {
                 defaultColourToken: colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)].token
             };
 
-            new BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
+            new global.BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
 
             return Expectation.expectResolution(new Preferences().load(), 
                 () => assertFormValues(expectedValues.defaultColourToken, expectedValues.shouldWarn, 

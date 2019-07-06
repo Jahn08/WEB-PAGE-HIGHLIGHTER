@@ -42,4 +42,4 @@ class MessageReceiver {
     shouldReturnTabState() { return MessageReceiver.msgEvent.isLoadTabStateEvent(this._msg); }
 }
 
-MessageReceiver.msgEvent = new MenuMessageEvent();
+MessageReceiver.msgEvent = new window.MenuMessageEvent();
