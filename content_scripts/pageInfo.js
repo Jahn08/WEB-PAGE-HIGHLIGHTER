@@ -1,7 +1,12 @@
 class PageInfo {
     constructor () {
-        this._uri = document.location.href;
+        this._uri = this._computeUri();
         this._storage = null;
+    }
+
+    _computeUri() {
+        const location = document.location;
+        return location.origin + location.pathname;
     }
 
     static get HTML_PROP_NAME() { 
