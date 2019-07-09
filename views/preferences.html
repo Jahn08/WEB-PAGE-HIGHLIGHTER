@@ -6,20 +6,39 @@
     </head>
     <body>
         <script src="../content_scripts/browserStorage.js"></script>
+        <script src="../content_scripts/pageInfo.js"></script>
         <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
 
         <form>
             <div>
-                <input id="option--checkbox-warning" type="checkbox" checked="checked" />
+                <input id="form--check-warning" type="checkbox" checked="checked" />
                 <label>Warning about unsaved changes</label>
             </div>
             <div>
-                <input id="option--checkbox-loading" type="checkbox" />
+                <input id="form--check-loading" type="checkbox" />
                 <label>Loading a page automatically from the storage</label>
             </div>
+            <hr />
             <div>
-                <label>Default colour</label>
-                <div id="colours"></div>
+                <label>Default colour:</label>
+                <div id="form--section-colours"></div>
+            </div>
+            <hr />
+            <div>
+                <label>Saved pages:</label>
+                <table id="form--table-pages">
+                    <thead>
+                            <tr>
+                                <th><input id="form--table-pages--check-all" type="checkbox" /></th>
+                                <th id="form--table-pages--cell-header">Page Uri</th>
+                            </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="form--section-page">
+                    <button disabled id="form--section-page--btn-show" type="button" title="Open in a New Tab">👁</button>
+                    <button disabled id="form--section-page--btn-remove" type="button" title="Remove">❌</button>
+                </div>
             </div>
             <hr />
             <button type="submit">Save</button>

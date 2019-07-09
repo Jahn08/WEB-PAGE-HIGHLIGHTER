@@ -67,6 +67,33 @@ class PageInfo {
 
         document.body.innerHTML = html;
     }
+
+    static _isUriValid(uri) {
+        try {
+            new URL(uri);
+            return true;
+        }
+        catch (ex) {
+            return false;
+        }
+    }
+
+    shouldLoad() {
+        return document.location.hash === PageInfo._LOADING_HASH;
+    }
+
+    static get _LOADING_HASH() {
+        return '#highlighterPageLoading';
+    }
+
+    static getAllSavedPages() {
+        return window.BrowserStorage.getAllKeys().then(keys =>
+            keys.filter(this._isUriValid).sort());
+    }
+
+    static generateLoadingUrl(url) {
+        return url + this._LOADING_HASH;
+    }
 }
 
 window.PageInfo = PageInfo;

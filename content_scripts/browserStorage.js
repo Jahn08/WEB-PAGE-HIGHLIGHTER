@@ -1,12 +1,16 @@
 class BrowserStorage {
     constructor(key) {
-        this._storage = browser.storage.sync;
-
+        this._storage = BrowserStorage._syncStorage;
+        
         if (!this._storage)
             throw this._buildStorageError('The sync storage is unavailable. ' + 
                 'Make sure the Add-ons option in Sync Settings is turned on');
 
         this._key = key;
+    }
+
+    static get _syncStorage() {
+        return browser.storage.sync;
     }
 
     _buildStorageError(msg, name = 'StorageError') {
@@ -25,19 +29,33 @@ class BrowserStorage {
     }
 
     _find() {
-        return new Promise(resolve => this._storage.get(this._key).
-            then(obj => {
-                let defaultObj = obj || {};
-
-                if (defaultObj.length)
-                    defaultObj = defaultObj[0];                
-
-                resolve(defaultObj[this._key]);
-            }));
+        return BrowserStorage._find(this._key).then(obj => obj[this._key]);
     }
 
     get() {
         return this._find();
+    }
+
+    static _find(key = null) {
+        return this._syncStorage.get(key).then(obj => {
+            let defaultObj = obj || {};
+
+            if (defaultObj.length)
+                defaultObj = defaultObj[0];                
+
+            return defaultObj;
+        });
+    }
+
+    static getAllKeys() {
+        return this._find().then(obj => Object.getOwnPropertyNames(obj));
+    }
+
+    static remove(keys) {
+        if (!keys || !keys.length)
+            return Promise.resolve();
+
+        return this._syncStorage.remove(keys);
     }
 }
 

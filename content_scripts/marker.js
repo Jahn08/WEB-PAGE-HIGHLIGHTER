@@ -55,7 +55,7 @@ void function() {
 
             canLoad = await pageInfo.canLoad();
 
-            if (canLoad && preferences.shouldLoad)
+            if (canLoad && (preferences.shouldLoad || pageInfo.shouldLoad()))
                 await performStorageAction(load);
         }
         catch (ex) {
