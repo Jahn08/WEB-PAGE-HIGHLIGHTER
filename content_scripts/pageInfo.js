@@ -25,10 +25,11 @@ class PageInfo {
     }
 
     _serialise() {
-        const page = { date: Date.now() };
-        page[PageInfo.HTML_PROP_NAME] = this._serialisedHtml;
-
-        return page;
+        return { 
+            date: Date.now(),
+            title: document.title,
+            [PageInfo.HTML_PROP_NAME]: this._serialisedHtml
+        };
     }
 
     get _serialisedHtml() {
@@ -86,9 +87,23 @@ class PageInfo {
         return '#highlighterPageLoading';
     }
 
-    static getAllSavedPages() {
-        return window.BrowserStorage.getAllKeys().then(keys =>
-            keys.filter(this._isUriValid).sort());
+    static getAllSavedPagesInfo() {
+        return window.BrowserStorage.getAll().then(objs => {
+            const pagesInfo = [];
+            
+            for (const prop in objs)
+                if (this._isUriValid(prop)) {
+                    const obj = objs[prop];
+                    
+                    pagesInfo.push({
+                        uri: prop, 
+                        title: obj.title,
+                        date: obj.date 
+                    });
+                }
+
+            return pagesInfo;
+        });
     }
 
     static generateLoadingUrl(url) {

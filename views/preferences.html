@@ -26,15 +26,23 @@
             <hr />
             <div>
                 <label>Saved pages:</label>
-                <table id="form--table-pages">
-                    <thead>
+                
+                <div>
+                    <span>🔍</span>
+                    <input type="text" placeholder="Search" id="form--section-page--txt-search" />
+                </div>
+                
+                <table id="form--table-pages" style="width:100%">
+                    <thead style="width:inherit">
                             <tr>
                                 <th><input id="form--table-pages--check-all" type="checkbox" /></th>
-                                <th id="form--table-pages--cell-header">Page Uri</th>
+                                <th class='form--table-pages--cell-header form--table-pages--cell-header-asc' data-sort-field="title">Page</th>
+                                <th class='form--table-pages--cell-header' data-sort-field="date">Date</th>
                             </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody style="width:inherit"></tbody>
                 </table>
+
                 <div class="form--section-page">
                     <button disabled id="form--section-page--btn-show" type="button" title="Open in a New Tab">👁</button>
                     <button disabled id="form--section-page--btn-remove" type="button" title="Remove">❌</button>

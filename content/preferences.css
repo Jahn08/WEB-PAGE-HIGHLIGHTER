@@ -6,20 +6,63 @@
     height: 16px;
 }
 
-#form--table-pages tbody {
-    display:block;
-    height: 150px;
-    overflow-y: auto;
-}
-  
-#form--table-pages thead tr{
-    display:block;
+#form--table-pages {
+    width: 100%;
 }
 
-#form--table-pages--cell-header {
+#form--table-pages tr {
+    width: 100%;
+}
+
+#form--table-pages th:nth-child(2), 
+#form--table-pages td:nth-child(2) {
+    width: 75vw;
+}
+
+#form--table-pages th:last-child, 
+#form--table-pages td:last-child {
+    width: 15vw;
+}
+
+#form--table-pages tbody {
+    display: block;
+    height: 35vh;
+    overflow-y: auto;
+}
+
+#form--table-pages tbody tr:nth-child(2n+1) {
+    background-color: gainsboro;
+}
+
+#form--table-pages thead tr {
+    display: block;
+}
+
+.form--table-pages--cell-title {
+    font-size: smaller;
+}
+
+.form--table-pages--cell-header {
     text-align: left;
+}
+
+.form--table-pages--cell-header:hover {
+    cursor: pointer;
+    box-shadow: 2px 2px gainsboro;
 }
 
 .form--section-page button {
     font-size: large;
+}
+
+.form--table-pages--cell-header-asc::after {
+    content: ' ▾';
+}
+
+.form--table-pages--cell-header-desc::after {
+    content: ' ▴';
+}
+
+.form--table-pages--row-hidden {
+    display: none;
 }

@@ -47,8 +47,8 @@ class BrowserStorage {
         });
     }
 
-    static getAllKeys() {
-        return this._find().then(obj => Object.getOwnPropertyNames(obj));
+    static getAll() {
+        return this._find();
     }
 
     static remove(keys) {
