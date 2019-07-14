@@ -31,7 +31,7 @@ class Expectation {
 
     static _processCallback(callback, result, resolve, reject) {
         if (!Expectation._isFunction(callback))
-            return;
+            return resolve();
 
         const resp = callback(result);
 
