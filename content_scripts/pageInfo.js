@@ -109,6 +109,10 @@ class PageInfo {
     static generateLoadingUrl(url) {
         return url + this._LOADING_HASH;
     }
+
+    static remove(pageUris = []) {
+        return window.BrowserStorage.remove(pageUris);
+    }
 }
 
 window.PageInfo = PageInfo;

@@ -4,7 +4,8 @@ export class StorageMocked {
     }
 
     get(key) {
-        return new Promise(resolve => resolve({ [key] : this._items[key] }));
+        return new Promise(resolve => resolve(key ? { [key] : this._items[key] }: 
+            Object.assign({}, this._items)));
     }
 
     set(keys) {
@@ -12,6 +13,18 @@ export class StorageMocked {
             for (const key in keys)
                 this._items[key] = keys[key];
             
+            resolve(); 
+        });
+    }
+
+    remove(keys) {
+        return new Promise(resolve => {
+            keys = keys || [];
+
+            keys.forEach(k => {
+                delete this._items[k];
+            });
+
             resolve(); 
         });
     }

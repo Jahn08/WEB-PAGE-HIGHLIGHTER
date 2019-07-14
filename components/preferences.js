@@ -83,7 +83,7 @@ class PageTable {
         const row = document.createElement('tr');
 
         const check = document.createElement('input');
-        check.value = pageInfo.uri;
+        check.dataset.uri = pageInfo.uri;
         check.className = this._CHECK_CLASS_NAME;
         check.type = 'checkbox';
         check.onchange = this._bindToThis(this._onRowCheck);
@@ -126,10 +126,14 @@ class PageTable {
     }
 
     _onShowPageBtnClick() {
-        const uri = document.querySelector(this._CHECK_TICKED_SELECTOR).value;
+        const uri = this._getCheckboxUri(document.querySelector(this._CHECK_TICKED_SELECTOR));
         
         if (uri)
             window.open(window.PageInfo.generateLoadingUrl(uri), '_blank');
+    }
+
+    _getCheckboxUri(checkbox) {
+        return checkbox.dataset.uri;
     }
 
     _onRemovePageBtnClick() {
@@ -138,7 +142,7 @@ class PageTable {
 
         document.querySelectorAll(this._CHECK_TICKED_SELECTOR)
             .forEach(el => {
-                this._removedPageUris.add(el.value);
+                this._removedPageUris.add(this._getCheckboxUri(el));
 
                 el.parentElement.parentElement.remove();
             });
@@ -215,7 +219,10 @@ export class Preferences {
         this._initColourList();
         
         this._pageTable = null;
-        this._initPageList();
+        this._loadedPreferences = null;
+
+        this._warningCheck = this._getCheckbox('warning');
+        this._loadingCheck = this._getCheckbox('loading');
 
         this._storage = new window.BrowserStorage(Preferences.STORAGE_KEY);
     }
@@ -234,7 +241,7 @@ export class Preferences {
             const groupEl = document.createElement('div');
 
             const radio = document.createElement('input');
-            radio.name = this._COLOUR_RADIO_CLASS;
+            radio.name = this._COLOUR_RADIO_NAME;
             radio.type = 'radio';
             radio.value = c.token;
             radio.checked = index === 0;
@@ -250,21 +257,21 @@ export class Preferences {
             return groupEl;
         }));
     }
-    
-    _initPageList() {
-        window.PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
-            this._pageTable = new PageTable(pagesInfo)
-        );
+
+    _getCheckbox(idPostfix) {
+        return document.getElementById('form--check-' + idPostfix);
     }
 
     load() {
-        return Preferences.loadFromStorage().then(loadedForm => {
+        return Promise.all([Preferences.loadFromStorage().then(loadedForm => {
+            this._loadedPreferences = loadedForm;
+
             if (loadedForm) {
                 this._shouldWarn = loadedForm.shouldWarn;
                 this._shouldLoad = loadedForm.shouldLoad;
                 this._defaultColourToken = loadedForm.defaultColourToken;
             }
-        });
+        }), this._initPageTable()]);
     }
 	
     static loadFromStorage() {
@@ -272,44 +279,55 @@ export class Preferences {
     }
 
     save() {
-        return Promise.all(this._storage.set({
+        return Promise.all([this._savePreferencesIntoStorage(),
+            this._removePageInfoFromStorage()]);
+    }
+    
+    _savePreferencesIntoStorage() {
+        return this._preferencesHaveChanged() ? this._storage.set({
             shouldWarn: this._shouldWarn,
             shouldLoad: this._shouldLoad,
             defaultColourToken: this._defaultColourToken
-        }), window.BrowserStorage.remove(this._pageTable.removedPageUris));
+        }) : Promise.resolve();
     }
-    
+
+    _preferencesHaveChanged() {
+        const pureValues = this._loadedPreferences;
+
+        return !pureValues || pureValues.shouldWarn !== this._shouldWarn || 
+            pureValues.shouldLoad !== this._shouldLoad || 
+            pureValues.defaultColourToken !== this._defaultColourToken;
+    }
+
+    _removePageInfoFromStorage() {
+        return this._pageTable && this._pageTable.removedPageUris.length ? 
+            window.PageInfo.remove(this._pageTable.removedPageUris) : 
+            Promise.resolve();
+    }
+
     get _shouldWarn() {
-        return this._getCheckbox(this._WARNING_CHECK_ID_POSTFIX).checked;
+        return this._warningCheck.checked;
     }
 
     set _shouldWarn(value) {
-        this._getCheckbox(this._WARNING_CHECK_ID_POSTFIX).checked = value;
-    }
-
-    get _WARNING_CHECK_ID_POSTFIX() {
-        return 'warning';
+        this._warningCheck.checked = value;
     }
     
     get _shouldLoad() {
-        return this._getCheckbox(this._LOADING_CHECK_ID_POSTFIX).checked;
+        return this._loadingCheck.checked;
     }
 
     set _shouldLoad(value) {
-        this._getCheckbox(this._LOADING_CHECK_ID_POSTFIX).checked = value;
-    }
-
-    get _LOADING_CHECK_ID_POSTFIX() {
-        return 'loading';
-    }
-
-    _getCheckbox(idPostfix) {
-        return document.getElementById('form--check-' + idPostfix);
+        this._loadingCheck.checked = value;
     }
     
     get _defaultColourToken() {
-        return [...document.getElementsByName(this._COLOUR_RADIO_CLASS)]
-            .find(c => c.checked).value;
+        return document.querySelector(
+            `[name='${this._COLOUR_RADIO_NAME}']:checked`).value;
+    }
+
+    get _COLOUR_RADIO_NAME () {
+        return 'form--section-colours--radio';
     }
 
     set _defaultColourToken(colourToken) {
@@ -318,8 +336,10 @@ export class Preferences {
         if (colourRadio)
             colourRadio.checked = true;
     }
-    
-    get _COLOUR_RADIO_CLASS () {
-        return 'form--section-colours--radio';
+
+    _initPageTable() {
+        return window.PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
+            this._pageTable = new PageTable(pagesInfo)
+        );
     }
 }

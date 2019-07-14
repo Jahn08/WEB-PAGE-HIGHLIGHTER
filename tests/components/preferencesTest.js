@@ -19,7 +19,8 @@ describe('content_script/preferences', function () {
     
     before(done => {
         EnvLoader.loadClass('./content_scripts/browserStorage.js', 'BrowserStorage')
-            .then(() => done())
+            .then(() => EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+                .then(() => done()))
             .catch(done);
     });
 
@@ -27,13 +28,14 @@ describe('content_script/preferences', function () {
         EnvLoader.unloadDomModel();
     });
 
-    const getWarnCheck = () => document.getElementById('option--checkbox-warning');
+    const getWarnCheck = () => document.getElementById('form--check-warning');
 
-    const getLoadCheck = () => document.getElementById('option--checkbox-loading');
+    const getLoadCheck = () => document.getElementById('form--check-loading');
 
     const getColourRadios = () => [...document.querySelectorAll('input[type=\'radio\']')];
 
-    const assertFormValues = (expectedColourToken = null, expectedWarnCheck = true, expectedLoadCheck = false) => {
+    const assertFormValues = (expectedColourToken = null, expectedWarnCheck = true,
+        expectedLoadCheck = false) => {
         const colourDivs = getColourRadios();
         
         const colourTokens = colourDivs.map(d => d.value);
@@ -52,21 +54,74 @@ describe('content_script/preferences', function () {
         assert.strictEqual(shouldLoadCheck.checked, expectedLoadCheck);
     };
 
+    const getPageTableBody = () => {
+        const table = document.getElementById('form--table-pages');
+        assert(table);
+
+        assert(table.tHead);
+        assert.strictEqual(table.tBodies.length, 1);
+
+        return table.tBodies[0];
+    };
+
+    const assertPageTableValues = (expectedRowValues = []) => {
+        const tableBody = getPageTableBody();
+
+        assert.strictEqual(tableBody.rows.length, expectedRowValues.length);
+        const rowContents = [...tableBody.rows].map(r => r.textContent);
+
+        assert(expectedRowValues.every(rv => {
+            const date = new Date(rv.date);
+            const dateVal = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+
+            return rowContents.find(rc => 
+                rc.indexOf(rv.title) !== -1 && rc.indexOf(dateVal) !== -1) !== null;
+        }));
+        
+        const rowUris = [...tableBody.querySelectorAll('input[type=checkbox]')]
+            .map(ch => ch.dataset.uri);
+
+        assert.strictEqual(rowUris.length, expectedRowValues.length);
+        assert(expectedRowValues.every(rv => rowUris.includes(rv.uri)));
+    };
+
     describe('#constructor', () => 
      
         it('should create a form with default values', () => {
             new Preferences();
+
             assertFormValues();
+            assertPageTableValues();
         })
     );
+
+    const createTestPageInfo = () => {
+        return {
+            title: Randomiser.getRandomNumberUpToMax(),
+            uri: 'https://test/' + Randomiser.getRandomNumber(10000000),
+            date: new Date().setMonth(Randomiser.getRandomNumber(1000))
+        };
+    };
+
+    const setTestPageInfoToStorage = () => {
+        const expectedPageData = [createTestPageInfo(), createTestPageInfo(), 
+            createTestPageInfo()];
+    
+        return Promise.all(expectedPageData.map(pi => new global.BrowserStorage(pi.uri).set(pi)))
+            .then(() => { return expectedPageData; });
+    };
 
     describe('#load', function () {
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
-            Expectation.expectResolution(new Preferences().load(), () => assertFormValues())
+            Expectation.expectResolution(new Preferences().load(), 
+                () => {
+                    assertFormValues();
+                    assertPageTableValues();
+                })
         );
 
-        it('should load preferences from  the storage and update the form', () => {
+        it('should load preferences from the storage and update the form', () => {
             const colourInfos = ColourList.colours;
             
             const expectedValues = { 
@@ -80,6 +135,12 @@ describe('content_script/preferences', function () {
             return Expectation.expectResolution(new Preferences().load(), 
                 () => assertFormValues(expectedValues.defaultColourToken, expectedValues.shouldWarn, 
                     expectedValues.shouldLoad));
+        });
+
+        it('should load saved page data from the storage and update the form', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(),
+                (expectedPageData) => new Preferences().load()
+                    .then(() => assertPageTableValues(expectedPageData)));
         });
     });
 
@@ -110,6 +171,45 @@ describe('content_script/preferences', function () {
                         assert.strictEqual(loadedForm.defaultColourToken, expectedColourRadio.value);
                     });
                 });
+        });
+
+        it('should save the preferences page without removing page data', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(),
+                expectedPageData => {
+                    const preferences = new Preferences();
+                    
+                    return preferences.load(() => preferences.save().then(() =>
+                        global.PageInfo.getAllSavedPagesInfo().then(pageInfos =>
+                            assert.deepStrictEqual(pageInfos, expectedPageData)
+                        )
+                    ));
+                });
+        });
+
+        it('should save the preferences page removing page data', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage()
+                .then(async expectedPageData => {
+                    const preferences = new Preferences();
+
+                    await preferences.load();
+
+                    const indexForRemoval = Randomiser.getRandomNumber(expectedPageData.length);
+                    const rowForRemoval = getPageTableBody().rows.item(indexForRemoval);
+                    
+                    const rowForRemovalCheck = rowForRemoval.querySelector('input[type=checkbox]');
+                    rowForRemovalCheck.checked = true;
+                    const uriForRemoval = rowForRemovalCheck.dataset.uri;
+
+                    document.getElementById('form--section-page--btn-remove').dispatchEvent(
+                        new Event('click'));
+
+                    await preferences.save();
+
+                    const pageInfos = await global.PageInfo.getAllSavedPagesInfo();
+                    
+                    assert.deepStrictEqual(pageInfos, 
+                        expectedPageData.filter(pi => pi.uri !== uriForRemoval));
+                }));
         });
     });
 });
