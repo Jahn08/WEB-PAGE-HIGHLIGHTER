@@ -111,6 +111,26 @@ describe('content_script/preferences', function () {
             .then(() => { return expectedPageData; });
     };
 
+    const tickPageInfoCheck = (tickNumber = 1) => {
+        const rows = getPageTableBody().rows;
+
+        const selectedRows = [];
+
+        if (rows === 1)
+            selectedRows.push(rows.item(Randomiser.getRandomNumber(rows.length)));
+        else
+            for (let i = 0; i < tickNumber && i < rows.length; ++i)
+                selectedRows.push(rows.item(i));
+        
+        return selectedRows.map(r => {
+            const rowCheck = r.querySelector('input[type=checkbox]');
+            rowCheck.checked = true;
+
+            rowCheck.dispatchEvent(new Event('change'));
+            return rowCheck.dataset.uri;
+        });
+    };
+
     describe('#load', function () {
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
@@ -141,6 +161,43 @@ describe('content_script/preferences', function () {
             return Expectation.expectResolution(setTestPageInfoToStorage(),
                 (expectedPageData) => new Preferences().load()
                     .then(() => assertPageTableValues(expectedPageData)));
+        });
+
+        const getShowingUriBtn = () => document.getElementById('form--section-page--btn-show');
+
+        it('should load saved page data and open its uri as loadable', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(),
+                () => new Preferences().load()
+                    .then(() => {
+                        const uriForShowing = tickPageInfoCheck()[0];
+                        
+                        return new Promise(resolve => {
+                            window.open = (uri, target) => {
+                                assert.strictEqual(target, '_blank');
+                                assert(uri.startsWith(uriForShowing));
+                                
+                                assert.strictEqual(global.PageInfo.generateLoadingUrl(uriForShowing), 
+                                    uri);
+                                resolve();
+                            };
+
+                            const btn = getShowingUriBtn();
+                            assert(!btn.disabled);
+                            
+                            btn.dispatchEvent(new Event('click'));
+                        });
+                    })
+            );
+        });
+
+        it('should load saved page data and disable button for showing several uris', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(),
+                () => new Preferences().load()
+                    .then(() => {
+                        tickPageInfoCheck(2);
+                        assert(getShowingUriBtn().disabled);
+                    })
+            );
         });
     });
 
@@ -186,29 +243,28 @@ describe('content_script/preferences', function () {
                 });
         });
 
-        it('should save the preferences page removing page data', () => {
+        const getRemovingPageInfoBtn = () => 
+            document.getElementById('form--section-page--btn-remove');
+            
+        it('should save the preferences page removing several pages', () => {
             return Expectation.expectResolution(setTestPageInfoToStorage()
                 .then(async expectedPageData => {
                     const preferences = new Preferences();
 
                     await preferences.load();
 
-                    const indexForRemoval = Randomiser.getRandomNumber(expectedPageData.length);
-                    const rowForRemoval = getPageTableBody().rows.item(indexForRemoval);
-                    
-                    const rowForRemovalCheck = rowForRemoval.querySelector('input[type=checkbox]');
-                    rowForRemovalCheck.checked = true;
-                    const uriForRemoval = rowForRemovalCheck.dataset.uri;
+                    const urisForRemoval = tickPageInfoCheck(2);
 
-                    document.getElementById('form--section-page--btn-remove').dispatchEvent(
-                        new Event('click'));
+                    const btn = getRemovingPageInfoBtn();
+                    assert(!btn.disabled);
+                    btn.dispatchEvent(new Event('click'));
 
                     await preferences.save();
 
                     const pageInfos = await global.PageInfo.getAllSavedPagesInfo();
                     
                     assert.deepStrictEqual(pageInfos, 
-                        expectedPageData.filter(pi => pi.uri !== uriForRemoval));
+                        expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));
                 }));
         });
     });
