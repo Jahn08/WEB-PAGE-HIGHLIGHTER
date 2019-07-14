@@ -5,10 +5,6 @@
         <link href="../content/preferences.css" rel="stylesheet" />
     </head>
     <body>
-        <script src="../content_scripts/browserStorage.js"></script>
-        <script src="../content_scripts/pageInfo.js"></script>
-        <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
-
         <form>
             <div>
                 <input id="form--check-warning" type="checkbox" checked="checked" />
@@ -49,7 +45,11 @@
                 </div>
             </div>
             <hr />
-            <button type="submit">Save</button>
+            <button type="submit" disabled>Save</button>
         </form>
+
+        <script src="../content_scripts/browserStorage.js"></script>
+        <script src="../content_scripts/pageInfo.js"></script>
+        <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
     </body>
 </html>
