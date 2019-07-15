@@ -17,12 +17,6 @@ describe('content_script/browserStorage', function () {
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });
     
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/browserStorage.js', 'BrowserStorage')
-            .then(() => done())
-            .catch(done);
-    });
-
     afterEach('releaseResources', () => {        
         EnvLoader.unloadDomModel();
     });

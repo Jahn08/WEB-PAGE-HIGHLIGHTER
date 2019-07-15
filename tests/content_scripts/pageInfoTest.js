@@ -3,6 +3,7 @@ import { Randomiser } from '../tools/randomiser.js';
 import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
+import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
@@ -18,10 +19,9 @@ describe('content_script/pageInfo', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/browserStorage.js', 'BrowserStorage')
-            .then(() => EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
-                .then(() => done())
-            ).catch(done);
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+            .then(() => done())
+            .catch(done);
     });
     
     afterEach('releaseResources', () => {        
@@ -82,5 +82,55 @@ describe('content_script/pageInfo', function () {
                         childLabel.innerHTML);
                 });
         });
+    });
+
+    describe('#shouldLoad', function () {
+        it('should assure that a default uri is not for loading a page automatically', () =>
+            assert(!new global.PageInfo().shouldLoad())
+        );
+
+        it('should recognise a uri with a particular hash for loading a page automatically', () => {
+            const originalLocation = document.location;
+
+            try {
+                const loadableUri = global.PageInfo.generateLoadingUrl(location.href);
+                global.document.location = new URL(loadableUri);
+
+                assert(new global.PageInfo().shouldLoad());
+            }
+            finally {
+                document.location = originalLocation;
+            }            
+        });
+    });
+
+    describe('#getAllSavedPagesInfo', function () {
+        it('should get previously saved page info items from the storage', () =>
+            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(), async expectedPageInfos => {
+                const actualPageInfos = await global.PageInfo.getAllSavedPagesInfo();
+                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
+            })
+        );
+    });
+
+    describe('#remove', function () {
+        it('should remove previously saved page info items from the storage', () =>
+            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5), async pageInfos => {
+                const urisForRemoval = [pageInfos[0], pageInfos[pageInfos.length - 1]].map(pi => pi.uri);
+                await global.PageInfo.remove(urisForRemoval);
+                
+                const actualPageInfos = await global.PageInfo.getAllSavedPagesInfo();
+                assert.deepStrictEqual(actualPageInfos, pageInfos.filter(pi => !urisForRemoval.includes(pi.uri)));
+            })
+        );
+
+        it('should remove nothing from the storage when passing an empty array of page uris', () =>
+            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5), async pageInfos => {
+                await global.PageInfo.remove([]);
+                
+                const actualPageInfos = await global.PageInfo.getAllSavedPagesInfo();
+                assert.deepStrictEqual(actualPageInfos, pageInfos);
+            })
+        );
     });
 });

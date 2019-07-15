@@ -5,6 +5,7 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
+import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 
 describe('content_script/preferences', function () {
     this.timeout(0);
@@ -18,9 +19,8 @@ describe('content_script/preferences', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/browserStorage.js', 'BrowserStorage')
-            .then(() => EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
-                .then(() => done()))
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+            .then(() => done())
             .catch(done);
     });
 
@@ -100,24 +100,6 @@ describe('content_script/preferences', function () {
         })
     );
 
-    const createTestPageInfo = () => {
-        return {
-            title: Randomiser.getRandomNumberUpToMax(),
-            uri: 'https://test/' + Randomiser.getRandomNumber(10000000),
-            date: new Date().setMonth(Randomiser.getRandomNumber(1000))
-        };
-    };
-
-    const setTestPageInfoToStorage = (numberOfItems = 3) => {
-        const expectedPageData = [];
-        
-        for (let i = 0; i < numberOfItems; ++i)
-            expectedPageData.push(createTestPageInfo());
-
-        return Promise.all(expectedPageData.map(pi => new global.BrowserStorage(pi.uri).set(pi)))
-            .then(() => { return expectedPageData; });
-    };
-
     const tickPageInfoCheck = (tickNumber = 1) => {
         const rows = getPageTableBody().rows;
 
@@ -165,7 +147,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data from the storage and update the form', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
                 (expectedPageData) => new Preferences().load()
                     .then(() => assertPageTableValues(expectedPageData)));
         });
@@ -173,7 +155,7 @@ describe('content_script/preferences', function () {
         const getShowingUriBtn = () => document.getElementById('form--section-page--btn-show');
 
         it('should load saved page data and open its uri as loadable', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
                 () => new Preferences().load()
                     .then(() => {
                         const uriForShowing = tickPageInfoCheck()[0];
@@ -198,7 +180,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data and disable button for showing several uris', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
                 () => new Preferences().load()
                     .then(() => {
                         tickPageInfoCheck(2);
@@ -208,7 +190,7 @@ describe('content_script/preferences', function () {
         });
         
         it('should load saved page data and filter the results afterwards', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(5),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5),
                 pagesInfo => new Preferences().load()
                     .then(() => {
                         const searchField = document.getElementById('form--section-page--txt-search');
@@ -233,7 +215,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data and sort the results by date afterwards', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(10),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(10),
                 pagesInfo => new Preferences().load()
                     .then(() => {
                         const headerClassName = 'form--table-pages--cell-header';
@@ -291,7 +273,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should save the preferences page without removing page data', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage(),
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
                 expectedPageData => {
                     const preferences = new Preferences();
                     
@@ -307,7 +289,7 @@ describe('content_script/preferences', function () {
             document.getElementById('form--section-page--btn-remove');
             
         it('should save the preferences page removing several pages', () => {
-            return Expectation.expectResolution(setTestPageInfoToStorage()
+            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage()
                 .then(async expectedPageData => {
                     const preferences = new Preferences();
 
