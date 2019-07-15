@@ -64,19 +64,20 @@ describe('content_script/preferences', function () {
         return table.tBodies[0];
     };
 
+    const formatDate = (ticks) => {
+        const date = new Date(ticks);
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    };
+
     const assertPageTableValues = (expectedRowValues = []) => {
         const tableBody = getPageTableBody();
 
         assert.strictEqual(tableBody.rows.length, expectedRowValues.length);
         const rowContents = [...tableBody.rows].map(r => r.textContent);
 
-        assert(expectedRowValues.every(rv => {
-            const date = new Date(rv.date);
-            const dateVal = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-
-            return rowContents.find(rc => 
-                rc.indexOf(rv.title) !== -1 && rc.indexOf(dateVal) !== -1) !== null;
-        }));
+        assert(expectedRowValues.every(rv => rowContents.find(rc => 
+                rc.indexOf(rv.title) !== -1 && rc.indexOf(formatDate(rv.date)) !== -1) !== null
+        ));
         
         const rowUris = [...tableBody.querySelectorAll('input[type=checkbox]')]
             .map(ch => ch.dataset.uri);
@@ -84,6 +85,10 @@ describe('content_script/preferences', function () {
         assert.strictEqual(rowUris.length, expectedRowValues.length);
         assert(expectedRowValues.every(rv => rowUris.includes(rv.uri)));
     };
+
+    const createClickEvent = () => new Event('click');
+
+    const createChangeEvent = () => new Event('change');
 
     describe('#constructor', () => 
      
@@ -103,10 +108,12 @@ describe('content_script/preferences', function () {
         };
     };
 
-    const setTestPageInfoToStorage = () => {
-        const expectedPageData = [createTestPageInfo(), createTestPageInfo(), 
-            createTestPageInfo()];
-    
+    const setTestPageInfoToStorage = (numberOfItems = 3) => {
+        const expectedPageData = [];
+        
+        for (let i = 0; i < numberOfItems; ++i)
+            expectedPageData.push(createTestPageInfo());
+
         return Promise.all(expectedPageData.map(pi => new global.BrowserStorage(pi.uri).set(pi)))
             .then(() => { return expectedPageData; });
     };
@@ -126,7 +133,7 @@ describe('content_script/preferences', function () {
             const rowCheck = r.querySelector('input[type=checkbox]');
             rowCheck.checked = true;
 
-            rowCheck.dispatchEvent(new Event('change'));
+            rowCheck.dispatchEvent(createChangeEvent());
             return rowCheck.dataset.uri;
         });
     };
@@ -184,7 +191,7 @@ describe('content_script/preferences', function () {
                             const btn = getShowingUriBtn();
                             assert(!btn.disabled);
                             
-                            btn.dispatchEvent(new Event('click'));
+                            btn.dispatchEvent(createClickEvent());
                         });
                     })
             );
@@ -196,6 +203,59 @@ describe('content_script/preferences', function () {
                     .then(() => {
                         tickPageInfoCheck(2);
                         assert(getShowingUriBtn().disabled);
+                    })
+            );
+        });
+        
+        it('should load saved page data and filter the results afterwards', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(5),
+                pagesInfo => new Preferences().load()
+                    .then(() => {
+                        const searchField = document.getElementById('form--section-page--txt-search');
+                        assert(searchField);
+                        
+                        const pageInfoToFind = pagesInfo[Randomiser.getRandomNumber(pagesInfo.length)];
+                        
+                        const titleToSearch = '' + pageInfoToFind.title;
+                        const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
+                        
+                        searchField.value = textToSearch;
+                        searchField.dispatchEvent(createChangeEvent());
+
+                        const tableBody = getPageTableBody();
+
+                        const targetText = textToSearch.toUpperCase();
+
+                        assert([...tableBody.rows].filter(r => !r.textContent.toUpperCase().includes(targetText))
+                            .every(r => r.classList.contains('form--table-pages--row-hidden')));
+                    })
+            );
+        });
+
+        it('should load saved page data and sort the results by date afterwards', () => {
+            return Expectation.expectResolution(setTestPageInfoToStorage(10),
+                pagesInfo => new Preferences().load()
+                    .then(() => {
+                        const headerClassName = 'form--table-pages--cell-header';
+                        
+                        const dateHeader = [...document.getElementsByClassName(headerClassName)]
+                            .filter(h => h.dataset.sortField === 'date')[0];
+                        assert(dateHeader);
+
+                        const tableBody = getPageTableBody();
+
+                        const sortDates = () => {
+                            dateHeader.dispatchEvent(createClickEvent());
+                            
+                            return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
+                        };
+
+                        assert.deepStrictEqual(sortDates(), pagesInfo.map(pi => formatDate(pi.date)).sort());
+                        assert(dateHeader.classList.contains(headerClassName + '-asc'));
+
+                        assert.deepStrictEqual(sortDates(), 
+                            pagesInfo.map(pi => formatDate(pi.date)).sort((a, b) => b > a ? 1 : (b < a ? -1 : 0)))
+                        assert(dateHeader.classList.contains(headerClassName + '-desc'));
                     })
             );
         });
@@ -257,7 +317,7 @@ describe('content_script/preferences', function () {
 
                     const btn = getRemovingPageInfoBtn();
                     assert(!btn.disabled);
-                    btn.dispatchEvent(new Event('click'));
+                    btn.dispatchEvent(createClickEvent());
 
                     await preferences.save();
 

@@ -188,10 +188,9 @@ class PageTable {
     }
 
     _sortPagesInfo(sortField = 'title', isAscending = true) {
-        let sortFn = isAscending ? (a, b) => a[sortField] > b[sortField] : 
-            (a, b) => b[sortField] > a[sortField];
-
-        this._pagesInfo = this._pagesInfo.sort(sortFn);
+        this._pagesInfo = isAscending ? 
+            this._pagesInfo.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
+            this._pagesInfo.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
     }
 
     _clearTableRows() {
@@ -200,9 +199,9 @@ class PageTable {
 
     _onSearching(hiddenClassName, _event) {
         const searchText = (_event.target.value || '').toUpperCase();
-        
+
         [...this._tableBody.rows].forEach(r => {
-            if (searchText.length && r.innerText.toUpperCase().indexOf(searchText) === -1)
+            if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
                 r.classList.add(hiddenClassName);
             else
                 r.classList.remove(hiddenClassName);
