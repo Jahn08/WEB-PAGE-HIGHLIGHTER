@@ -5,7 +5,7 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
-import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { StorageHelper } from '../tools/storageHelper.js';
 
 describe('content_script/preferences', function () {
     this.timeout(0);
@@ -76,7 +76,7 @@ describe('content_script/preferences', function () {
         const rowContents = [...tableBody.rows].map(r => r.textContent);
 
         assert(expectedRowValues.every(rv => rowContents.find(rc => 
-                rc.indexOf(rv.title) !== -1 && rc.indexOf(formatDate(rv.date)) !== -1) !== null
+            rc.indexOf(rv.title) !== -1 && rc.indexOf(formatDate(rv.date)) !== -1) !== null
         ));
         
         const rowUris = [...tableBody.querySelectorAll('input[type=checkbox]')]
@@ -147,7 +147,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data from the storage and update the form', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 (expectedPageData) => new Preferences().load()
                     .then(() => assertPageTableValues(expectedPageData)));
         });
@@ -155,7 +155,7 @@ describe('content_script/preferences', function () {
         const getShowingUriBtn = () => document.getElementById('form--section-page--btn-show');
 
         it('should load saved page data and open its uri as loadable', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
                         const uriForShowing = tickPageInfoCheck()[0];
@@ -180,7 +180,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data and disable button for showing several uris', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
                         tickPageInfoCheck(2);
@@ -190,7 +190,7 @@ describe('content_script/preferences', function () {
         });
         
         it('should load saved page data and filter the results afterwards', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
                 pagesInfo => new Preferences().load()
                     .then(() => {
                         const searchField = document.getElementById('form--section-page--txt-search');
@@ -215,7 +215,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should load saved page data and sort the results by date afterwards', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(10),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
                 pagesInfo => new Preferences().load()
                     .then(() => {
                         const headerClassName = 'form--table-pages--cell-header';
@@ -232,11 +232,14 @@ describe('content_script/preferences', function () {
                             return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
                         };
 
-                        assert.deepStrictEqual(sortDates(), pagesInfo.map(pi => formatDate(pi.date)).sort());
+                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
+                            .sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0))
+                            .map(pi => formatDate(pi.date)));
                         assert(dateHeader.classList.contains(headerClassName + '-asc'));
 
-                        assert.deepStrictEqual(sortDates(), 
-                            pagesInfo.map(pi => formatDate(pi.date)).sort((a, b) => b > a ? 1 : (b < a ? -1 : 0)))
+                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
+                            .sort((a, b) => b.date > a.date ? 1 : (b.date < a.date ? -1 : 0))
+                            .map(pi => formatDate(pi.date)));
                         assert(dateHeader.classList.contains(headerClassName + '-desc'));
                     })
             );
@@ -273,7 +276,7 @@ describe('content_script/preferences', function () {
         });
 
         it('should save the preferences page without removing page data', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(),
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 expectedPageData => {
                     const preferences = new Preferences();
                     
@@ -289,7 +292,7 @@ describe('content_script/preferences', function () {
             document.getElementById('form--section-page--btn-remove');
             
         it('should save the preferences page removing several pages', () => {
-            return Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage()
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo()
                 .then(async expectedPageData => {
                     const preferences = new Preferences();
 

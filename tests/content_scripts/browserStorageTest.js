@@ -3,6 +3,7 @@ import { Randomiser } from '../tools/randomiser.js';
 import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
+import { StorageHelper } from '../tools/storageHelper.js';
 
 describe('content_script/browserStorage', function () {
     this.timeout(0);
@@ -31,20 +32,18 @@ describe('content_script/browserStorage', function () {
                 })
         );
 
-        it('should get an object previously set in the storage', () => {
-            const itemKey = Randomiser.getRandomNumberUpToMax();
-            const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
+        it('should get an object previously set in the storage', () =>
+            Expectation.expectResolution(StorageHelper.saveRandomObjects(1), 
+                async storageValues => {
+                    const expectedObj = storageValues[0];
+                    const result = await new global.BrowserStorage(expectedObj.key).get();
+                    assert(result);
+                    assert.deepStrictEqual(result, expectedObj);
 
-            return Expectation.expectResolution(new global.BrowserStorage(itemKey).set(expectedObj), () =>
-                Expectation.expectResolution(new global.BrowserStorage(itemKey).get(), 
-                    result => {
-                        assert(result);
-                        assert.deepStrictEqual(result, expectedObj);
-
-                        assert.strictEqual(storage.length, 1);
-                    })
-            );
-        });
+                    assert.strictEqual(storage.length, 1);
+                }
+            )
+        );
     });
 
     describe('#contains', function () {
@@ -69,5 +68,43 @@ describe('content_script/browserStorage', function () {
             const itemKey = Randomiser.getRandomNumberUpToMax();
             return testContaining(itemKey, itemKey, true);
         });
+    });
+    
+    const assureArrayIsInObject = (obj, expectedValues) => {
+        expectedValues.forEach(v => assert.deepStrictEqual(obj[v.key], v));
+        assert.strictEqual(Object.getOwnPropertyNames(obj).length, expectedValues.length);
+    };
+
+    describe('#getAll', function () {
+        it('should get previously saved items from the storage', () =>
+            Expectation.expectResolution(StorageHelper.saveRandomObjects(), 
+                async expectedValues => {
+                    const result = await global.BrowserStorage.getAll();
+                    assureArrayIsInObject(result, expectedValues);
+                })
+        );
+    });
+
+    describe('#remove', function () {
+        it('should remove previously saved items from the storage', () =>
+            Expectation.expectResolution(StorageHelper.saveRandomObjects(5), async storageObjs => {
+                const keysForRemoval = [storageObjs[0], storageObjs[storageObjs.length - 1]]
+                    .map(obj => obj.key);
+                await global.BrowserStorage.remove(keysForRemoval);
+                
+                const result = await global.BrowserStorage.getAll();
+                assureArrayIsInObject(result, 
+                    storageObjs.filter(obj => !keysForRemoval.includes(obj.key)));
+            })
+        );
+
+        it('should remove nothing from the storage when passing an empty array', () =>
+            Expectation.expectResolution(StorageHelper.saveRandomObjects(5), async storageObjs => {
+                await global.BrowserStorage.remove([]);
+                
+                const result = await global.BrowserStorage.getAll();
+                assureArrayIsInObject(result, storageObjs);
+            })
+        );
     });
 });

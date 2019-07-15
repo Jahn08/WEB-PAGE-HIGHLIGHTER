@@ -1,7 +1,25 @@
-import { Randomiser } from '../tools/randomiser.js';
+import { Randomiser } from './randomiser.js';
 
-export class PageInfoHelper {
-    static setTestPageInfoToStorage (numberOfItems = 3) {
+export class StorageHelper {
+    static saveRandomObjects(numberOfItems = 3) {
+        const expectedPageData = [];
+
+        for (let i = 0; i < numberOfItems; ++i)
+            expectedPageData.push(this._createRandomObject());
+
+        return Promise.all(expectedPageData
+            .map(obj => new global.BrowserStorage(obj.key).set(obj)))
+            .then(() => { return expectedPageData; });
+    }
+
+    static _createRandomObject() {
+        return { 
+            key: Randomiser.getRandomNumberUpToMax(),
+            value: Randomiser.getRandomNumberUpToMax()
+        };
+    }
+
+    static saveTestPageInfo (numberOfItems = 3) {
         const expectedPageData = [];
 
         const addedUris = [];

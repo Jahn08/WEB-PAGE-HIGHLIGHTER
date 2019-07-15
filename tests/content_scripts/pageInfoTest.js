@@ -3,7 +3,7 @@ import { Randomiser } from '../tools/randomiser.js';
 import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
-import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { StorageHelper } from '../tools/storageHelper.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
@@ -106,7 +106,7 @@ describe('content_script/pageInfo', function () {
 
     describe('#getAllSavedPagesInfo', function () {
         it('should get previously saved page info items from the storage', () =>
-            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(), async expectedPageInfos => {
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
                 const actualPageInfos = await global.PageInfo.getAllSavedPagesInfo();
                 assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
             })
@@ -115,7 +115,7 @@ describe('content_script/pageInfo', function () {
 
     describe('#remove', function () {
         it('should remove previously saved page info items from the storage', () =>
-            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5), async pageInfos => {
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5), async pageInfos => {
                 const urisForRemoval = [pageInfos[0], pageInfos[pageInfos.length - 1]].map(pi => pi.uri);
                 await global.PageInfo.remove(urisForRemoval);
                 
@@ -125,7 +125,7 @@ describe('content_script/pageInfo', function () {
         );
 
         it('should remove nothing from the storage when passing an empty array of page uris', () =>
-            Expectation.expectResolution(PageInfoHelper.setTestPageInfoToStorage(5), async pageInfos => {
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5), async pageInfos => {
                 await global.PageInfo.remove([]);
                 
                 const actualPageInfos = await global.PageInfo.getAllSavedPagesInfo();
