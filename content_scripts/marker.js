@@ -1,8 +1,6 @@
 void function() {
     let activeNode;
 
-    const rangeMarker = new window.RangeMarker();
-
     let domIsPure;
     let canLoad;
 
@@ -90,7 +88,7 @@ void function() {
                 return true;
         
             let msg;
-            const curColourClasses = rangeMarker.getColourClassesForSelectedNodes();
+            const curColourClasses = window.RangeMarker.getColourClassesForSelectedNodes();
 
             if (curColourClasses)
             {
@@ -99,7 +97,7 @@ void function() {
                 if (curColourClasses.length)
                     msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setUnmarkMenuReady());
             }
-            else if (rangeMarker.isNodeMarked(info.target)) 
+            else if (window.RangeMarker.isNodeMarked(info.target)) 
             {
                 msg = window.MessageReceiver.setUnmarkMenuReady();
                 activeNode = info.target;
@@ -122,9 +120,9 @@ void function() {
             let domWasChanged = false;
 
             if (receiver.shouldMark())
-                domWasChanged = rangeMarker.markSelectedNodes(receiver.markColourClass);
+                domWasChanged = window.RangeMarker.markSelectedNodes(receiver.markColourClass);
             else if (receiver.shouldUnmark()) {
-                domWasChanged = rangeMarker.unmarkSelectedNodes(curNode);
+                domWasChanged = window.RangeMarker.unmarkSelectedNodes(curNode);
                 
                 if (!window.RangeMarker.domContainsMarkers()) {
                     domWasChanged = false;
@@ -132,7 +130,7 @@ void function() {
                 }
             }
             else if (receiver.shouldChangeColour())
-                domWasChanged = rangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
+                domWasChanged = window.RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
             else if (receiver.shouldSave())
                 await performStorageAction(save);

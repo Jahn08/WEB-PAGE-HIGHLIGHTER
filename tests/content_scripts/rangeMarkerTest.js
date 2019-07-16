@@ -6,8 +6,8 @@ describe('content_script/rangeMarker', function () {
     this.timeout(0);
 
     before(done => {
-        EnvLoader.loadClass('./content_scripts/rangeMarker.js', 'RangeMarker')
-            .then(() => done())
+        EnvLoader.loadClass('./content_scripts/rangeBase.js', 'RangeBase')
+            .then(() => EnvLoader.loadClass('./content_scripts/rangeMarker.js', 'RangeMarker').then(() => done()))
             .catch(done);
     });
 
@@ -24,32 +24,26 @@ describe('content_script/rangeMarker', function () {
 
     describe('#isNodeMarked', function () {
         it('should return false for all unmarked nodes', function () {
-            const rangeMarker = new global.RangeMarker();
-            
             document.querySelectorAll('.article--paragraph--sentence--label').forEach(n => 
-                assert(rangeMarker.isNodeMarked(n) === false));
+                assert(global.RangeMarker.isNodeMarked(n) === false));
         });
 
         it('should return true for all marked nodes', function () {
-            const rangeMarker = new global.RangeMarker();
-            
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
             italicNodes.forEach(n => {
                 n.classList.add(global.RangeMarker.markerClass);
-                assert(rangeMarker.isNodeMarked(n));
+                assert(global.RangeMarker.isNodeMarked(n));
             });
         });
 
         it('should return false for nodes which contain marked children', function () {
-            const rangeMarker = new global.RangeMarker();
-            
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
             italicNodes.forEach(n => n.classList.add(global.RangeMarker.markerClass));
 
             let markedSentencesCount = 0;
 
             document.querySelectorAll('.article--paragraph--sentence').forEach(n => {
-                if (rangeMarker.isNodeMarked(n)) 
+                if (global.RangeMarker.isNodeMarked(n)) 
                     ++markedSentencesCount;
             });
 
@@ -61,7 +55,7 @@ describe('content_script/rangeMarker', function () {
 
     const markCurSelectionWithRandomColour = (shouldMark = true) => {
         const colourClass = createRandomColourClass();
-        assert.strictEqual(new global.RangeMarker().markSelectedNodes(colourClass), shouldMark);
+        assert.strictEqual(global.RangeMarker.markSelectedNodes(colourClass), shouldMark);
 
         return colourClass;
     };
@@ -99,7 +93,7 @@ describe('content_script/rangeMarker', function () {
         const range = document.createRange();
         setRangeContainersCallback(range);
 
-        const markColours = new global.RangeMarker().getColourClassesForSelectedNodes();
+        const markColours = global.RangeMarker.getColourClassesForSelectedNodes();
         assert(markColours);
         assert.strictEqual(markColours.length, 1);
         assert.strictEqual(markColours[0], expectedColourClass);
@@ -252,7 +246,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#unmarkSelectedNodes', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            assert.strictEqual(new global.RangeMarker().unmarkSelectedNodes(), false);
+            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), false);
             checkMarkedNodes(0, '');
         });
 
@@ -260,14 +254,14 @@ describe('content_script/rangeMarker', function () {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
             setRange(setRangeContainerForSentenceItalic);
-            assert.strictEqual(new global.RangeMarker().unmarkSelectedNodes(), false);
+            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
-            assert.strictEqual(new global.RangeMarker().unmarkSelectedNodes(getFirstItalicSentenceNode()), 
+            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(getFirstItalicSentenceNode()), 
                 false);
             
             assertRangeColour(setRangeContainerForSentence, expectedColour);
@@ -279,7 +273,7 @@ describe('content_script/rangeMarker', function () {
             if (!targetNode)
                 setRange(setRangeContainersCallback);
             
-            assert.strictEqual(new global.RangeMarker().unmarkSelectedNodes(targetNode), true);
+            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(targetNode), true);
             checkMarkedNodes(0, '');
         };
 
@@ -307,7 +301,7 @@ describe('content_script/rangeMarker', function () {
             const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
             setRange(getRangeSetterForRemarkingPartially(curColour, startOffset, endOffset));
             
-            assert.strictEqual(new global.RangeMarker().unmarkSelectedNodes(), true);
+            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), true);
 
             checkMarkedNodes(startOffset && endOffset ? 2 : 1, 
                 expectedResidualMarkedText, curColour);
@@ -333,7 +327,7 @@ describe('content_script/rangeMarker', function () {
 
             setRangeForFirstParagraph();
 
-            new global.RangeMarker().unmarkSelectedNodes();
+            global.RangeMarker.unmarkSelectedNodes();
             checkMarkedNodes(0, '');
         });
 
@@ -356,7 +350,7 @@ describe('content_script/rangeMarker', function () {
                 document.body.append(emptyMarker);
             }
 
-            new global.RangeMarker().unmarkSelectedNodes();
+            global.RangeMarker.unmarkSelectedNodes();
             
             const markers = [...document.getElementsByClassName(global.RangeMarker.markerClass)];
             assert.strictEqual(markers.length, expectedTokens.length);
@@ -368,7 +362,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#changeSelectedNodesColour', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            assert.strictEqual(new global.RangeMarker().changeSelectedNodesColour(createRandomColourClass()), 
+            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(createRandomColourClass()), 
                 false);
             checkMarkedNodes(0, '');
         });
@@ -376,7 +370,7 @@ describe('content_script/rangeMarker', function () {
         const changeColourOverRange = (setRangeContainersCallback, 
             colour = createRandomColourClass(), shouldChangeColour = true) => {
             setRange(setRangeContainersCallback);
-            assert.strictEqual(new global.RangeMarker().changeSelectedNodesColour(colour), shouldChangeColour);
+            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(colour), shouldChangeColour);
 
             return colour;
         };
@@ -392,7 +386,7 @@ describe('content_script/rangeMarker', function () {
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
             
-            assert.strictEqual(new global.RangeMarker().changeSelectedNodesColour(createRandomColourClass(),
+            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(createRandomColourClass(),
                 getFirstItalicSentenceNode()), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
@@ -413,7 +407,7 @@ describe('content_script/rangeMarker', function () {
             assert.notStrictEqual(initialColour, expectedColour);
 
             assert.strictEqual(
-                new global.RangeMarker().changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
+                global.RangeMarker.changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
                 true);
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
