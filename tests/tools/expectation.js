@@ -15,7 +15,7 @@ class Expectation {
                     reject(err);
                 }
             })
-                .then(() => reject(new Error('The callback should\'ve been rejected')));
+            .then(() => reject(new Error('The callback should\'ve been rejected')));
         });
     }
 
@@ -23,10 +23,11 @@ class Expectation {
         if (!expectedProps)
             return;
 
-        for (const prop in expectedProps)
+        Object.getOwnPropertyNames(expectedProps).filter(prop => prop !== 'stack').forEach(prop =>
             assert.strictEqual(actualObj[prop], expectedProps[prop], 
                 `Actual[${prop}] is '${actualObj[prop]}', Expected[${prop}]` +
-                ` is '${expectedProps[prop]}'. Actual: '${JSON.stringify(actualObj)}'`);
+                ` is '${expectedProps[prop]}'. Actual: '${JSON.stringify(actualObj)}'`)
+        );
     }
 
     static _processCallback(callback, result, resolve, reject) {

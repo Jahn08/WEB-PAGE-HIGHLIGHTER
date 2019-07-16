@@ -3,7 +3,7 @@ import { EnvLoader } from '../tools/envLoader.js';
 import { Randomiser } from '../tools/randomiser';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
-import { Preferences } from '../../components/preferences.js';
+import { Preferences, RepeatInitError } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 
@@ -90,15 +90,20 @@ describe('content_script/preferences', function () {
 
     const createChangeEvent = () => new Event('change');
 
-    describe('#constructor', () => 
+    describe('#constructor', function () { 
      
         it('should create a form with default values', () => {
             new Preferences();
 
             assertFormValues();
             assertPageTableValues();
-        })
-    );
+        });
+
+        it('should throw an error when trying to render the page twice', () => {
+            new Preferences();
+            assert.throws(() => new Preferences(), new RepeatInitError());
+        });
+    });
 
     const tickPageInfoCheck = (tickNumber = 1) => {
         const rows = getPageTableBody().rows;
@@ -128,6 +133,11 @@ describe('content_script/preferences', function () {
                     assertFormValues();
                     assertPageTableValues();
                 })
+        );
+
+        it('should throw an error when trying to load the page twice', () =>
+            Expectation.expectRejection(new Preferences().load().then(() => new Preferences().load()),
+                new RepeatInitError())
         );
 
         it('should load preferences from the storage and update the form', () => {

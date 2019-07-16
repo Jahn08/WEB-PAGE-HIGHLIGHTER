@@ -4,10 +4,10 @@ class RepeatInitError extends Error {
     constructor() {
         super('The page has already been initialised');
         
-        this.name = RepeatInitError.MESSAGE;
+        this.name = RepeatInitError.NAME;
     }
 
-    static get MESSAGE() {
+    static get NAME() {
         return 'RepeatInitError';
     }
 }
@@ -213,7 +213,7 @@ class PageTable {
     }
 }
 
-export class Preferences {
+class Preferences {
     constructor() {
         this._initColourList();
         
@@ -342,3 +342,5 @@ export class Preferences {
         );
     }
 }
+
+export { RepeatInitError, Preferences };
