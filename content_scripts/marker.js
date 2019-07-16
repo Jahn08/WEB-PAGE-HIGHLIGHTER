@@ -35,8 +35,14 @@ void function() {
     const pageInfo = new window.PageInfo();
 
     const save = async () => {
-        await pageInfo.save();
-        window.MessageControl.show('The page has been saved successfully');
+        try {
+            await pageInfo.save();
+            window.MessageControl.show('The page has been saved successfully');
+        }
+        catch (err) {
+            alert(`An error occurred while trying to save the page: "${err.toString()}". ` +
+                'Please, consider going to the preferences to remove redundant saved pages')
+        }
     };
 
     const load = async () => {
