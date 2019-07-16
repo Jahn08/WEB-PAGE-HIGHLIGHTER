@@ -17,9 +17,9 @@ describe('components/ContextMenu', () => {
             new ContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
-            assert.strictEqual(itemOptions.length, 12);
+            assert.strictEqual(itemOptions.length, 14);
             assert.strictEqual(itemOptions.filter(i => i.type === 'separator').length, 1);
-            assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 5);
+            assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 7);
             assert.strictEqual(itemOptions.filter(i => i.type === 'radio').length, 6);
         });
 
@@ -80,10 +80,12 @@ describe('components/ContextMenu', () => {
             contextMenu.hideUnmarkingBtn();
             contextMenu.hideSaveBtn();
             contextMenu.hideLoadBtn();
+            contextMenu.hideAddingNoteBtn();
+            contextMenu.hideRemovingNoteBtn();
 
             const btnOptions = browserMocked.menuOptions
                 .filter(i => i.type === 'normal' && i.visible !== undefined);
-            assert.strictEqual(btnOptions.length, 4);
+            assert.strictEqual(btnOptions.length, 6);
             
             const assertItemsVisibility = (visible) => assert(btnOptions.every(b => b.visible === visible));
             assertItemsVisibility(false);
@@ -92,6 +94,9 @@ describe('components/ContextMenu', () => {
             contextMenu.showUnmarkingBtn();
             contextMenu.showLoadBtn();
             contextMenu.showSaveBtn();
+            contextMenu.showAddingNoteBtn();
+            contextMenu.showRemovingNoteBtn();
+
             assertItemsVisibility(true);
         });
     });

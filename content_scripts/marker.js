@@ -82,13 +82,15 @@ void function() {
         return msg;
     };
 
-    document.addEventListener('mousedown', info => {
+    document.addEventListener('mousedown', _event => {
         try {
-            if (info.button !== 2)
+            if (_event.button !== 2)
                 return true;
         
             let msg;
             const curColourClasses = window.RangeMarker.getColourClassesForSelectedNodes();
+
+            const focusedNode = _event.target;
 
             if (curColourClasses)
             {
@@ -97,12 +99,19 @@ void function() {
                 if (curColourClasses.length)
                     msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setUnmarkMenuReady());
             }
-            else if (window.RangeMarker.isNodeMarked(info.target)) 
+            else if (window.RangeMarker.isNodeMarked(focusedNode)) 
             {
                 msg = window.MessageReceiver.setUnmarkMenuReady();
-                activeNode = info.target;
+                activeNode = focusedNode;
             }
+
+            if (window.RangeMarker.hasSelectionRange())
+                msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setAddNoteMenuReady());
             
+            // TODO: Implement a condition for setting ready the remove note menu item
+            // if (RangeNote.hasNote(focusedNode))
+            //     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
+
             browser.runtime.sendMessage(includeLoadSaveEvents(msg));
         }
         catch (ex) {
@@ -132,6 +141,10 @@ void function() {
             else if (receiver.shouldChangeColour())
                 domWasChanged = window.RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
+            else if (receiver.shouldAddNote())
+                console.log('Should add a note');
+            else if (receiver.shouldRemoveNote())
+                console.log('Should remove a note');
             else if (receiver.shouldSave())
                 await performStorageAction(save);
             else if (receiver.shouldLoad())

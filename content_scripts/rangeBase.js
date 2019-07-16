@@ -1,4 +1,8 @@
 class RangeBase {
+    static hasSelectionRange() {
+        return this._getSelectionRange() !== null;
+    }
+
     static _getSelectionRange() {
         const sel = window.getSelection();
         return sel.isCollapsed ? null: sel.getRangeAt(0);

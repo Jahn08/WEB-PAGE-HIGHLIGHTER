@@ -17,6 +17,12 @@ class MenuMessageEvent {
         this._loadTabStateEvent = 'loadTabState';
 
         this._colourClassField = 'colourClass';
+
+        this._addNoteReadyEvent = 'setAddNoteReady';
+        this._addNoteEvent = 'addNote';
+
+        this._removeNoteReadyEvent = 'setRemoveNoteReady';
+        this._removeNoteEvent = 'removeNote';
     }
 
     createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, [colourClass]); }
@@ -90,7 +96,19 @@ class MenuMessageEvent {
     isLoadPreferencesEvent(msg) { return this._isEvent(msg, this._loadPreferencesEvent); } 
 
     createLoadTabStateEvent() { return this._createEvent(this._loadTabStateEvent); }
-    isLoadTabStateEvent(msg) { return this._isEvent(msg, this._loadTabStateEvent); } 
+    isLoadTabStateEvent(msg) { return this._isEvent(msg, this._loadTabStateEvent); }
+    
+    createAddNoteReadyEvent() { return this._createEvent(this._addNoteReadyEvent); }
+    isSetAddNoteReadyEvent(msg) { return this._isEvent(msg, this._addNoteReadyEvent); }
+
+    createAddNoteEvent() { return this._createEvent(this._addNoteEvent); }
+    isAddNoteEvent(msg) { return this._isEvent(msg, this._addNoteEvent); }   
+
+    createRemoveNoteReadyEvent() { return this._createEvent(this._removeNoteReadyEvent); }
+    isSetRemoveNoteReadyEvent(msg) { return this._isEvent(msg, this._removeNoteReadyEvent); }
+
+    createRemoveNoteEvent() { return this._createEvent(this._removeNoteEvent); }
+    isRemoveNoteEvent(msg) { return this._isEvent(msg, this._removeNoteEvent); }
 }
 
 window.MenuMessageEvent = MenuMessageEvent;

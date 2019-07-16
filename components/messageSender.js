@@ -38,4 +38,12 @@ export class MessageSender {
     shouldReturnPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
 
     static startLoadingTabState() { return msgEvent.createLoadTabStateEvent(this._msg); }
+    
+    static startAddingNote() { return msgEvent.createAddNoteEvent(); }
+
+    shouldSetAddNoteMenuReady() { return msgEvent.isSetAddNoteReadyEvent(this._msg); }
+
+    static startRemovingNote() { return msgEvent.createRemoveNoteEvent(); }
+
+    shouldSetRemoveNoteMenuReady() { return msgEvent.isSetRemoveNoteReadyEvent(this._msg); }
 }

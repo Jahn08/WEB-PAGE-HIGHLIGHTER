@@ -14,18 +14,28 @@ describe('content_script/menuMessageEvent', function () {
     const IS_SET_MARK_READY_EVENT_METHOD_NAME = 'isSetMarkReadyEvent';
     const IS_SET_UNMARK_READY_EVENT_METHOD_NAME = 'isSetUnmarkReadyEvent';
     const IS_UNMARK_EVENT_METHOD_NAME = 'isUnmarkEvent';
+    
     const IS_LOAD_EVENT_METHOD_NAME = 'isLoadEvent';
     const IS_SET_LOAD_READY_EVENT_METHOD_NAME = 'isSetLoadReadyEvent';
     const IS_SAVE_EVENT_METHOD_NAME = 'isSaveEvent';
     const IS_SET_SAVE_READY_EVENT_METHOD_NAME = 'isSetSaveReadyEvent';
     const IS_LOAD_PREFERENCES_EVENT_METHOD_NAME = 'isLoadPreferencesEvent';
+    
     const IS_LOAD_TAB_STATE_METHOD_NAME = 'isLoadTabStateEvent';
+
+    const IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME = 'isSetAddNoteReadyEvent';
+    const IS_ADD_NOTE_EVENT_METHOD_NAME = 'isAddNoteEvent';
+    const IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME = 'isSetRemoveNoteReadyEvent';
+    const IS_REMOVE_NOTE_EVENT_METHOD_NAME = 'isRemoveNoteEvent';
     
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME, IS_LOAD_EVENT_METHOD_NAME, IS_SAVE_EVENT_METHOD_NAME,
         IS_SET_LOAD_READY_EVENT_METHOD_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME, 
-        IS_LOAD_PREFERENCES_EVENT_METHOD_NAME, IS_LOAD_TAB_STATE_METHOD_NAME];
+        IS_LOAD_PREFERENCES_EVENT_METHOD_NAME, IS_LOAD_TAB_STATE_METHOD_NAME, 
+        IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME, IS_ADD_NOTE_EVENT_METHOD_NAME,
+        IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME, IS_REMOVE_NOTE_EVENT_METHOD_NAME
+    ];
 
     const createEventWithColourAndCheckIt = function (createEventMethodName, checkEventMethodName,
         useSeveralColours = false) {
@@ -97,6 +107,14 @@ describe('content_script/menuMessageEvent', function () {
 
     createTestForCheckingEvent('createLoadTabStateEvent', IS_LOAD_TAB_STATE_METHOD_NAME);
 
+    createTestForCheckingEvent('createAddNoteReadyEvent', IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME);
+
+    createTestForCheckingEvent('createAddNoteEvent', IS_ADD_NOTE_EVENT_METHOD_NAME);
+
+    createTestForCheckingEvent('createRemoveNoteReadyEvent', IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME);
+
+    createTestForCheckingEvent('createRemoveNoteEvent', IS_REMOVE_NOTE_EVENT_METHOD_NAME);
+
     describe('#combineEvents', function () {
         it('should combine several events correctly', function () {
             const msgEvent = new global.MenuMessageEvent();
@@ -113,20 +131,29 @@ describe('content_script/menuMessageEvent', function () {
             const saveReadyEvent = msgEvent.createSaveReadyEvent(); 
             const saveEvent = msgEvent.createSaveEvent();
 
+            const addNoteReadyEvent = msgEvent.createAddNoteReadyEvent(); 
+            const addNoteEvent = msgEvent.createAddNoteEvent();
+
             const _events = msgEvent.combineEvents([changeColourEvent, markReadyEvent, 
-                unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent]);
+                unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
+                addNoteReadyEvent, addNoteEvent]);
             
             assert(!msgEvent.isMarkEvent(_events));
             assert(!msgEvent.isLoadEvent(_events));
             assert(!msgEvent.isSetLoadReadyEvent(_events));
             assert(!msgEvent.isLoadPreferencesEvent(_events));
             assert(!msgEvent.isLoadTabStateEvent(_events));
+            assert(!msgEvent.isSetRemoveNoteReadyEvent(_events));
+            assert(!msgEvent.isRemoveNoteEvent(_events));
+
             assert(msgEvent.isSetMarkReadyEvent(_events));
             assert(msgEvent.isChangeColourEvent(_events));
             assert(msgEvent.isUnmarkEvent(_events));
             assert(msgEvent.isSetUnmarkReadyEvent(_events));
             assert(msgEvent.isSetSaveReadyEvent(_events));
             assert(msgEvent.isSaveEvent(_events));
+            assert(msgEvent.isSetAddNoteReadyEvent(_events));
+            assert(msgEvent.isAddNoteEvent(_events));
 
             const colourClasses = msgEvent.getMarkColourClasses(_events);
             assert.strictEqual(colourClasses.length, 2);

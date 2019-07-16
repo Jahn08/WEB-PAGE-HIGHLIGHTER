@@ -40,6 +40,14 @@ class MessageReceiver {
     static loadPreferences() { return MessageReceiver.msgEvent.createLoadPreferencesEvent(); }
 
     shouldReturnTabState() { return MessageReceiver.msgEvent.isLoadTabStateEvent(this._msg); }
+
+    static setAddNoteMenuReady() { return MessageReceiver.msgEvent.createAddNoteReadyEvent(); }
+
+    shouldAddNote() { return MessageReceiver.msgEvent.isAddNoteEvent(this._msg); }
+
+    static setRemoveNoteMenuReady() { return MessageReceiver.msgEvent.createRemoveNoteReadyEvent(); }
+
+    shouldRemoveNote() { return MessageReceiver.msgEvent.isRemoveNoteEvent(this._msg); }
 }
 
 MessageReceiver.msgEvent = new window.MenuMessageEvent();

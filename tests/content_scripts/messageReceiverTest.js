@@ -20,7 +20,8 @@ describe('content_script/messageReceiver', function () {
 
         assert.strictEqual(receiver[receiverEvent](), true);
         assert.strictEqual([receiver.shouldChangeColour(), receiver.shouldLoad(),
-            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark(), receiver.shouldReturnTabState()]
+            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark(), receiver.shouldReturnTabState(),
+            receiver.shouldAddNote(), receiver.shouldRemoveNote()]
             .filter(e => e).length, 1);
 
         assert.strictEqual(receiver.markColourClass, expectedColour);
@@ -56,6 +57,16 @@ describe('content_script/messageReceiver', function () {
             testReceivingEvents('startLoadingTabState', 'shouldReturnTabState'))
     );
 
+    describe('#shouldAddNote', () => 
+        it('should recognise an event as adding a note', () =>
+            testReceivingEvents('startAddingNote', 'shouldAddNote'))
+    );
+
+    describe('#shouldRemoveNote', () => 
+        it('should recognise an event as removing a note', () =>
+            testReceivingEvents('startRemovingNote', 'shouldRemoveNote'))
+    );
+
     const testSendingEvents = (receiverEvent, senderEvent, useColoursArg = false) => {
         const expectedColours = useColoursArg ? 
             [Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax()] : [];
@@ -64,8 +75,8 @@ describe('content_script/messageReceiver', function () {
 
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
-            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldReturnPreferences()]
-            .filter(e => e).length, 1);
+            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldReturnPreferences(),
+            sender.shouldSetAddNoteMenuReady(), sender.shouldSetRemoveNoteMenuReady()].filter(e => e).length, 1);
 
         assert.deepStrictEqual(sender.currentColourClasses, expectedColours);
     };
@@ -95,6 +106,16 @@ describe('content_script/messageReceiver', function () {
             testSendingEvents('loadPreferences', 'shouldReturnPreferences'))
     );
 
+    describe('#setAddNoteMenuReady', () =>
+        it('should recognise an event as setting menu ready for adding a note', () =>
+            testSendingEvents('setAddNoteMenuReady', 'shouldSetAddNoteMenuReady'))
+    );
+
+    describe('#setRemoveNoteMenuReady', () =>
+        it('should recognise an event as setting menu ready for removing a note', () =>
+            testSendingEvents('setRemoveNoteMenuReady', 'shouldSetRemoveNoteMenuReady'))
+    );
+
     describe('#combineEvents', function () {
         it('should return null when combining undefined events', () =>
             assert.strictEqual(
@@ -107,12 +128,13 @@ describe('content_script/messageReceiver', function () {
             const msg =  global.MessageReceiver.combineEvents(undefined, 
                 global.MessageReceiver.setLoadMenuReady(), undefined, 
                 global.MessageReceiver.setSaveMenuReady(), null, 
-                global.MessageReceiver.setMarkMenuReady(expectedColours));
+                global.MessageReceiver.setMarkMenuReady(expectedColours),
+                global.MessageReceiver.setRemoveNoteMenuReady());
 
             assert(msg);
 
             assert(msg.event);
-            assert.strictEqual(msg.event.length, 3);
+            assert.strictEqual(msg.event.length, 4);
             
             assert(msg.colourClass);
             assert.deepStrictEqual(msg.colourClass, expectedColours);
@@ -120,6 +142,7 @@ describe('content_script/messageReceiver', function () {
             const sender = new global.MessageSender(msg);
             assert(sender.shouldSetSaveMenuReady());
             assert(sender.shouldSetLoadMenuReady());
+            assert(sender.shouldSetRemoveNoteMenuReady());
 
             assert(sender.shouldSetMarkMenuReady());
             assert.deepStrictEqual(sender.currentColourClasses, expectedColours);

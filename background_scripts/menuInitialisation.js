@@ -18,6 +18,10 @@ menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving
 
 menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
+menu.onAddingNote = (info) => sendMessageToTab(info.tabId, MessageSender.startAddingNote());
+
+menu.onRemovingNote = (info) => sendMessageToTab(info.tabId, MessageSender.startRemovingNote());
+
 browser.runtime.onMessage.addListener(async msg => {
     try {
         const sender = new MessageSender(msg);
@@ -51,6 +55,16 @@ browser.runtime.onMessage.addListener(async msg => {
             menu.showUnmarkingBtn();
         else
             menu.hideUnmarkingBtn();
+
+        if (sender.shouldSetAddNoteMenuReady())
+            menu.showAddingNoteBtn();
+        else
+            menu.hideAddingNoteBtn();
+
+        if (sender.shouldSetRemoveNoteMenuReady())
+            menu.showRemovingNoteBtn();
+        else
+            menu.hideRemovingNoteBtn();
         
         menu.render();
     }
