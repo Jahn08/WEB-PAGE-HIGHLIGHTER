@@ -101,7 +101,7 @@ describe('content_script/preferences', function () {
 
         it('should throw an error when trying to render the page twice', () => {
             new Preferences();
-            assert.throws(() => new Preferences(), new RepeatInitError());
+            Expectation.expectError(() => new Preferences(), new RepeatInitError());
         });
     });
 

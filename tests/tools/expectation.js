@@ -1,15 +1,28 @@
 import assert from 'assert';
 
 class Expectation {
-    static expectRejection (promise, expectedProps, assertionFn = null) {
+    static expectError(fn, expectedProps) {
+        assert(this._isFunction(fn), 'The first argument should be a function');
+
+        try {
+            fn();
+        }
+        catch (err) {
+            return this._assertExpectedProps(err, expectedProps);
+        }
+
+        throw new Error('An error was expected');
+    }
+
+    static expectRejection(promise, expectedProps, assertionFn = null) {
         return new Promise((resolve, reject) => {
             promise.catch(resultErr => {
                 try {
                     assert(resultErr);
 
-                    Expectation._assertExpectedProps(resultErr, expectedProps);
+                    this._assertExpectedProps(resultErr, expectedProps);
                     
-                    return Expectation._processCallback(assertionFn, resultErr, resolve, reject);
+                    return this._processCallback(assertionFn, resultErr, resolve, reject);
                 }
                 catch (err) {
                     reject(err);
@@ -30,7 +43,7 @@ class Expectation {
     }
 
     static _processCallback(callback, result, resolve, reject) {
-        if (!Expectation._isFunction(callback))
+        if (!this._isFunction(callback))
             return resolve();
 
         const resp = callback(result);
@@ -41,13 +54,13 @@ class Expectation {
         return resolve(result);
     }
 
-    static _isFunction (fn) { return typeof fn === 'function'; }
+    static _isFunction(fn) { return typeof fn === 'function'; }
 
-    static expectResolution (promise, assertionFn = null) {
+    static expectResolution(promise, assertionFn = null) {
         return new Promise((resolve, reject) => {
             promise.then(result => {
                 try {
-                    return Expectation._processCallback(assertionFn, result, resolve, reject);
+                    return this._processCallback(assertionFn, result, resolve, reject);
                 }
                 catch (err) {
                     reject(err);
