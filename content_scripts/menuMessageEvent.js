@@ -110,5 +110,3 @@ class MenuMessageEvent {
     createRemoveNoteEvent() { return this._createEvent(this._removeNoteEvent); }
     isRemoveNoteEvent(msg) { return this._isEvent(msg, this._removeNoteEvent); }
 }
-
-window.MenuMessageEvent = MenuMessageEvent;

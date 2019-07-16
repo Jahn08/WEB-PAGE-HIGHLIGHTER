@@ -129,7 +129,7 @@ class PageTable {
         const uri = this._getCheckboxUri(document.querySelector(this._CHECK_TICKED_SELECTOR));
         
         if (uri)
-            window.open(window.PageInfo.generateLoadingUrl(uri), '_blank');
+            window.open(PageInfo.generateLoadingUrl(uri), '_blank');
     }
 
     _getCheckboxUri(checkbox) {
@@ -223,7 +223,7 @@ class Preferences {
         this._warningCheck = this._getCheckbox('warning');
         this._loadingCheck = this._getCheckbox('loading');
 
-        this._storage = new window.BrowserStorage(Preferences.STORAGE_KEY);
+        this._storage = new BrowserStorage(Preferences.STORAGE_KEY);
     }
 	
     static get STORAGE_KEY() {
@@ -274,7 +274,7 @@ class Preferences {
     }
 	
     static loadFromStorage() {
-        return new window.BrowserStorage(Preferences.STORAGE_KEY).get();
+        return new BrowserStorage(Preferences.STORAGE_KEY).get();
     }
 
     save() {
@@ -300,7 +300,7 @@ class Preferences {
 
     _removePageInfoFromStorage() {
         return this._pageTable && this._pageTable.removedPageUris.length ? 
-            window.PageInfo.remove(this._pageTable.removedPageUris) : 
+            PageInfo.remove(this._pageTable.removedPageUris) : 
             Promise.resolve();
     }
 
@@ -337,7 +337,7 @@ class Preferences {
     }
 
     _initPageTable() {
-        return window.PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
+        return PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
             this._pageTable = new PageTable(pagesInfo)
         );
     }

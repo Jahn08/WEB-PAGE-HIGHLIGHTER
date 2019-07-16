@@ -26,31 +26,31 @@ void function() {
             domIsPure = true;
         }
         finally {
-            window.MessageControl.hide();
+            MessageControl.hide();
         }
     };
 
-    const pageInfo = new window.PageInfo();
+    const pageInfo = new PageInfo();
 
     const save = async () => {
         try {
             await pageInfo.save();
-            window.MessageControl.show('The page has been saved successfully');
+            MessageControl.show('The page has been saved successfully');
         }
         catch (err) {
             alert(`An error occurred while trying to save the page: "${err.toString()}". ` +
-                'Please, consider going to the preferences to remove redundant saved pages')
+                'Please, consider going to the preferences to remove redundant saved pages');
         }
     };
 
     const load = async () => {
-        window.MessageControl.show('Page is loading');
+        MessageControl.show('Page is loading');
         await pageInfo.load();
 
-        window.MessageControl.show('The page has been loaded successfully');
+        MessageControl.show('The page has been loaded successfully');
     };
 
-    browser.runtime.sendMessage(window.MessageReceiver.loadPreferences()).then(async settings => {
+    browser.runtime.sendMessage(MessageReceiver.loadPreferences()).then(async settings => {
         try {
             Object.assign(preferences, settings);
 
@@ -72,12 +72,12 @@ void function() {
             return msg;
 
         if (domIsPure === false)
-            msg = window.MessageReceiver.combineEvents(msg, 
-                window.MessageReceiver.setSaveMenuReady());
+            msg = MessageReceiver.combineEvents(msg, 
+                MessageReceiver.setSaveMenuReady());
 
         if (canLoad)
-            msg = window.MessageReceiver.combineEvents(msg, 
-                window.MessageReceiver.setLoadMenuReady());
+            msg = MessageReceiver.combineEvents(msg, 
+                MessageReceiver.setLoadMenuReady());
 
         return msg;
     };
@@ -88,25 +88,25 @@ void function() {
                 return true;
         
             let msg;
-            const curColourClasses = window.RangeMarker.getColourClassesForSelectedNodes();
+            const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
 
             const focusedNode = _event.target;
 
             if (curColourClasses)
             {
-                msg = window.MessageReceiver.setMarkMenuReady(curColourClasses);
+                msg = MessageReceiver.setMarkMenuReady(curColourClasses);
 
                 if (curColourClasses.length)
-                    msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setUnmarkMenuReady());
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
             }
-            else if (window.RangeMarker.isNodeMarked(focusedNode)) 
+            else if (RangeMarker.isNodeMarked(focusedNode)) 
             {
-                msg = window.MessageReceiver.setUnmarkMenuReady();
+                msg = MessageReceiver.setUnmarkMenuReady();
                 activeNode = focusedNode;
             }
 
-            if (window.RangeMarker.hasSelectionRange())
-                msg = window.MessageReceiver.combineEvents(msg, window.MessageReceiver.setAddNoteMenuReady());
+            if (RangeMarker.hasSelectionRange())
+                msg = MessageReceiver.combineEvents(msg, MessageReceiver.setAddNoteMenuReady());
             
             // TODO: Implement a condition for setting ready the remove note menu item
             // if (RangeNote.hasNote(focusedNode))
@@ -121,7 +121,7 @@ void function() {
 
     const processMessage = async msg => {
         try {
-            const receiver = new window.MessageReceiver(msg);
+            const receiver = new MessageReceiver(msg);
 
             const curNode = activeNode;
             activeNode = null;
@@ -129,17 +129,17 @@ void function() {
             let domWasChanged = false;
 
             if (receiver.shouldMark())
-                domWasChanged = window.RangeMarker.markSelectedNodes(receiver.markColourClass);
+                domWasChanged = RangeMarker.markSelectedNodes(receiver.markColourClass);
             else if (receiver.shouldUnmark()) {
-                domWasChanged = window.RangeMarker.unmarkSelectedNodes(curNode);
+                domWasChanged = RangeMarker.unmarkSelectedNodes(curNode);
                 
-                if (!window.RangeMarker.domContainsMarkers()) {
+                if (!RangeMarker.domContainsMarkers()) {
                     domWasChanged = false;
                     domIsPure = true;
                 }
             }
             else if (receiver.shouldChangeColour())
-                domWasChanged = window.RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
+                domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
             else if (receiver.shouldAddNote())
                 console.log('Should add a note');

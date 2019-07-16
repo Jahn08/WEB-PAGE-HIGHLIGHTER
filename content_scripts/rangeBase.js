@@ -106,4 +106,3 @@ class RangeBase {
     }
 }
 
-window.RangeBase = RangeBase;

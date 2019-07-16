@@ -19,7 +19,7 @@ class PageInfo {
 
     get _browserStorage() {
         if (!this._storage)
-            this._storage = new window.BrowserStorage(this._uri);
+            this._storage = new BrowserStorage(this._uri);
 
         return this._storage;
     }
@@ -88,7 +88,7 @@ class PageInfo {
     }
 
     static getAllSavedPagesInfo() {
-        return window.BrowserStorage.getAll().then(objs => {
+        return BrowserStorage.getAll().then(objs => {
             const pagesInfo = [];
             
             for (const prop in objs)
@@ -111,8 +111,6 @@ class PageInfo {
     }
 
     static remove(pageUris = []) {
-        return window.BrowserStorage.remove(pageUris);
+        return BrowserStorage.remove(pageUris);
     }
 }
-
-window.PageInfo = PageInfo;

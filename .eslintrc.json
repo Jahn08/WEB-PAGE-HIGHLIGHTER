@@ -12,6 +12,15 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
+    "globals": {
+        "RangeBase": "readonly",
+        "MessageReceiver": "readonly",
+        "MessageControl": "readonly",
+        "RangeMarker": "readonly",
+        "PageInfo": "readonly",
+        "MenuMessageEvent": "readonly",
+        "BrowserStorage": "readonly"
+    },
     "rules": {
         "indent": [
             "error",

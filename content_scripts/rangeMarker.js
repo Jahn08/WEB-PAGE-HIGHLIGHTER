@@ -228,5 +228,3 @@ class RangeMarker extends RangeBase {
 
     static get markerClass() { return 'marker'; }
 }
-
-window.RangeMarker = RangeMarker;

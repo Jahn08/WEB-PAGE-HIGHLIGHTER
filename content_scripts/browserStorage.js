@@ -58,5 +58,3 @@ class BrowserStorage {
         return this._syncStorage.remove(keys);
     }
 }
-
-window.BrowserStorage = BrowserStorage;

@@ -14,8 +14,7 @@ class Expectation {
                 catch (err) {
                     reject(err);
                 }
-            })
-            .then(() => reject(new Error('The callback should\'ve been rejected')));
+            }).then(() => reject(new Error('The callback should\'ve been rejected')));
         });
     }
 

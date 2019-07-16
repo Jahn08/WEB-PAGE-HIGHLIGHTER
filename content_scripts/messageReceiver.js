@@ -50,6 +50,4 @@ class MessageReceiver {
     shouldRemoveNote() { return MessageReceiver.msgEvent.isRemoveNoteEvent(this._msg); }
 }
 
-MessageReceiver.msgEvent = new window.MenuMessageEvent();
-
-window.MessageReceiver = MessageReceiver;
+MessageReceiver.msgEvent = new MenuMessageEvent();
