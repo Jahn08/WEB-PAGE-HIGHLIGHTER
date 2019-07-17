@@ -94,23 +94,23 @@ void function() {
 
             if (curColourClasses)
             {
-                msg = MessageReceiver.setMarkMenuReady(curColourClasses);
+                msg = MessageReceiver.combineEvents(MessageReceiver.setMarkMenuReady(curColourClasses), 
+                    MessageReceiver.setAddNoteMenuReady());
 
                 if (curColourClasses.length)
                     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
             }
             else if (RangeMarker.isNodeMarked(focusedNode)) 
             {
-                msg = MessageReceiver.setUnmarkMenuReady();
+                msg = MessageReceiver.combineEvents(MessageReceiver.setUnmarkMenuReady(), 
+                    MessageReceiver.setAddNoteMenuReady());
                 activeNode = focusedNode;
             }
-
-            if (RangeMarker.hasSelectionRange())
-                msg = MessageReceiver.combineEvents(msg, MessageReceiver.setAddNoteMenuReady());
             
-            // TODO: Implement a condition for setting ready the remove note menu item
-            // if (RangeNote.hasNote(focusedNode))
-            //     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
+            if (RangeNote.hasNote(focusedNode)) {
+                msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
+                activeNode = focusedNode;
+            }
 
             browser.runtime.sendMessage(includeLoadSaveEvents(msg));
         }
@@ -142,9 +142,9 @@ void function() {
                 domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
             else if (receiver.shouldAddNote())
-                console.log('Should add a note');
+                domWasChanged = RangeNote.createNote(prompt('New note text:'), curNode);
             else if (receiver.shouldRemoveNote())
-                console.log('Should remove a note');
+                domWasChanged = RangeNote.removeNote(curNode);
             else if (receiver.shouldSave())
                 await performStorageAction(save);
             else if (receiver.shouldLoad())

@@ -210,7 +210,8 @@ class Range {
         global.window.getSelection = () => {
             return { 
                 isCollapsed: _this.collapsed,
-                getRangeAt() { return _this; }
+                getRangeAt() { return _this; },
+                rangeCount: 1
             };
         };
     }

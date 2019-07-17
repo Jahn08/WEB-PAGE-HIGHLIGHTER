@@ -1,11 +1,18 @@
 class RangeBase {
-    static hasSelectionRange() {
-        return this._getSelectionRange() !== null;
+    static _getSelectionRange() {
+        return this._getSelectionRanges()[0];
     }
 
-    static _getSelectionRange() {
+    static _getSelectionRanges() {
         const sel = window.getSelection();
-        return sel.isCollapsed ? null: sel.getRangeAt(0);
+
+        const ranges = [];
+        
+        if (!sel.isCollapsed)
+            for (let i = 0; i < sel.rangeCount; ++i)
+                ranges.push(sel.getRangeAt(i));
+
+        return ranges;
     }
 
     static _collapseRange(range) { 
