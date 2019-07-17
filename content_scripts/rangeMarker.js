@@ -1,6 +1,6 @@
 class RangeMarker extends RangeBase {    
     static isNodeMarked(node) {
-        return node && node.classList.contains(RangeMarker.markerClass);
+        return node && node.classList.contains(this.MARKER_CLASS_NAME);
     }
 
     static getColourClassesForSelectedNodes() {
@@ -26,7 +26,7 @@ class RangeMarker extends RangeBase {
     }
 
     static _getMarkerElementsFromTextNodes(nodes = []) {
-        const markerClass = RangeMarker.markerClass;
+        const markerClass = this.MARKER_CLASS_NAME;
         return nodes.map(n => n.parentElement).filter(n => n.classList.contains(markerClass));
     }
 
@@ -53,13 +53,13 @@ class RangeMarker extends RangeBase {
     }
 
     static _getMarkerElementsFromElement(node) {
-        const markerClass = RangeMarker.markerClass;
+        const markerClass = this.MARKER_CLASS_NAME;
         return node.classList.contains(markerClass) ? [node] : 
             [...node.getElementsByClassName(markerClass)];
     }
 
     static _removeEmptyMarkers() {
-        for (const node of document.getElementsByClassName(RangeMarker.markerClass))
+        for (const node of document.getElementsByClassName(this.MARKER_CLASS_NAME))
             if (!node.childNodes.length)
                 node.remove();
     }
@@ -78,7 +78,7 @@ class RangeMarker extends RangeBase {
     }
 
     static _markTextNodes(nodes, range, colour = null) {
-        const markerClass = RangeMarker.markerClass;
+        const markerClass = this.MARKER_CLASS_NAME;
         const lastNodeIndex = nodes.length - 1;
 
         const isSingleNode = !lastNodeIndex;
@@ -208,7 +208,7 @@ class RangeMarker extends RangeBase {
 
     static _createMarkedSpan(colourClass) {
         const node = document.createElement('span');
-        node.classList.add(RangeMarker.markerClass, colourClass);
+        node.classList.add(this.MARKER_CLASS_NAME, colourClass);
         return node;
     }
 
@@ -223,8 +223,8 @@ class RangeMarker extends RangeBase {
     }
 
     static domContainsMarkers() {
-        return document.getElementsByClassName(RangeMarker.markerClass).length > 0;
+        return document.getElementsByClassName(this.MARKER_CLASS_NAME).length > 0;
     }
 
-    static get markerClass() { return 'marker'; }
+    static get MARKER_CLASS_NAME() { return 'marker'; }
 }

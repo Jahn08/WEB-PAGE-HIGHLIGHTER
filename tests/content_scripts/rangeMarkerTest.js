@@ -31,14 +31,14 @@ describe('content_script/rangeMarker', function () {
         it('should return true for all marked nodes', function () {
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
             italicNodes.forEach(n => {
-                n.classList.add(RangeMarker.markerClass);
+                n.classList.add(RangeMarker.MARKER_CLASS_NAME);
                 assert(RangeMarker.isNodeMarked(n));
             });
         });
 
         it('should return false for nodes which contain marked children', function () {
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
-            italicNodes.forEach(n => n.classList.add(RangeMarker.markerClass));
+            italicNodes.forEach(n => n.classList.add(RangeMarker.MARKER_CLASS_NAME));
 
             let markedSentencesCount = 0;
 
@@ -51,7 +51,7 @@ describe('content_script/rangeMarker', function () {
         });
     });
 
-    const createRandomColourClass = () => `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
+    const createRandomColourClass = () => `${RangeMarker.MARKER_CLASS_NAME}_${Randomiser.getRandomNumber(1000)}`;
 
     const markCurSelectionWithRandomColour = (shouldMark = true) => {
         const colourClass = createRandomColourClass();
@@ -61,7 +61,7 @@ describe('content_script/rangeMarker', function () {
     };
 
     const checkMarkedNodes = function (expectedMarkersNumber, expectedText, 
-        colourClass = RangeMarker.markerClass) {
+        colourClass = RangeMarker.MARKER_CLASS_NAME) {
         const markedNodes = [...document.querySelectorAll(`.${colourClass}`)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
@@ -129,7 +129,7 @@ describe('content_script/rangeMarker', function () {
 
     const getRangeSetterForRemarkingPartially = (colour, startOffset, endOffset) => {
         return (range) => {
-            let markedNodes = document.querySelectorAll('.' + RangeMarker.markerClass);
+            let markedNodes = document.querySelectorAll('.' + RangeMarker.MARKER_CLASS_NAME);
             
             const newColourNodes = [...markedNodes].filter(n => !n.classList.contains(colour));
 
@@ -340,7 +340,7 @@ describe('content_script/rangeMarker', function () {
 
             for (let i = 0; i < 5; ++i) {
                 const emptyMarker = document.createElement('div');
-                emptyMarker.className = RangeMarker.markerClass;
+                emptyMarker.className = RangeMarker.MARKER_CLASS_NAME;
 
                 if (i % 2 === 0) {
                     emptyMarker.innerHTML = Randomiser.getRandomNumberUpToMax();
@@ -352,7 +352,7 @@ describe('content_script/rangeMarker', function () {
 
             RangeMarker.unmarkSelectedNodes();
             
-            const markers = [...document.getElementsByClassName(RangeMarker.markerClass)];
+            const markers = [...document.getElementsByClassName(RangeMarker.MARKER_CLASS_NAME)];
             assert.strictEqual(markers.length, expectedTokens.length);
             assert(markers.every(m => expectedTokens.includes(m.innerHTML)));
 
