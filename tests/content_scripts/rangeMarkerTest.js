@@ -15,12 +15,12 @@ describe('content_script/rangeMarker', function () {
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });
 
-    afterEach('assertDocumentPurity', function () {
+    afterEach(function () {
         if (document.textContentChanged() === true)
             this.test.error(new Error('The DOM document text content has been altered'));
-    });
 
-    afterEach('unloadDomModel', () => EnvLoader.unloadDomModel());
+        EnvLoader.unloadDomModel();
+    });
 
     describe('#isNodeMarked', function () {
         it('should return false for all unmarked nodes', function () {
