@@ -25,7 +25,7 @@ describe('content_script/browserStorage', function () {
     describe('#get', function () {
 
         it('should return null while trying to get a non-existent object from the storage', () =>
-            Expectation.expectResolution(new global.BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
+            Expectation.expectResolution(new BrowserStorage(Randomiser.getRandomNumberUpToMax()).get(), 
                 outcome => { 
                     assert(!outcome);
                     assert(storage.isEmpty());
@@ -36,7 +36,7 @@ describe('content_script/browserStorage', function () {
             Expectation.expectResolution(StorageHelper.saveRandomObjects(1), 
                 async storageValues => {
                     const expectedObj = storageValues[0];
-                    const result = await new global.BrowserStorage(expectedObj.key).get();
+                    const result = await new BrowserStorage(expectedObj.key).get();
                     assert(result);
                     assert.deepStrictEqual(result, expectedObj);
 
@@ -51,8 +51,8 @@ describe('content_script/browserStorage', function () {
         const testContaining = (savedKey, loadedKey, shouldContain = false) => {
             const expectedObj = { id: Randomiser.getRandomNumberUpToMax() };
 
-            return Expectation.expectResolution(new global.BrowserStorage(savedKey).set(expectedObj), () =>
-                Expectation.expectResolution(new global.BrowserStorage(loadedKey).contains(), 
+            return Expectation.expectResolution(new BrowserStorage(savedKey).set(expectedObj), () =>
+                Expectation.expectResolution(new BrowserStorage(loadedKey).contains(), 
                     result => {
                         assert.strictEqual(result, shouldContain);
                         assert.strictEqual(storage.length, 1);
@@ -79,7 +79,7 @@ describe('content_script/browserStorage', function () {
         it('should get previously saved items from the storage', () =>
             Expectation.expectResolution(StorageHelper.saveRandomObjects(), 
                 async expectedValues => {
-                    const result = await global.BrowserStorage.getAll();
+                    const result = await BrowserStorage.getAll();
                     assureArrayIsInObject(result, expectedValues);
                 })
         );
@@ -90,9 +90,9 @@ describe('content_script/browserStorage', function () {
             Expectation.expectResolution(StorageHelper.saveRandomObjects(5), async storageObjs => {
                 const keysForRemoval = [storageObjs[0], storageObjs[storageObjs.length - 1]]
                     .map(obj => obj.key);
-                await global.BrowserStorage.remove(keysForRemoval);
+                await BrowserStorage.remove(keysForRemoval);
                 
-                const result = await global.BrowserStorage.getAll();
+                const result = await BrowserStorage.getAll();
                 assureArrayIsInObject(result, 
                     storageObjs.filter(obj => !keysForRemoval.includes(obj.key)));
             })
@@ -100,9 +100,9 @@ describe('content_script/browserStorage', function () {
 
         it('should remove nothing from the storage when passing an empty array', () =>
             Expectation.expectResolution(StorageHelper.saveRandomObjects(5), async storageObjs => {
-                await global.BrowserStorage.remove([]);
+                await BrowserStorage.remove([]);
                 
-                const result = await global.BrowserStorage.getAll();
+                const result = await BrowserStorage.getAll();
                 assureArrayIsInObject(result, storageObjs);
             })
         );

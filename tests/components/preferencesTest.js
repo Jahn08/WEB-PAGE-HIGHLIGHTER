@@ -149,7 +149,7 @@ describe('content_script/preferences', function () {
                 defaultColourToken: colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)].token
             };
 
-            new global.BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
+            new BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
 
             return Expectation.expectResolution(new Preferences().load(), 
                 () => assertFormValues(expectedValues.defaultColourToken, expectedValues.shouldWarn, 
@@ -175,7 +175,7 @@ describe('content_script/preferences', function () {
                                 assert.strictEqual(target, '_blank');
                                 assert(uri.startsWith(uriForShowing));
                                 
-                                assert.strictEqual(global.PageInfo.generateLoadingUrl(uriForShowing), 
+                                assert.strictEqual(PageInfo.generateLoadingUrl(uriForShowing), 
                                     uri);
                                 resolve();
                             };
@@ -291,7 +291,7 @@ describe('content_script/preferences', function () {
                     const preferences = new Preferences();
                     
                     return preferences.load(() => preferences.save().then(() =>
-                        global.PageInfo.getAllSavedPagesInfo().then(pageInfos =>
+                        PageInfo.getAllSavedPagesInfo().then(pageInfos =>
                             assert.deepStrictEqual(pageInfos, expectedPageData)
                         )
                     ));
@@ -316,7 +316,7 @@ describe('content_script/preferences', function () {
 
                     await preferences.save();
 
-                    const pageInfos = await global.PageInfo.getAllSavedPagesInfo();
+                    const pageInfos = await PageInfo.getAllSavedPagesInfo();
                     
                     assert.deepStrictEqual(pageInfos, 
                         expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));

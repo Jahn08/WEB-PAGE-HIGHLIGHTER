@@ -21,13 +21,13 @@ describe('content_script/messageControl', function () {
     });
 
     const checkMessageControlText = (msgEl, expectedMsg) => {
-        const msgLabelEl = msgEl.querySelector('#' + global.MessageControl.BLANKET_PARAGRAPH_ELEM_ID);
+        const msgLabelEl = msgEl.querySelector('#' + MessageControl.BLANKET_PARAGRAPH_ELEM_ID);
         assert(msgLabelEl);
         assert.strictEqual(msgLabelEl.innerHTML, '' + expectedMsg);
     };
 
     const getMessageControl = (shouldBePresent = true) => {
-        const msgEl = document.getElementById(global.MessageControl.BLANKET_ELEM_ID);
+        const msgEl = document.getElementById(MessageControl.BLANKET_ELEM_ID);
         assert.strictEqual(msgEl === null, !shouldBePresent);
 
         return msgEl;
@@ -44,14 +44,14 @@ describe('content_script/messageControl', function () {
 
         it('should render a message control in DOM', () => {
             const expectedMessage = Randomiser.getRandomNumberUpToMax();
-            global.MessageControl.show(expectedMessage);
+            MessageControl.show(expectedMessage);
             
             checkMessageControl(expectedMessage);
         });
 
         it('should render a message control, which won\'t disappear after changing the body tag', () => {
             const expectedMessage = Randomiser.getRandomNumberUpToMax();
-            global.MessageControl.show(expectedMessage);
+            MessageControl.show(expectedMessage);
             
             const rootDiv = document.createElement('div');
             rootDiv.innerHTML = Randomiser.getRandomNumberUpToMax();
@@ -63,10 +63,10 @@ describe('content_script/messageControl', function () {
 
         it('should rerender a text in a message control when showing different messages', () => {
             const initialMessage = Randomiser.getRandomNumberUpToMax();
-            global.MessageControl.show(initialMessage);
+            MessageControl.show(initialMessage);
             
             const expectedMessage = Randomiser.getRandomNumberUpToMax();
-            global.MessageControl.show(expectedMessage);
+            MessageControl.show(expectedMessage);
             checkMessageControl(expectedMessage);
 
             assert.strictEqual([...document.querySelectorAll('p')]
@@ -89,15 +89,15 @@ describe('content_script/messageControl', function () {
         };
 
         it('should do nothing if there is no message element rendered', () =>
-            Expectation.expectResolution(global.MessageControl.hide(), 
+            Expectation.expectResolution(MessageControl.hide(), 
                 () => getMessageControl(false))
         );
 
         const buildHiddenMessageControlText = () => {
             const expectedMessage = Randomiser.getRandomNumberUpToMax();
 
-            global.MessageControl.show(expectedMessage);            
-            return global.MessageControl.hide().then(() => expectedMessage);
+            MessageControl.show(expectedMessage);            
+            return MessageControl.hide().then(() => expectedMessage);
         };
 
         it('should add hiding classes to an existent message element', () => 
@@ -108,7 +108,7 @@ describe('content_script/messageControl', function () {
         it('should hide an existent message only once', () => {
             return Expectation.expectResolution(
                 buildHiddenMessageControlText().then(expectedMessage => { 
-                    return global.MessageControl.hide().then(() => expectedMessage); 
+                    return MessageControl.hide().then(() => expectedMessage); 
                 }),
                 expectedMessage => checkHiddentMessageControl(expectedMessage));
         });

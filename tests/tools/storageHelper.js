@@ -8,7 +8,7 @@ export class StorageHelper {
             expectedPageData.push(this._createRandomObject());
 
         return Promise.all(expectedPageData
-            .map(obj => new global.BrowserStorage(obj.key).set(obj)))
+            .map(obj => new BrowserStorage(obj.key).set(obj)))
             .then(() => { return expectedPageData; });
     }
 
@@ -38,7 +38,7 @@ export class StorageHelper {
             ++i;
         }
 
-        return Promise.all(expectedPageData.map(pi => new global.BrowserStorage(pi.uri).set(pi)))
+        return Promise.all(expectedPageData.map(pi => new BrowserStorage(pi.uri).set(pi)))
             .then(() => { return expectedPageData; });
     }
 

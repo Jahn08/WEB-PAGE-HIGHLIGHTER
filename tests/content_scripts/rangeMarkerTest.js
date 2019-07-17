@@ -25,25 +25,25 @@ describe('content_script/rangeMarker', function () {
     describe('#isNodeMarked', function () {
         it('should return false for all unmarked nodes', function () {
             document.querySelectorAll('.article--paragraph--sentence--label').forEach(n => 
-                assert(global.RangeMarker.isNodeMarked(n) === false));
+                assert(RangeMarker.isNodeMarked(n) === false));
         });
 
         it('should return true for all marked nodes', function () {
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
             italicNodes.forEach(n => {
-                n.classList.add(global.RangeMarker.markerClass);
-                assert(global.RangeMarker.isNodeMarked(n));
+                n.classList.add(RangeMarker.markerClass);
+                assert(RangeMarker.isNodeMarked(n));
             });
         });
 
         it('should return false for nodes which contain marked children', function () {
             const italicNodes = document.querySelectorAll('.article--paragraph--sentence--italic');
-            italicNodes.forEach(n => n.classList.add(global.RangeMarker.markerClass));
+            italicNodes.forEach(n => n.classList.add(RangeMarker.markerClass));
 
             let markedSentencesCount = 0;
 
             document.querySelectorAll('.article--paragraph--sentence').forEach(n => {
-                if (global.RangeMarker.isNodeMarked(n)) 
+                if (RangeMarker.isNodeMarked(n)) 
                     ++markedSentencesCount;
             });
 
@@ -51,17 +51,17 @@ describe('content_script/rangeMarker', function () {
         });
     });
 
-    const createRandomColourClass = () => `${global.RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
+    const createRandomColourClass = () => `${RangeMarker.markerClass}_${Randomiser.getRandomNumber(1000)}`;
 
     const markCurSelectionWithRandomColour = (shouldMark = true) => {
         const colourClass = createRandomColourClass();
-        assert.strictEqual(global.RangeMarker.markSelectedNodes(colourClass), shouldMark);
+        assert.strictEqual(RangeMarker.markSelectedNodes(colourClass), shouldMark);
 
         return colourClass;
     };
 
     const checkMarkedNodes = function (expectedMarkersNumber, expectedText, 
-        colourClass = global.RangeMarker.markerClass) {
+        colourClass = RangeMarker.markerClass) {
         const markedNodes = [...document.querySelectorAll(`.${colourClass}`)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
@@ -93,7 +93,7 @@ describe('content_script/rangeMarker', function () {
         const range = document.createRange();
         setRangeContainersCallback(range);
 
-        const markColours = global.RangeMarker.getColourClassesForSelectedNodes();
+        const markColours = RangeMarker.getColourClassesForSelectedNodes();
         assert(markColours);
         assert.strictEqual(markColours.length, 1);
         assert.strictEqual(markColours[0], expectedColourClass);
@@ -129,7 +129,7 @@ describe('content_script/rangeMarker', function () {
 
     const getRangeSetterForRemarkingPartially = (colour, startOffset, endOffset) => {
         return (range) => {
-            let markedNodes = document.querySelectorAll('.' + global.RangeMarker.markerClass);
+            let markedNodes = document.querySelectorAll('.' + RangeMarker.markerClass);
             
             const newColourNodes = [...markedNodes].filter(n => !n.classList.contains(colour));
 
@@ -246,7 +246,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#unmarkSelectedNodes', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), false);
+            assert.strictEqual(RangeMarker.unmarkSelectedNodes(), false);
             checkMarkedNodes(0, '');
         });
 
@@ -254,14 +254,14 @@ describe('content_script/rangeMarker', function () {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
             setRange(setRangeContainerForSentenceItalic);
-            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), false);
+            assert.strictEqual(RangeMarker.unmarkSelectedNodes(), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });
 
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
-            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(getFirstItalicSentenceNode()), 
+            assert.strictEqual(RangeMarker.unmarkSelectedNodes(getFirstItalicSentenceNode()), 
                 false);
             
             assertRangeColour(setRangeContainerForSentence, expectedColour);
@@ -273,7 +273,7 @@ describe('content_script/rangeMarker', function () {
             if (!targetNode)
                 setRange(setRangeContainersCallback);
             
-            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(targetNode), true);
+            assert.strictEqual(RangeMarker.unmarkSelectedNodes(targetNode), true);
             checkMarkedNodes(0, '');
         };
 
@@ -301,7 +301,7 @@ describe('content_script/rangeMarker', function () {
             const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
             setRange(getRangeSetterForRemarkingPartially(curColour, startOffset, endOffset));
             
-            assert.strictEqual(global.RangeMarker.unmarkSelectedNodes(), true);
+            assert.strictEqual(RangeMarker.unmarkSelectedNodes(), true);
 
             checkMarkedNodes(startOffset && endOffset ? 2 : 1, 
                 expectedResidualMarkedText, curColour);
@@ -327,7 +327,7 @@ describe('content_script/rangeMarker', function () {
 
             setRangeForFirstParagraph();
 
-            global.RangeMarker.unmarkSelectedNodes();
+            RangeMarker.unmarkSelectedNodes();
             checkMarkedNodes(0, '');
         });
 
@@ -340,7 +340,7 @@ describe('content_script/rangeMarker', function () {
 
             for (let i = 0; i < 5; ++i) {
                 const emptyMarker = document.createElement('div');
-                emptyMarker.className = global.RangeMarker.markerClass;
+                emptyMarker.className = RangeMarker.markerClass;
 
                 if (i % 2 === 0) {
                     emptyMarker.innerHTML = Randomiser.getRandomNumberUpToMax();
@@ -350,9 +350,9 @@ describe('content_script/rangeMarker', function () {
                 document.body.append(emptyMarker);
             }
 
-            global.RangeMarker.unmarkSelectedNodes();
+            RangeMarker.unmarkSelectedNodes();
             
-            const markers = [...document.getElementsByClassName(global.RangeMarker.markerClass)];
+            const markers = [...document.getElementsByClassName(RangeMarker.markerClass)];
             assert.strictEqual(markers.length, expectedTokens.length);
             assert(markers.every(m => expectedTokens.includes(m.innerHTML)));
 
@@ -362,7 +362,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#changeSelectedNodesColour', function () {
         it('should do nothing with neither selected text nor a focused node', () => {
-            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(createRandomColourClass()), 
+            assert.strictEqual(RangeMarker.changeSelectedNodesColour(createRandomColourClass()), 
                 false);
             checkMarkedNodes(0, '');
         });
@@ -370,7 +370,7 @@ describe('content_script/rangeMarker', function () {
         const changeColourOverRange = (setRangeContainersCallback, 
             colour = createRandomColourClass(), shouldChangeColour = true) => {
             setRange(setRangeContainersCallback);
-            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(colour), shouldChangeColour);
+            assert.strictEqual(RangeMarker.changeSelectedNodesColour(colour), shouldChangeColour);
 
             return colour;
         };
@@ -386,7 +386,7 @@ describe('content_script/rangeMarker', function () {
         it('should do nothing with a selected unmarked node', () => {
             const expectedColour = markRangeAndCheckColour(setRangeContainerForSentence);
             
-            assert.strictEqual(global.RangeMarker.changeSelectedNodesColour(createRandomColourClass(),
+            assert.strictEqual(RangeMarker.changeSelectedNodesColour(createRandomColourClass(),
                 getFirstItalicSentenceNode()), false);
 
             assertRangeColour(setRangeContainerForSentence, expectedColour);
@@ -407,7 +407,7 @@ describe('content_script/rangeMarker', function () {
             assert.notStrictEqual(initialColour, expectedColour);
 
             assert.strictEqual(
-                global.RangeMarker.changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
+                RangeMarker.changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
                 true);
             assertRangeColour(setRangeContainerForSentence, expectedColour);
         });

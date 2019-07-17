@@ -15,8 +15,8 @@ describe('content_script/messageReceiver', function () {
 
     const testReceivingEvents = (senderEvent, receiverEvent, useColourArg = false) => {
         const expectedColour = useColourArg ? Randomiser.getRandomNumberUpToMax() : null;
-        const receiver = new global.MessageReceiver(
-            global.MessageSender[senderEvent](expectedColour));
+        const receiver = new MessageReceiver(
+            MessageSender[senderEvent](expectedColour));
 
         assert.strictEqual(receiver[receiverEvent](), true);
         assert.strictEqual([receiver.shouldChangeColour(), receiver.shouldLoad(),
@@ -70,8 +70,8 @@ describe('content_script/messageReceiver', function () {
     const testSendingEvents = (receiverEvent, senderEvent, useColoursArg = false) => {
         const expectedColours = useColoursArg ? 
             [Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax()] : [];
-        const sender = new global.MessageSender(
-            global.MessageReceiver[receiverEvent](expectedColours));
+        const sender = new MessageSender(
+            MessageReceiver[receiverEvent](expectedColours));
 
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
@@ -119,17 +119,17 @@ describe('content_script/messageReceiver', function () {
     describe('#combineEvents', function () {
         it('should return null when combining undefined events', () =>
             assert.strictEqual(
-                global.MessageReceiver.combineEvents(undefined, undefined), null));
+                MessageReceiver.combineEvents(undefined, undefined), null));
 
         it('should filter out null events and combine the rest correctly', () => {
             const expectedColours = [Randomiser.getRandomNumberUpToMax(),
                 Randomiser.getRandomNumberUpToMax()];
 
-            const msg =  global.MessageReceiver.combineEvents(undefined, 
-                global.MessageReceiver.setLoadMenuReady(), undefined, 
-                global.MessageReceiver.setSaveMenuReady(), null, 
-                global.MessageReceiver.setMarkMenuReady(expectedColours),
-                global.MessageReceiver.setRemoveNoteMenuReady());
+            const msg =  MessageReceiver.combineEvents(undefined, 
+                MessageReceiver.setLoadMenuReady(), undefined, 
+                MessageReceiver.setSaveMenuReady(), null, 
+                MessageReceiver.setMarkMenuReady(expectedColours),
+                MessageReceiver.setRemoveNoteMenuReady());
 
             assert(msg);
 
@@ -139,7 +139,7 @@ describe('content_script/messageReceiver', function () {
             assert(msg.colourClass);
             assert.deepStrictEqual(msg.colourClass, expectedColours);
 
-            const sender = new global.MessageSender(msg);
+            const sender = new MessageSender(msg);
             assert(sender.shouldSetSaveMenuReady());
             assert(sender.shouldSetLoadMenuReady());
             assert(sender.shouldSetRemoveNoteMenuReady());

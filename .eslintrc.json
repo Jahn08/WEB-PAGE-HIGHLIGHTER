@@ -13,12 +13,14 @@
     },
     "globals": {
         "RangeBase": "readonly",
-        "MessageReceiver": "readonly",
-        "MessageControl": "readonly",
         "RangeMarker": "readonly",
-        "PageInfo": "readonly",
+        "RangeNote": "readonly",
         "MenuMessageEvent": "readonly",
-        "BrowserStorage": "readonly"
+        "MessageReceiver": "readonly",
+        "MessageSender": "readonly",
+        "MessageControl": "readonly",
+        "BrowserStorage": "readonly",
+        "PageInfo": "readonly"
     },
     "rules": {
         "indent": [
