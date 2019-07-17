@@ -1,8 +1,4 @@
 class RangeBase {
-    static _getSelectionRange() {
-        return this._getSelectionRanges()[0];
-    }
-
     static _getSelectionRanges() {
         const sel = window.getSelection();
 

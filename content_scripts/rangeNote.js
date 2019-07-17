@@ -1,6 +1,6 @@
 class RangeNote extends RangeBase {
     static hasSelectionRange() {
-        return this._getSelectionRange() !== null;
+        return this._getSelectionRanges().length !== 0;
     }
 
     static createNote(text, targetNode = null) {

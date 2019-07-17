@@ -4,18 +4,21 @@ class RangeMarker extends RangeBase {
     }
 
     static getColourClassesForSelectedNodes() {
-        const range = this._getSelectionRange();
+        const ranges = this._getSelectionRanges();
 
-        if (!range)
+        if (!ranges.length)
             return;
 
-        const markerElems = this._getMarkerElementsFromSelection(range);
+        const colourClasses = ranges.map(range => {
+            const markerElems = this._getMarkerElementsFromSelection(range);
 
-        if (!markerElems.length)
-            return [];
+            if (!markerElems.length)
+                return [];
+    
+            return markerElems.map(e => this._obtainMarkerColourClass(e.classList))
+                .filter(cl => cl);
+        }).reduce((prev, cur) => prev.concat(cur));
 
-        const colourClasses = markerElems.map(e => this._obtainMarkerColourClass(e.classList))
-            .filter(cl => cl);
         return [...new Set(colourClasses)];
     }
 
@@ -31,25 +34,36 @@ class RangeMarker extends RangeBase {
     }
 
     static unmarkSelectedNodes(targetNode = null) {
-        const range = this._getSelectionRange();
-        const affectedNodes = this._markTextNodes(this._getActiveTextNodes(range, targetNode), range);
-   
-        this._collapseRange(range);
+        const ranges = this._getSelectionRanges();
 
-        this._removeEmptyMarkers();
+        let affectedNodes = [];
 
-        return affectedNodes.length > 0;
+        if (ranges.length)
+            affectedNodes = this._getSelectionRanges().filter(range => {
+                const affectedNodes = this._markTextNodes(this._getSelectedTextNodes(range), range);
+
+                this._collapseRange(range);
+
+                return affectedNodes.length > 0;
+            });
+        else if (targetNode)
+            affectedNodes = this._markTextNodes(this._getActiveTextNodes(targetNode));
+
+        const successfully = affectedNodes.length !== 0;
+
+        if (successfully)
+            this._removeEmptyMarkers();
+        
+        return successfully;
     }
     
-    static _getActiveTextNodes(range, targetNode) {
-        if (range)
-            return this._getSelectedTextNodes(range);
-        else if (targetNode)
-            return this._getMarkerElementsFromElement(targetNode)
-                .map(n => n.firstChild)
-                .filter(n => this._isProperTextNode(n));
-    
-        return [];
+    static _getActiveTextNodes(targetNode) {
+        if (!targetNode)
+            return [];    
+        
+        return this._getMarkerElementsFromElement(targetNode)
+            .map(n => n.firstChild)
+            .filter(n => this._isProperTextNode(n));
     }
 
     static _getMarkerElementsFromElement(node) {
@@ -65,19 +79,20 @@ class RangeMarker extends RangeBase {
     }
 
     static markSelectedNodes(colourClass) {
-        const range = this._getSelectionRange();
-        const selectedNodes = this._getSelectedTextNodes(range);
+        return this._getSelectionRanges().filter(range => {
+            const selectedNodes = this._getSelectedTextNodes(range);
 
-        if (!selectedNodes.length)
-            return this._collapseRange(range), false;
-
-        this._markTextNodes(selectedNodes, range, colourClass);
-        this._collapseRange(range);
-
-        return true;
+            if (!selectedNodes.length)
+                return this._collapseRange(range), false;
+    
+            this._markTextNodes(selectedNodes, range, colourClass);
+            this._collapseRange(range);
+    
+            return true;
+        }).length !== 0;
     }
 
-    static _markTextNodes(nodes, range, colour = null) {
+    static _markTextNodes(nodes, range = null, colour = null) {
         const markerClass = this.MARKER_CLASS_NAME;
         const lastNodeIndex = nodes.length - 1;
 
@@ -213,13 +228,23 @@ class RangeMarker extends RangeBase {
     }
 
     static changeSelectedNodesColour(colourClass, targetNode = null) {
-        const range = this._getSelectionRange();
-        const affectedNodes = this._markTextNodes(this._getActiveTextNodes(range, targetNode), 
-            range, colourClass);
+        const ranges = this._getSelectionRanges();
 
-        this._collapseRange(range);
+        let affectedNodes = [];
 
-        return affectedNodes.length > 0;
+        if (ranges.length)
+            affectedNodes = this._getSelectionRanges().filter(range => {
+                const affectedNodes = this._markTextNodes(this._getSelectedTextNodes(range), 
+                    range, colourClass);
+
+                this._collapseRange(range);
+
+                return affectedNodes.length > 0;
+            });
+        else if (targetNode)
+            affectedNodes = this._markTextNodes(this._getActiveTextNodes(targetNode), null, colourClass);
+
+        return affectedNodes.length !== 0;
     }
 
     static domContainsMarkers() {
