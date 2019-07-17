@@ -92,7 +92,7 @@
 }
 
 .marker-solid-note::after {
-    content:']';
+    content:']✎';
 }
 
 .marker-has-note {

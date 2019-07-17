@@ -34,68 +34,63 @@ class RangeNote extends RangeBase {
     }
 
     static _appendNoteToRangeNodes(ranges, noteId, text) {
-        if (!ranges)
+        if (!ranges || !ranges.length)
             return false;
 
-        const firstRange = ranges[0];
-        const lastRange = ranges[ranges.length - 1];
-        const hasOnlyRange = firstRange === lastRange;
-
-        const endOffset = lastRange.endOffset;
-        const skipLastNode = !endOffset;
-
-        let selectedNodes = this._getSelectedTextNodes(firstRange);
-
-        if (!hasOnlyRange)
-            selectedNodes = selectedNodes.concat(this._getSelectedTextNodes(lastRange));
-
-        let lastNodeIndex = selectedNodes.length - (skipLastNode ? 1 : 0) - 1;
-        lastNodeIndex = lastNodeIndex <= 0 ? 0: lastNodeIndex;
-        const isSingleNode = hasOnlyRange && !lastNodeIndex;
-
-        if (isSingleNode) {
-            const noteNode = this._createSolidContainerNoteNode(noteId, text);
-            noteNode.append(firstRange.extractContents());
-            firstRange.insertNode(noteNode);
-
-            return true;
-        }
+        ranges.forEach(range => {            
+            const endOffset = range.endOffset;
+            const skipLastNode = !endOffset;
     
-        const startOffset = firstRange.startOffset;
-
-        const firstNode = selectedNodes[0];
-        const useFirstNodePartially = startOffset > 0;
-
-        const startNoteEl = this._createStartContainerNoteNode(noteId, text);
-
-        if (useFirstNodePartially) {
-            const val = firstNode.nodeValue;
-            firstNode.nodeValue = val.substring(0, startOffset);
-
-            const fragment = new DocumentFragment();
-            fragment.append(startNoteEl, document.createTextNode(val.substring(startOffset)));
-            
-            firstNode.parentElement.insertBefore(fragment, firstNode.nextSibling);
-        }
-        else
-            firstNode.parentElement.insertBefore(startNoteEl, firstNode);
-
-        const lastNode = selectedNodes[lastNodeIndex];
-        const useLastNodePartially = endOffset && endOffset !== lastNode.length;
-
-        const endNoteEl = this._createEndContainerNoteNode(noteId, text);
-
-        if (useLastNodePartially) {
-            const val = lastNode.nodeValue;
-            lastNode.nodeValue = val.substring(endOffset);
-
-            const fragment = new DocumentFragment();
-            fragment.append(document.createTextNode(val.substring(0, endOffset)), endNoteEl);
-            
-            lastNode.parentElement.insertBefore(fragment, lastNode);
-        }
-        else
-            lastNode.parentElement.insertBefore(endNoteEl, lastNode.nextSibling);
+            const selectedNodes = this._getSelectedTextNodes(range);
+    
+            let lastNodeIndex = selectedNodes.length - (skipLastNode ? 1 : 0) - 1;
+            lastNodeIndex = lastNodeIndex <= 0 ? 0: lastNodeIndex;
+            const isSingleNode = !lastNodeIndex;
+    
+            if (isSingleNode) {
+                const noteNode = this._createSolidContainerNoteNode(noteId, text);
+                noteNode.append(range.extractContents());
+                range.insertNode(noteNode);
+    
+                return true;
+            }
+        
+            const startOffset = range.startOffset;
+    
+            const firstNode = selectedNodes[0];
+            const useFirstNodePartially = startOffset > 0;
+    
+            const startNoteEl = this._createStartContainerNoteNode(noteId, text);
+    
+            if (useFirstNodePartially) {
+                const val = firstNode.nodeValue;
+                firstNode.nodeValue = val.substring(0, startOffset);
+    
+                const fragment = new DocumentFragment();
+                fragment.append(startNoteEl, document.createTextNode(val.substring(startOffset)));
+                
+                firstNode.parentElement.insertBefore(fragment, firstNode.nextSibling);
+            }
+            else
+                firstNode.parentElement.insertBefore(startNoteEl, firstNode);
+    
+            const lastNode = selectedNodes[lastNodeIndex];
+            const useLastNodePartially = endOffset && endOffset !== lastNode.length;
+    
+            const endNoteEl = this._createEndContainerNoteNode(noteId, text);
+    
+            if (useLastNodePartially) {
+                const val = lastNode.nodeValue;
+                lastNode.nodeValue = val.substring(endOffset);
+    
+                const fragment = new DocumentFragment();
+                fragment.append(document.createTextNode(val.substring(0, endOffset)), endNoteEl);
+                
+                lastNode.parentElement.insertBefore(fragment, lastNode);
+            }
+            else
+                lastNode.parentElement.insertBefore(endNoteEl, lastNode.nextSibling);
+        });
 
         return true;
     }
