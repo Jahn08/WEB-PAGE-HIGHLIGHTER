@@ -37,7 +37,7 @@ export class EnvLoader {
 
     static loadDomModel(path = './tests/resources/testPage.html') {
         return this._wrapWithPromise(resolve => {
-            if (EnvLoader._cleanup)
+            if (this._cleanup)
                 return;
 
             this._checkPathExistence(path);
@@ -47,7 +47,7 @@ export class EnvLoader {
                 if (err)
                     throw err;
             
-                EnvLoader._cleanup = jsDom(data.toString('utf8'));
+                this._cleanup = jsDom(data.toString('utf8'));
                 this._buildDocumentCreateRangeFunction();
                 this._buildDocumentContentChecker();
 
@@ -57,10 +57,40 @@ export class EnvLoader {
     }
 
     static _buildDocumentCreateRangeFunction() {
-        if (global.document && !EnvLoader._range) {
-            EnvLoader._range = new Range();
-            global.document.createRange = () => EnvLoader._range;
+        if (global.document && !this._ranges) {
+            this._ranges = [new Range()];
+            
+            global.document.createRange = () => this._ranges[0];
+            
+            global.document.appendRange = () => { 
+                const collapsedRange = this._ranges.find(r => r.collapsed);
+
+                if (collapsedRange)
+                    return collapsedRange;
+                    
+                const newRange = new Range();
+                this._ranges.push(newRange);
+
+                return newRange;
+            };
+
+            this._setWindowSelection();
         }
+    }
+
+    static _setWindowSelection() {
+        if (!global.window)
+            global.window = {};
+
+        global.window.getSelection = () => {
+            const activeRanges = EnvLoader._ranges.filter(r => !r.collapsed);
+
+            return { 
+                isCollapsed: !activeRanges.length,
+                getRangeAt(index) { return activeRanges[index]; },
+                rangeCount: activeRanges.length
+            };
+        };
     }
 
     static _buildDocumentContentChecker() {
@@ -72,20 +102,19 @@ export class EnvLoader {
         }
     }
 
-    static _getAllDocTextContent()
-    {
+    static _getAllDocTextContent() {
         return document.body.textContent.replace(/\s/gm, '');
     }
 
     static unloadDomModel() {
-        if (EnvLoader._cleanup) {
-            EnvLoader._cleanup();
-            EnvLoader._cleanup = null;
+        if (this._cleanup) {
+            this._cleanup();
+            this._cleanup = null;
         }
 
-        if (EnvLoader._range) {
-            EnvLoader._range.dispose();
-            EnvLoader._range = null;
+        if (this._ranges) {
+            this._ranges = null;
+            global.window = null;
         }
     }
 }
@@ -97,8 +126,6 @@ class Range {
         this.endContainer;
         this.endOffset = 0;
         this.startOffset = 0;
-
-        this._setWindowSelection();
     }
 
     surroundContents(newParent) {
@@ -126,11 +153,6 @@ class Range {
 
     get collapsed() {
         return !this.startContainer || !this.endContainer;
-    }
-
-    dispose() {
-        if (global.window)
-            global.window = null;
     }
 
     collapse() {
@@ -199,21 +221,6 @@ class Range {
         while ((node = node.parentNode) && !startParents.includes(node));
 
         this.commonAncestorContainer = node;
-    }
-
-    _setWindowSelection() {
-        if (!global.window)
-            global.window = {};
-
-        const _this = this;
-
-        global.window.getSelection = () => {
-            return { 
-                isCollapsed: _this.collapsed,
-                getRangeAt() { return _this; },
-                rangeCount: 1
-            };
-        };
     }
 
     _getParentsUntilRoot(node) {

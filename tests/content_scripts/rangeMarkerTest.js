@@ -60,6 +60,8 @@ describe('content_script/rangeMarker', function () {
         return colourClass;
     };
 
+    const removeExcessSpaces = text => text.replace(/\s+/gm, ' ').trim();
+
     const checkMarkedNodes = function (expectedMarkersNumber, expectedText, 
         colourClass = RangeMarker.MARKER_CLASS_NAME) {
         const markedNodes = [...document.querySelectorAll(`.${colourClass}`)];
@@ -73,32 +75,50 @@ describe('content_script/rangeMarker', function () {
             markedText = markedNodes.reduce(
                 (p, c) => (p.textContent ? p.textContent: p) + c.textContent);
 
-        assert.strictEqual(markedText.replace(/\s+/gm, ' ').trim(), expectedText);
+        assert.strictEqual(removeExcessSpaces(markedText), expectedText);
         assert.strictEqual(document.querySelectorAll('.' + colourClass).length > 0,
             expectedMarkersNumber ? true: false);
     };
 
-    const setRange = setRangeContainersCallback => setRangeContainersCallback(document.createRange());
+    const setRange = setRangeContainersCallback => {
+        const range = document.createRange();
+        setRangeContainersCallback(range);
 
-    const markRangeAndCheckColour = setRangeContainersCallback => {
-        setRange(setRangeContainersCallback);
+        return range;
+    };
+
+    const markRangeAndCheckColour = (...setRangeContainersCallbacks) => {
+        setMultipleRanges(setRangeContainersCallbacks);
         
         const colourClass = markCurSelectionWithRandomColour();
-        assertRangeColour(setRangeContainersCallback, colourClass);
+        assertRangeColour(colourClass, ...setRangeContainersCallbacks);
 
         return colourClass;
     };
 
-    const assertRangeColour = (setRangeContainersCallback, expectedColourClass) => {
-        const range = document.createRange();
-        setRangeContainersCallback(range);
+    const setMultipleRanges = setRangeContainersCallbacks => {
+        return setRangeContainersCallbacks.map((fn, index) => {
+            if (!index)
+                return setRange(fn);
+            
+            const range = document.appendRange();
+            fn(range);
+            
+            return range;
+        });
+    };
 
-        const markColours = RangeMarker.getColourClassesForSelectedNodes();
-        assert(markColours);
-        assert.strictEqual(markColours.length, 1);
-        assert.strictEqual(markColours[0], expectedColourClass);
+    const assertRangeColour = (expectedColourClass, ...setRangeContainersCallbacks) => {
+        setMultipleRanges(setRangeContainersCallbacks).forEach((range, index) => {
+            setRangeContainersCallbacks[index](range);
 
-        range.collapse();
+            const markColours = RangeMarker.getColourClassesForSelectedNodes();
+            assert(markColours);
+            assert.strictEqual(markColours.length, 1);
+            assert.strictEqual(markColours[0], expectedColourClass);
+    
+            range.collapse();
+        });
     };
 
     const setRangeForEntireNodes = range => {
@@ -121,6 +141,12 @@ describe('content_script/rangeMarker', function () {
 
     const getLastParagraphSentenceNode = () => 
         document.querySelector('#article--paragraph-last .article--paragraph--sentence');
+
+    const setRangeForLastParagraphSentenceNode = range => {
+        const node = getLastParagraphSentenceNode();
+        range.setStart(node);
+        range.setEnd(node);
+    };
 
     const setRangeForSeveralParagraphs = range => {
         range.setStart(getFirstItalicSentenceNode(), 26);
@@ -161,20 +187,30 @@ describe('content_script/rangeMarker', function () {
             checkMarkedNodes(expectedMarkersNumber, expectedText);
         };
 
+        const PARTLY_SELECTED_NODE_EXPECTED_TEXT = 'nsions for Firefox ar';
+
         it('should mark text over partially selected text of the same node', () =>
-            testMarking(setRangeForPartlySelectedItalicSentenceNode, 1, 'nsions for Firefox ar')
+            testMarking(setRangeForPartlySelectedItalicSentenceNode, 1, PARTLY_SELECTED_NODE_EXPECTED_TEXT)
         );
+
+        const ENTIRELY_SELECTED_NODE_EXPECTED_TEXT = 'can extend and modify the capability of a browser. ' + 
+            'Extensions for Firefox are built using the WebExtensions API, ' + 
+            'a cross-browser system for developing';
 
         it('should mark text over entirely selected nodes', () =>
-            testMarking(setRangeForEntireNodes, 5, 
-                'can extend and modify the capability of a browser. ' + 
-                'Extensions for Firefox are built using the WebExtensions API, ' + 
-                'a cross-browser system for developing')
+            testMarking(setRangeForEntireNodes, 5, ENTIRELY_SELECTED_NODE_EXPECTED_TEXT)
         );
 
-        it('should mark over partly selected nodes', () => {
-            testMarking(setRangeForPartlySelectedNodes, 3, 
-                'or Firefox are built using the WebExtensions API, a cross-browser system f');
+        it('should mark over partly selected nodes', () =>
+            testMarking(setRangeForPartlySelectedNodes, 3, 'or Firefox are built using the WebExtensions API, a cross-browser system f')
+        );
+
+        it('should mark over several selected nodes', () => {
+            markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode, setRangeForLastParagraphSentenceNode);
+
+            const lastPart = removeExcessSpaces(getLastParagraphSentenceNode().textContent);
+            const expectedText = [PARTLY_SELECTED_NODE_EXPECTED_TEXT, lastPart].join(' ');
+            checkMarkedNodes(4, expectedText);
         });
     
         const SEVERAL_PARAGRAPHS_EXPECTED_NODES = 9;
@@ -256,7 +292,7 @@ describe('content_script/rangeMarker', function () {
             setRange(setRangeContainerForSentenceItalic);
             assert.strictEqual(RangeMarker.unmarkSelectedNodes(), false);
 
-            assertRangeColour(setRangeContainerForSentence, expectedColour);
+            assertRangeColour(expectedColour, setRangeContainerForSentence);
         });
 
         it('should do nothing with a selected unmarked node', () => {
@@ -264,7 +300,7 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(RangeMarker.unmarkSelectedNodes(getFirstItalicSentenceNode()), 
                 false);
             
-            assertRangeColour(setRangeContainerForSentence, expectedColour);
+            assertRangeColour(expectedColour, setRangeContainerForSentence);
         });
 
         const testUnmarking = function (setRangeContainersCallback, targetNode = null) {
@@ -321,13 +357,22 @@ describe('content_script/rangeMarker', function () {
                 setRangeContainer(range, document.getElementById('article--paragraph-first')));
         };
 
-        it('should unmark text over several marked texts', () => {
+        it('should unmark text over several marked texts in the same range', () => {
             markRangeAndCheckColour(setRangeContainerForSentence);
             markRangeAndCheckColour(setRangeContainerForSentenceItalic);
 
             setRangeForFirstParagraph();
 
             RangeMarker.unmarkSelectedNodes();
+            checkMarkedNodes(0, '');
+        });
+
+        it('should unmark text over several marked texts in a few ranges', () => {
+            markRangeAndCheckColour(setRangeContainerForSentence, setRangeContainerForSentenceItalic);
+
+            setMultipleRanges([setRangeContainerForSentence, setRangeContainerForSentenceItalic]);
+            RangeMarker.unmarkSelectedNodes();
+
             checkMarkedNodes(0, '');
         });
 
@@ -367,10 +412,9 @@ describe('content_script/rangeMarker', function () {
             checkMarkedNodes(0, '');
         });
         
-        const changeColourOverRange = (setRangeContainersCallback, 
-            colour = createRandomColourClass(), shouldChangeColour = true) => {
-            setRange(setRangeContainersCallback);
-            assert.strictEqual(RangeMarker.changeSelectedNodesColour(colour), shouldChangeColour);
+        const assureChangingColourOverRange = (colour = createRandomColourClass(), ...setRangeContainersCallbacks) => {
+            setMultipleRanges(setRangeContainersCallbacks);
+            assert.strictEqual(RangeMarker.changeSelectedNodesColour(colour), true);
 
             return colour;
         };
@@ -378,9 +422,15 @@ describe('content_script/rangeMarker', function () {
         it('should mark selected unmarked text with a changed colour', () => {
             const oldColour = markRangeAndCheckColour(setRangeContainerForSentence);
 
-            const newColour = changeColourOverRange(setRangeContainerForSentenceItalic, undefined, true);
-            assertRangeColour(setRangeContainerForSentence, oldColour);
-            assertRangeColour(setRangeContainerForSentenceItalic, newColour);
+            const newColour = assureChangingColourOverRange(undefined, setRangeContainerForSentenceItalic);
+            assertRangeColour(oldColour, setRangeContainerForSentence);
+            assertRangeColour(newColour, setRangeContainerForSentenceItalic);
+        });
+
+        it('should mark a few selected unmarked texts with a changed colour', () => {
+            const newColour = assureChangingColourOverRange(undefined, setRangeContainerForSentenceItalic, 
+                setRangeContainerForSentence);
+            assertRangeColour(newColour, setRangeContainerForSentenceItalic, setRangeContainerForSentence);
         });
 
         it('should do nothing with a selected unmarked node', () => {
@@ -389,15 +439,15 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(RangeMarker.changeSelectedNodesColour(createRandomColourClass(),
                 getFirstItalicSentenceNode()), false);
 
-            assertRangeColour(setRangeContainerForSentence, expectedColour);
+            assertRangeColour(expectedColour, setRangeContainerForSentence);
         });
 
         it('should change colour for a selected text', () => {
             const expectedColour = createRandomColourClass();
             assert.notStrictEqual(markRangeAndCheckColour(setRangeForSeveralParagraphs), expectedColour);
            
-            changeColourOverRange(setRangeForSeveralParagraphs, expectedColour);
-            assertRangeColour(setRangeForSeveralParagraphs, expectedColour);
+            assureChangingColourOverRange(expectedColour, setRangeForSeveralParagraphs);
+            assertRangeColour(expectedColour, setRangeForSeveralParagraphs);
         });
 
         it('should change colour for a focused node', () => {
@@ -409,15 +459,30 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(
                 RangeMarker.changeSelectedNodesColour(expectedColour, getFirstSentenceNode()),
                 true);
-            assertRangeColour(setRangeContainerForSentence, expectedColour);
+            assertRangeColour(expectedColour, setRangeContainerForSentence);
         });
 
         it('should partially change colour in the middle of already marked text', () => {
             const curColour = markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode);
-            const newColour = changeColourOverRange(getRangeSetterForRemarkingPartially(
+            const newColour = assureChangingColourOverRange(undefined, getRangeSetterForRemarkingPartially(
                 curColour, PARTIAL_REMARKING_START_OFFSET, PARTIAL_REMARKING_END_OFFSET));
 
             checkMarkedNodes(1, 's for Fir', newColour);
+        });
+        
+        it('should change colour for several marked texts', () => {
+            markRangeAndCheckColour(setRangeForPartlySelectedItalicSentenceNode); 
+            const curColour = markRangeAndCheckColour(setRangeContainerForSentence, setRangeForLastParagraphSentenceNode);
+            
+            const partlyMarkedRangeSetter = getRangeSetterForRemarkingPartially(curColour, 
+                PARTIAL_REMARKING_START_OFFSET, PARTIAL_REMARKING_END_OFFSET);
+
+            const newColour = assureChangingColourOverRange(undefined, partlyMarkedRangeSetter, 
+                setRangeForLastParagraphSentenceNode, setRangeContainerForSentence);
+
+            const firstPart = removeExcessSpaces(getFirstSentenceNode().textContent);
+            const lastPart = removeExcessSpaces(getLastParagraphSentenceNode().textContent);
+            checkMarkedNodes(7, `${firstPart} s for Fir ${lastPart}`, newColour);
         });
     });
 });

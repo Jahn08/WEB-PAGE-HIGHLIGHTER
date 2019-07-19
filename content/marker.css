@@ -42,6 +42,7 @@
     opacity: 0 !important;
     transition: opacity 1s ease-out;
     -webkit-transition: opacity 1s, position 2s;
+    z-index: -1000 !important;
 }
 
 .blanket-leave {
