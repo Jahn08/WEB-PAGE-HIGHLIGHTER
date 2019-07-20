@@ -94,12 +94,17 @@ export class EnvLoader {
     }
 
     static _buildDocumentContentChecker() {
-        if (global.document) {
-            const originalDocTextContent = this._getAllDocTextContent();
+        if (!global.document)
+            return;
 
-            global.document.textContentChanged = () =>
-                this._getAllDocTextContent() !== originalDocTextContent;
-        }
+        const originalDocTextContent = this._getAllDocTextContent();
+
+        global.document.textContentChanged = (nodesToRemoveSelector = '') => {
+            if (nodesToRemoveSelector)
+                document.body.querySelectorAll(nodesToRemoveSelector).forEach(n => n.remove());
+
+            return this._getAllDocTextContent() !== originalDocTextContent;
+        };
     }
 
     static _getAllDocTextContent() {
@@ -122,7 +127,10 @@ export class EnvLoader {
 class Range {
     constructor() {
         this.commonAncestorContainer;
+
         this.startContainer;
+        this._startContainerParent;
+
         this.endContainer;
         this.endOffset = 0;
         this.startOffset = 0;
@@ -172,8 +180,10 @@ class Range {
         this.startOffset = offset;
         this.startContainer = this.startOffset === 0 ? node:
             this._getOffsetChild(node, this.startOffset);
-    
+
         this._setCommonAncestor();
+
+        this._startContainerParent = this.startContainer.parentNode;
     }
       
     _getOffsetChild(node, startFrom) {
@@ -209,7 +219,7 @@ class Range {
     }
     
     _setCommonAncestor() {
-        if (!this.endContainer || !this.startContainer)
+        if (this.collapsed)
             return this.commonAncestorContainer = null, undefined;
             
         if (this.endContainer === this.startContainer)
@@ -230,5 +240,30 @@ class Range {
             parents.push(node);
 
         return parents;
+    }
+
+    extractContents() {
+        const docFragment = document.createDocumentFragment();
+
+        if (this.collapsed)
+            return docFragment;
+
+        let curContainer = this.startContainer;
+
+        curContainer.remove();
+        docFragment.append(curContainer);
+
+        while (curContainer !== this.endContainer) {
+            curContainer = curContainer.nextSibling;
+            curContainer.remove();
+            docFragment.append(curContainer);
+        }
+
+        return docFragment;
+    }
+
+    insertNode(newNode) {
+        if (this._startContainerParent)
+            this._startContainerParent.insertBefore(newNode, this._startContainerParent.firstChild);
     }
 }

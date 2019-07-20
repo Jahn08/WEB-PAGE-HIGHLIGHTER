@@ -1,8 +1,4 @@
 class RangeNote extends RangeBase {
-    static hasSelectionRange() {
-        return this._getSelectionRanges().length !== 0;
-    }
-
     static createNote(text, targetNode = null) {
         const ranges = this._getSelectionRanges();
 
@@ -49,6 +45,7 @@ class RangeNote extends RangeBase {
     
             if (isSingleNode) {
                 const noteNode = this._createSolidContainerNoteNode(noteId, text);
+
                 noteNode.append(range.extractContents());
                 range.insertNode(noteNode);
     
@@ -66,7 +63,7 @@ class RangeNote extends RangeBase {
                 const val = firstNode.nodeValue;
                 firstNode.nodeValue = val.substring(0, startOffset);
     
-                const fragment = new DocumentFragment();
+                const fragment = document.createDocumentFragment();
                 fragment.append(startNoteEl, document.createTextNode(val.substring(startOffset)));
                 
                 firstNode.parentElement.insertBefore(fragment, firstNode.nextSibling);
@@ -83,7 +80,7 @@ class RangeNote extends RangeBase {
                 const val = lastNode.nodeValue;
                 lastNode.nodeValue = val.substring(endOffset);
     
-                const fragment = new DocumentFragment();
+                const fragment = document.createDocumentFragment();
                 fragment.append(document.createTextNode(val.substring(0, endOffset)), endNoteEl);
                 
                 lastNode.parentElement.insertBefore(fragment, lastNode);
@@ -147,8 +144,16 @@ class RangeNote extends RangeBase {
     }
 
     static _getNoteElement(targetNode) {
+        if (!targetNode)
+            return null;
+        
+        let noteNode;
+
         if (this._elementHasNote(targetNode))
             return targetNode;
+        else if (targetNode.querySelector && 
+            (noteNode = targetNode.querySelector('.' + this.HAS_NOTE_CLASS_NAME)))
+            return noteNode;
 
         const parentElement = targetNode.parentElement;
         return this._elementHasNote(parentElement) ? parentElement : null;
