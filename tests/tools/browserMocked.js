@@ -28,7 +28,10 @@ export class BrowserMocked {
             create: options => this._menuOptions.push(options),
             update: (id, options) => Object.assign(this._menuOptions.find(i => i.id === id), options),
             onShown: eventListener,
-            onHidden: eventListener
+            onHidden: eventListener,
+            remove: (id) => {
+                this._menuOptions = this._menuOptions.filter(i => i.id !== id);
+            }
         };
     }
 

@@ -1,7 +1,7 @@
 import { MenuIcon } from './menuIcon.js';
 
 class BaseMenuItem {
-    constructor(id, type = 'normal') {
+    constructor(id, type) {
         this._id = id;
         this._type = type;
 
@@ -28,7 +28,7 @@ class BaseMenuItem {
         return false;
     }
 
-    removeFromMenu() {
+    _removeFromMenu() {
         browser.menus.remove(this._id);
     }
 
@@ -45,22 +45,26 @@ class BaseMenuItem {
 
 class SeparatorMenuItem extends BaseMenuItem {
     constructor() {
-        const ctrlType = 'separator';
+        const ctrlType = SeparatorMenuItem.TYPE;
         super(`${ctrlType}_${Date.now()}_${Math.floor(Math.random() * 10000)}`, ctrlType);
     }
+
+    static get TYPE() { return 'separator'; }
 
     addToMenu() { super.addToMenu(); }
 }
 
 class RadioSubMenuItem extends BaseMenuItem {
     constructor(id, parentId, title) {
-        super(id, 'radio');
+        super(id, RadioSubMenuItem.TYPE);
 
         this._parentId = parentId;
         this._title = title;
 
         this._isChecked = false;
     }
+
+    static get TYPE() { return 'radio'; }
 
     addToMenu(onchange, icon = new MenuIcon(), checked = false) {
         super.addToMenu({
@@ -90,13 +94,15 @@ class RadioSubMenuItem extends BaseMenuItem {
 
 class ButtonMenuItem extends BaseMenuItem {
     constructor (id, title, parentId = null) {
-        super(id);
+        super(id, ButtonMenuItem.TYPE);
     
         this._title = title;
         this._visible = true;
 
         this._parentId = parentId;
     }
+
+    static get TYPE() { return 'normal'; }
 
     hide() { return this._setVisibility(false); }
 
@@ -128,6 +134,8 @@ class ButtonMenuItem extends BaseMenuItem {
     }
 
     addToSelectionMenu(onclick, icon = new MenuIcon()) { this._addToMenu(onclick, icon, true); }
+
+    removeFromMenu() { super._removeFromMenu(); }
 }
 
 export { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem };

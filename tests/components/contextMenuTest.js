@@ -3,6 +3,7 @@ import { ContextMenu } from '../../components/contextMenu';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser';
 import { ColourList } from '../../components/colourList.js';
+import { SeparatorMenuItem, RadioSubMenuItem, ButtonMenuItem } from '../../components/menuItem.js';
 
 describe('components/ContextMenu', () => {
     const mockBrowser = () => {
@@ -11,6 +12,12 @@ describe('components/ContextMenu', () => {
         return browserMocked;
     };
     
+    const BTN_TYPE = ButtonMenuItem.TYPE;
+
+    const SEPARATOR_TYPE = SeparatorMenuItem.TYPE;
+    
+    const RADIO_TYPE = RadioSubMenuItem.TYPE;
+
     describe('#constructor', () => {
         it('should create a proper number of items in a context menu', () => {
             const browserMocked = mockBrowser();
@@ -18,9 +25,12 @@ describe('components/ContextMenu', () => {
 
             const itemOptions = browserMocked.menuOptions;
             assert.strictEqual(itemOptions.length, 14);
-            assert.strictEqual(itemOptions.filter(i => i.type === 'separator').length, 1);
-            assert.strictEqual(itemOptions.filter(i => i.type === 'normal').length, 7);
-            assert.strictEqual(itemOptions.filter(i => i.type === 'radio').length, 6);
+
+            assert.strictEqual(itemOptions.filter(i => i.type === SEPARATOR_TYPE).length, 1);
+
+            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 7);
+            
+            assert.strictEqual(itemOptions.filter(i => i.type === RADIO_TYPE).length, 6);
         });
 
         const testClickingOnMenuItem = (menuCallbackNameToTest, filterMenuItemCallback, 
@@ -65,7 +75,7 @@ describe('components/ContextMenu', () => {
             const menuColourIds = [];
             const changedColourIds = [];
 
-            return testClickingOnMenuItem('onChangingColour', i => i.type === 'radio',
+            return testClickingOnMenuItem('onChangingColour', i => i.type === RADIO_TYPE,
                 (menuItemInfo, menu) => {
                     menuColourIds.push(menuItemInfo.menuItemId);
                     changedColourIds.push(menu.currentColourClass);
@@ -84,7 +94,7 @@ describe('components/ContextMenu', () => {
             contextMenu.hideRemovingNoteBtn();
 
             const btnOptions = browserMocked.menuOptions
-                .filter(i => i.type === 'normal' && i.visible !== undefined);
+                .filter(i => i.type === BTN_TYPE && i.visible !== undefined);
             assert.strictEqual(btnOptions.length, 6);
             
             const assertItemsVisibility = (visible) => assert(btnOptions.every(b => b.visible === visible));
@@ -101,7 +111,7 @@ describe('components/ContextMenu', () => {
         });
     });
 
-    describe('checkColourRadio', function () {
+    describe('#checkColourRadio', function () {
         
         it('should make a radio item checked in a context menu', () => {
             const browserMocked = mockBrowser();
@@ -112,7 +122,7 @@ describe('components/ContextMenu', () => {
             
             contextMenu.checkColourRadio(expectedColour.token);
 
-            const actualColourRadio = browserMocked.menuOptions.find(i => i.type === 'radio' && i.id === expectedColour.token);
+            const actualColourRadio = browserMocked.menuOptions.find(i => i.type === RADIO_TYPE && i.id === expectedColour.token);
             assert(actualColourRadio);
             assert.deepStrictEqual(actualColourRadio.checked, true);
         });
@@ -122,7 +132,92 @@ describe('components/ContextMenu', () => {
             const contextMenu = new ContextMenu();
             
             contextMenu.checkColourRadio(Randomiser.getRandomNumberUpToMax());
-            assert.strictEqual(browserMocked.menuOptions.filter(i => i.type === 'radio' && i.checked).length, 1);
+
+            assert.strictEqual(browserMocked.menuOptions.filter(i => i.type === RADIO_TYPE && i.checked).length, 1);
+        });
+    });
+    
+    const createRandomNoteLink = () => {
+        return {
+            id: '' + Randomiser.getRandomNumberUpToMax(),
+            text: '' + Randomiser.getRandomNumberUpToMax()
+        };
+    };
+
+    const menuHasNoteLinks = (expectedNoteLinks, actualMenuOptions) => {
+        const expectedNoteLinkIds = expectedNoteLinks.map(l => l.id);
+        const actualNoteLinkBtns = actualMenuOptions.filter(i => i.type === BTN_TYPE && 
+            expectedNoteLinkIds.includes(i.id));
+        
+        if (actualNoteLinkBtns.length !== expectedNoteLinks.length)
+            return false;
+
+        const parentId = actualNoteLinkBtns[0].parentId;
+
+        if (!actualNoteLinkBtns.every(btn => btn.parentId === parentId) || 
+            !actualNoteLinkBtns.every(btn => expectedNoteLinks.find(li => btn.id === li.id && 
+                btn.title === li.text)))
+            return false;
+
+        return actualMenuOptions.filter(i => i.type === BTN_TYPE && i.id === parentId).length === 1;
+    };
+
+    describe('#renderNoteLinks', () => {
+
+        it('should render note links in menu', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            contextMenu.renderNoteLinks(expectedNoteLinks);
+            
+            assert(menuHasNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
+        });
+
+        it('should remove all previous note links in menu while rendering afresh', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const noteLinksToRemove = [createRandomNoteLink(), createRandomNoteLink()];
+            contextMenu.renderNoteLinks(noteLinksToRemove);
+            
+            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            contextMenu.renderNoteLinks(expectedNoteLinks);
+
+            assert(!menuHasNoteLinks(noteLinksToRemove, browserMocked.menuOptions));
+            assert(menuHasNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
+        });
+    });
+
+    describe('#appendNoteLink', () => {
+
+        it('should append a note link to menu', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const expectedNoteLink = createRandomNoteLink();
+            contextMenu.appendNoteLink(expectedNoteLink.id, expectedNoteLink.text);
+            
+            assert(menuHasNoteLinks([expectedNoteLink], browserMocked.menuOptions));
+        });
+    });
+    
+    describe('#removeNoteLink', () => {
+
+        it('should remove a note link from menu', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink(), 
+                createRandomNoteLink()];
+            contextMenu.renderNoteLinks(expectedNoteLinks);
+            
+            const noteLinkToRemove = expectedNoteLinks[0];
+            contextMenu.removeNoteLink(noteLinkToRemove.id);
+
+            assert(!menuHasNoteLinks([noteLinkToRemove], browserMocked.menuOptions));
+            assert(menuHasNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), 
+                browserMocked.menuOptions));
         });
     });
 });
