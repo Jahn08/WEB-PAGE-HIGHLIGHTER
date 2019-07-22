@@ -84,25 +84,31 @@ describe('components/ButtonMenuItem', () => {
                 id: Randomiser.getRandomNumberUpToMax(), 
                 title: Randomiser.getRandomNumberUpToMax(),
                 onclick: () => {},
-                icon: new MenuIcon(Randomiser.getRandomNumberUpToMax())
+                icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()), 
+                parentId: Randomiser.getRandomNumberUpToMax()
             };
         };
 
         const buttons = [];
 
-        const getCreatedBtnOptions = () => {
+        const getCreatedBtnOptions = (withParent = true) => {
             const btnOptions = buildRandomBtnOptions();
-            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title);
+
+            if (!withParent)
+                btnOptions.parentId = null;
+
+            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title, btnOptions.parentId);
             buttons.push(newBtn);
             newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icon);
 
             return btnOptions;
         };
         
-        const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions()];
+        const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions(false)];
 
         const newBtnOptions = browserMocked.menuOptions;
         assert(newBtnOptions.every(o => o.type === 'normal'));
+
         assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
             tr.parentId === r.parentId && tr.title === r.title && 
             tr.onclick === r.onclick &&

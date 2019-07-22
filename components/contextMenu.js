@@ -120,6 +120,9 @@ export class ContextMenu {
         this._loadBtn.hide();
 
         browser.menus.onHidden.addListener(() => this._makePure());
+
+        this._noteNavigationInstance = null;
+        this.onGoingToNote = null;
     }
 
     async _passTabInfoToCallback(callback, options = {}) {
@@ -191,5 +194,94 @@ export class ContextMenu {
 
     _getColourRadio(colourClass) {
         return this._colourRadios.find(r => r.id === colourClass);
+    }
+
+    get _noteNavigation() {
+        if (!this._noteNavigationInstance) 
+            this._noteNavigationInstance = new NoteNavigation(async info => {
+                try {
+                    await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
+                }
+                catch (ex) {
+                    console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
+                        + ex.toString());
+                }
+            });
+
+        return this._noteNavigationInstance;
+    }
+
+    renderNoteLinks(noteLinks) {
+        this._noteNavigation.render(noteLinks);
+    }
+
+    appendNoteLink(noteId, noteText) {
+        this._noteNavigation.appendLink(noteId, noteText);
+    }
+
+    removeNoteLink(noteId) {
+        this._noteNavigation.removeLink(noteId);
+    }
+}
+
+class NoteNavigation {
+    constructor(onGoingToNoteFn) {
+        this._onGoingToNote = onGoingToNoteFn;
+        
+        this._noteLinkBtns = [];
+
+        this._noteNavigationBtn = null;
+    }
+
+    render(noteLinks) {
+        noteLinks = noteLinks || [];
+        
+        if (this._noteLinkBtns.length) {
+            this._noteLinkBtns.forEach(li => li.removeFromMenu());
+            this._noteLinkBtns = [];
+        }
+        
+        if (!noteLinks.length)
+            return this._removeNavigationButton();
+
+        noteLinks.forEach(li => this.appendLink(li.id, li.text));
+    }
+
+    _initNavigationBtn() {
+        if (this._noteNavigationBtn)
+            return;
+
+        const noteLinksMenuId = 'noteNavigation';
+        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId, 'Note Links');
+        this._noteNavigationBtn.addToMenu();
+    }
+
+    _removeNavigationButton() {
+        if (!this._noteNavigationBtn || this._noteLinkBtns.length)
+            return;
+
+        this._noteNavigationBtn.removeFromMenu();
+        this._noteNavigationBtn = null;
+    }
+
+    appendLink(noteId, noteText) {
+        this._initNavigationBtn();
+
+        const linkBtn = new ButtonMenuItem(noteId, noteText, this._noteNavigationBtn.id);
+        this._noteLinkBtns.push(linkBtn);
+        
+        linkBtn.addToMenu(this._onGoingToNote);
+    }
+
+    removeLink(noteId) {
+        const linkToRemove = this._noteLinkBtns.find(li => li.id === noteId);
+
+        if (!linkToRemove)
+            return;
+
+        linkToRemove.removeFromMenu();
+        this._noteLinkBtns = this._noteLinkBtns.filter(li => li.id !== noteId);
+
+        this._removeNavigationButton();
     }
 }

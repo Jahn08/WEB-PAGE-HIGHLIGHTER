@@ -18,9 +18,19 @@ menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving
 
 menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
-menu.onAddingNote = (info) => sendMessageToTab(info.tabId, MessageSender.startAddingNote());
+menu.onAddingNote = (info) => 
+    sendMessageToTab(info.tabId, MessageSender.startAddingNote())
+        .then(outcome => {
+            if (outcome)
+                menu.appendNoteLink(outcome.id, outcome.text);
+        });
 
-menu.onRemovingNote = (info) => sendMessageToTab(info.tabId, MessageSender.startRemovingNote());
+menu.onRemovingNote = (info) =>
+    sendMessageToTab(info.tabId, MessageSender.startRemovingNote())
+        .then(noteId => menu.removeNoteLink(noteId));
+
+menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
+    MessageSender.startGoingToNote(info.noteId));
 
 browser.runtime.onMessage.addListener(async msg => {
     try {
@@ -66,6 +76,9 @@ browser.runtime.onMessage.addListener(async msg => {
         else
             menu.hideRemovingNoteBtn();
         
+        if (sender.shouldAddNoteLinks())
+            menu.renderNoteLinks(sender.noteLinks);
+
         menu.render();
     }
     catch (ex) {

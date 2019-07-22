@@ -23,6 +23,19 @@ describe('content_script/rangeMarker', function () {
         EnvLoader.unloadDomModel();
     });
 
+    const createNoteWithRandomText = (targetNode = null, expectedNoteId = '1') => {
+        const noteText = '' + Randomiser.getRandomNumber(999999999999);
+
+        const noteLink = RangeNote.createNote(noteText, targetNode);
+        assert(noteLink);
+        assert.strictEqual(noteLink.id, expectedNoteId);
+        
+        assert(noteLink.text);
+        assert(noteLink.text.endsWith(noteText));
+
+        return noteText;
+    };
+
     describe('#hasNote', function () {
         
         it('should return false for a node without a note', () =>
@@ -32,14 +45,23 @@ describe('content_script/rangeMarker', function () {
         it('should return false when no node is passed', () =>
             assert.strictEqual(RangeNote.hasNote(null), false)
         );
+
+        it('should return true for a target node with a note', () => {
+            const targetNode = TestPageHelper.getFirstItalicSentenceNode();
+            createNoteWithRandomText(targetNode);
+
+            assert.strictEqual(RangeNote.hasNote(targetNode), true);
+        });
+
+        it('should return true for a node with a range note', () => {
+            TestPageHelper.setRange(TestPageHelper.setRangeForLastParagraphSentenceNode);
+            createNoteWithRandomText();
+
+            const targetNode = TestPageHelper.getLastParagraphSentenceNode()
+                .getElementsByClassName(RangeNote.START_NOTE_CLASS_NAME)[0];
+            assert.strictEqual(RangeNote.hasNote(targetNode), true);
+        });
     });
-
-    const createNoteWithRandomText = (targetNode = null) => {
-        const noteText = '' + Randomiser.getRandomNumber(999999999999);
-        assert.strictEqual(RangeNote.createNote(noteText, targetNode), true);
-
-        return noteText;
-    };
 
     const excludeNotesFromText = (text, noteText) => {
         if (!text.includes(noteText)) 
@@ -52,7 +74,7 @@ describe('content_script/rangeMarker', function () {
                     
         return (matches && matches.length ? matches[0] : text)
             .replace(new RegExp(noteText, regExpFlags), '').trim();
-    }
+    };
 
     const assureNoteValidity = (expectedNoteText, expectedNoteNodeTexts) => {
         const noteElems = [...document.getElementsByClassName(RangeNote.NOTE_CLASS_NAME)];
@@ -90,7 +112,7 @@ describe('content_script/rangeMarker', function () {
 
     describe('#createNote', function () {
         it('should do nothing when passing no parameters', () => {
-            assert.strictEqual(RangeNote.createNote(), false);
+            assert.strictEqual(RangeNote.createNote(), null);
             assert.strictEqual(
                 document.getElementsByClassName(RangeNote.HAS_NOTE_CLASS_NAME).length, 0);
         });
@@ -102,8 +124,6 @@ describe('content_script/rangeMarker', function () {
             const noteText = createNoteWithRandomText();
 
             const expectedNoteNodes = [TestPageHelper.getFirstItalicSentenceNode(), TestPageHelper.getLastParagraphSentenceNode()];
-            expectedNoteNodes.forEach(n => assert.strictEqual(RangeNote.hasNote(n), true));
-            
             assureNoteValidity(noteText, expectedNoteNodes.map(n => n.textContent));
         });
         
@@ -125,7 +145,7 @@ describe('content_script/rangeMarker', function () {
             const nodeWithNote = TestPageHelper.getFirstItalicSentenceNode();
             const expectedNoteText = createNoteWithRandomText(nodeWithNote);
 
-            assert.strictEqual(RangeNote.removeNote(targetNode), false); 
+            assert.strictEqual(RangeNote.removeNote(targetNode), null); 
 
             assureNoteValidity(expectedNoteText, [nodeWithNote.textContent]);
         };
@@ -141,7 +161,7 @@ describe('content_script/rangeMarker', function () {
         const testRemovingNoteForNode = (targetNode) => {
             createNoteWithRandomText(targetNode);
 
-            assert.strictEqual(RangeNote.removeNote(targetNode), true);
+            assert.strictEqual(RangeNote.removeNote(targetNode), '1');
             assert.strictEqual(document.querySelectorAll('[class*=note]').length, 0);
         };
 
@@ -158,9 +178,9 @@ describe('content_script/rangeMarker', function () {
             createNoteWithRandomText(nodeForNoteRemoval);
 
             const residualNoteNode = TestPageHelper.getLastParagraphSentenceNode();
-            const residualNoteText = createNoteWithRandomText(residualNoteNode);
+            const residualNoteText = createNoteWithRandomText(residualNoteNode, '2');
 
-            assert.strictEqual(RangeNote.removeNote(nodeForNoteRemoval), true); 
+            assert.strictEqual(RangeNote.removeNote(nodeForNoteRemoval), '1'); 
 
             assureNoteValidity(residualNoteText, [residualNoteNode.textContent]);
         });

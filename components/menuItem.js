@@ -28,6 +28,10 @@ class BaseMenuItem {
         return false;
     }
 
+    removeFromMenu() {
+        browser.menus.remove(this._id);
+    }
+
     updateVisibility(visible) {
         this.updateItem({
             visible: visible === true
@@ -85,11 +89,13 @@ class RadioSubMenuItem extends BaseMenuItem {
 }
 
 class ButtonMenuItem extends BaseMenuItem {
-    constructor (id, title) {
+    constructor (id, title, parentId = null) {
         super(id);
     
         this._title = title;
         this._visible = true;
+
+        this._parentId = parentId;
     }
 
     hide() { return this._setVisibility(false); }
@@ -114,6 +120,7 @@ class ButtonMenuItem extends BaseMenuItem {
 
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
+            parentId: this._parentId,
             onclick,
             contexts,
             title: this._title

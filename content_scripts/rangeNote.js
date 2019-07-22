@@ -3,14 +3,21 @@ class RangeNote extends RangeBase {
         const ranges = this._getSelectionRanges();
 
         if (!text || (!ranges.length && !targetNode))
-            return false;
+            return null;
 
-        const noteId = document.querySelectorAll(`.${this.START_NOTE_CLASS_NAME},.${this.SOLID_NOTE_CLASS_NAME}`).length + 1;
+        const noteId = 
+            document.querySelectorAll(`.${this.START_NOTE_CLASS_NAME},.${this.SOLID_NOTE_CLASS_NAME}`).length + 1;
+
+        let success = false;
+            
+        const noteLink = new NoteLink(noteId, text);
 
         if (ranges.length)
-            return this._appendNoteToRanges(ranges, noteId, text);
+            success = this._appendNoteToRanges(ranges, noteId, text);
+        else
+            success = this._appendNoteToNode(targetNode, noteId, text);
 
-        return this._appendNoteToNode(targetNode, noteId, text);
+        return success ? noteLink : null;
     }
 
     static get START_NOTE_CLASS_NAME() {
@@ -147,13 +154,8 @@ class RangeNote extends RangeBase {
         if (!targetNode)
             return null;
         
-        let noteNode;
-
         if (this._elementHasNote(targetNode))
             return targetNode;
-        else if (targetNode.querySelector && 
-            (noteNode = targetNode.querySelector('.' + this.HAS_NOTE_CLASS_NAME)))
-            return noteNode;
 
         const parentElement = targetNode.parentElement;
         return this._elementHasNote(parentElement) ? parentElement : null;
@@ -164,21 +166,61 @@ class RangeNote extends RangeBase {
     }
 
     static removeNote(targetNode) {
-        if (!(targetNode = this._getNoteElement(targetNode)))
-            return false;
+        let noteId;
 
-        const noteId = targetNode.dataset.noteId;
+        if (!(targetNode = this._getNoteElement(targetNode)) || !(noteId = targetNode.dataset.noteId))
+            return null;
 
-        if (!noteId)
-            return false;
-
-        const noteNodes = [...document.querySelectorAll(`.marker-has-note[data-note-id="${noteId}"]`)];
+        const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
         noteNodes.forEach(n => n.childElementCount === 1 ? n.remove() : this._extractLastChildContent(n));
 
-        return noteNodes.length > 0;        
+        return noteNodes.length > 0 ? noteId : null;        
+    }
+
+    static _getNoteSearchSelector(noteId) {
+        return `.marker-has-note[data-note-id="${noteId}"]`;
     }
 
     static _extractLastChildContent(targetNode) {
         targetNode.replaceWith(targetNode.lastChild);
+    }
+
+    static goToNote(noteId) {
+        let noteElem;
+
+        if (!noteId || !(noteElem = document.querySelector(this._getNoteSearchSelector(noteId))))
+            return;
+
+        noteElem.scrollIntoView();
+    }
+
+    static getNoteLinks() {
+        const uniqueIds = [];
+        
+        return [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
+            const noteId = n.dataset.noteId;
+
+            if (noteId && !uniqueIds.includes(noteId)) {
+                uniqueIds.push(noteId);
+                return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
+            }
+
+            return null;
+        }).filter(n => n).sort((a, b) => a.id > b.id ? 1 : (a.id < b.id ? -1 : 0));
+    }
+}
+
+class NoteLink {
+    constructor(id, text) {
+        this.id = '' + id;
+        this.text = this._formatText(id, text);
+
+        this._TEXT_LENGTH_LIMIT = 15;
+    }
+
+    _formatText(id, text) {
+        return `${id}: ` + (text.length > this._TEXT_LENGTH_LIMIT ? 
+            `${text.substring(0, this._TEXT_LENGTH_LIMIT)}...` : 
+            text);
     }
 }

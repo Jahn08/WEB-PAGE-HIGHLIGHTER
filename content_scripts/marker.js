@@ -47,6 +47,11 @@ void function() {
         MessageControl.show('Page is loading');
         await pageInfo.load();
 
+        const noteLinks = RangeNote.getNoteLinks();
+
+        if (noteLinks.length)
+            browser.runtime.sendMessage(MessageReceiver.addNoteLinks(noteLinks));
+
         MessageControl.show('The page has been loaded successfully');
     };
 
@@ -63,7 +68,8 @@ void function() {
                 await performStorageAction(load);
         }
         catch (ex) {
-            console.error('An error while trying to apply the extension preferences: ' + ex.toString());
+            console.error('An error occurred while trying to apply the extension preferences: ' + 
+                ex.toString());
         }
     });    
 
@@ -128,6 +134,8 @@ void function() {
 
             let domWasChanged = false;
 
+            let outcome;
+
             if (receiver.shouldMark())
                 domWasChanged = RangeMarker.markSelectedNodes(receiver.markColourClass);
             else if (receiver.shouldUnmark()) {
@@ -141,21 +149,33 @@ void function() {
             else if (receiver.shouldChangeColour())
                 domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                     curNode);
-            else if (receiver.shouldAddNote())
-                domWasChanged = RangeNote.createNote(prompt('New note text:'), curNode);
-            else if (receiver.shouldRemoveNote())
-                domWasChanged = RangeNote.removeNote(curNode);
+            else if (receiver.shouldAddNote()) {
+                outcome = RangeNote.createNote(prompt('New note text:'), curNode);
+
+                if (outcome)
+                    domWasChanged = true;
+            }
+            else if (receiver.shouldRemoveNote()) {
+                outcome = RangeNote.removeNote(curNode);
+
+                if (outcome)
+                    domWasChanged = true;
+            }
             else if (receiver.shouldSave())
                 await performStorageAction(save);
             else if (receiver.shouldLoad())
                 await performStorageAction(load);
             else if (receiver.shouldReturnTabState())
                 return includeLoadSaveEvents();
+            else if (receiver.shouldGoToNote())
+                RangeNote.goToNote(receiver.noteLink.id);
             else
                 throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
 
             if (domWasChanged)
                 domIsPure = false;
+
+            return outcome;
         }
         catch (err) {
             console.error(err.toString());
