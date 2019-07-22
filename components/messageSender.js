@@ -3,7 +3,10 @@ const msgEvent = new MenuMessageEvent();
 export class MessageSender {
     constructor (msg) {
         this._msg = msg;
+
         this._curColourClasses = [];
+
+        this._noteLinks = [];
     }
 
     shouldSetMarkMenuReady() { 
@@ -46,4 +49,21 @@ export class MessageSender {
     static startRemovingNote() { return msgEvent.createRemoveNoteEvent(); }
 
     shouldSetRemoveNoteMenuReady() { return msgEvent.isSetRemoveNoteReadyEvent(this._msg); }
+
+    shouldAddNoteLinks() {
+        const isAddingNoteLink = msgEvent.isAddNoteLinksEvent(this._msg);
+
+        if (isAddingNoteLink)
+            this._setNoteLinks();
+
+        return isAddingNoteLink;
+    }
+
+    _setNoteLinks() { this._noteLinks = msgEvent.getNoteLinks(this._msg); }
+    
+    get noteLinks() { return this._noteLinks; }
+
+    static startGoingToNote(noteId) { 
+        return msgEvent.createGoToNoteEvent({ id: noteId });
+    }
 }

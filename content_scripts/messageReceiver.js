@@ -2,6 +2,7 @@ class MessageReceiver {
     constructor (msg) {
         this._msg = msg;       
         this._markColourClass = null;
+        this._noteLink = null;
     }
 
     get markColourClass() { return this._markColourClass; }
@@ -48,6 +49,21 @@ class MessageReceiver {
     static setRemoveNoteMenuReady() { return MessageReceiver.msgEvent.createRemoveNoteReadyEvent(); }
 
     shouldRemoveNote() { return MessageReceiver.msgEvent.isRemoveNoteEvent(this._msg); }
+    
+    static addNoteLinks(noteLinks) { 
+        return MessageReceiver.msgEvent.createAddNoteLinksEvent(noteLinks); 
+    }
+
+    shouldGoToNote() {
+        return MessageReceiver.msgEvent.isGoToNoteEvent(this._msg) && this._setNoteLink();
+    }
+
+    get noteLink() { return this._noteLink; }
+
+    _setNoteLink() { 
+        this._noteLink = MessageReceiver.msgEvent.getNoteLinks(this._msg)[0];
+        return this._noteLink ? true: false;
+    }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

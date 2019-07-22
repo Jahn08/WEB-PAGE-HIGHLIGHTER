@@ -16,20 +16,29 @@ class MenuMessageEvent {
         this._loadPreferencesEvent = 'loadPreferences';
         this._loadTabStateEvent = 'loadTabState';
 
-        this._colourClassField = 'colourClass';
-
         this._addNoteReadyEvent = 'setAddNoteReady';
         this._addNoteEvent = 'addNote';
 
         this._removeNoteReadyEvent = 'setRemoveNoteReady';
         this._removeNoteEvent = 'removeNote';
+
+        this._addNoteLinksEvent = 'addNoteLinks';
+        this._goToNoteEvent = 'goToNote';
     }
 
     createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, [colourClass]); }
 
     _createEventWithColour(eventName, colourClasses) {
+        return this._createEventWithArgs(eventName, colourClasses, this._COLOUR_CLASS_FIELD);
+    }
+
+    get _COLOUR_CLASS_FIELD() {
+        return 'colourClass';
+    }
+
+    _createEventWithArgs(eventName, args, propName) {
         const event = this._createEvent(eventName);
-        event[this._colourClassField] = colourClasses;
+        event[propName] = args;
 
         return event; 
     }
@@ -49,22 +58,29 @@ class MenuMessageEvent {
             return validMsgs[0];
 
         return validMsgs.reduce((p, c) => {
-            c.event.push(...p.event);
+            p.event.push(...c.event);
 
-            if (!c.colourClass)
-                c.colourClass = p.colourClass;
-            else if (p.colourClass)
-                c.colourClass.push(...p.colourClass);
+            this._combineArrays(p, c, this._COLOUR_CLASS_FIELD);
+            this._combineArrays(p, c, this._NOTE_LINK_FIELD);
             
-            return c;
-        });
+            return p;
+        }, { event: [] });
+    }
+
+    get _NOTE_LINK_FIELD() {
+        return 'noteLink';
+    }
+
+    _combineArrays(targetObj, sourceObj, propName) {
+        if (sourceObj[propName])
+            targetObj[propName] = sourceObj[propName];
     }
 
     isMarkEvent(msg) { return this._isEvent(msg, this._markEvent); }
 
     _isEvent(msg, eventName) { return msg && msg.event.includes(eventName); }
 
-    getMarkColourClasses(msg) { return msg ? msg[this._colourClassField]: []; }
+    getMarkColourClasses(msg) { return msg ? msg[this._COLOUR_CLASS_FIELD]: []; }
 
     createMarkReadyEvent(curColourClasses) {
         return this._createEventWithColour(this._markReadyEvent, curColourClasses);
@@ -109,4 +125,21 @@ class MenuMessageEvent {
 
     createRemoveNoteEvent() { return this._createEvent(this._removeNoteEvent); }
     isRemoveNoteEvent(msg) { return this._isEvent(msg, this._removeNoteEvent); }
+
+    createAddNoteLinksEvent(noteLinks) { 
+        return this._createEventWithNoteLink(this._addNoteLinksEvent, noteLinks); 
+    }
+    
+    _createEventWithNoteLink(eventName, noteLinks) {
+        return this._createEventWithArgs(eventName, noteLinks, this._NOTE_LINK_FIELD);
+    }
+
+    isAddNoteLinksEvent(msg) { return this._isEvent(msg, this._addNoteLinksEvent); }
+
+    getNoteLinks(msg) { return msg ? msg[this._NOTE_LINK_FIELD]: []; }
+
+    createGoToNoteEvent(noteLink) {
+        return this._createEventWithNoteLink(this._goToNoteEvent, [noteLink]); 
+    }
+    isGoToNoteEvent(msg) { return this._isEvent(msg, this._goToNoteEvent); }
 }

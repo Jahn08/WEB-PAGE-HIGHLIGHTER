@@ -28,46 +28,51 @@ describe('content_script/menuMessageEvent', function () {
     const IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME = 'isSetRemoveNoteReadyEvent';
     const IS_REMOVE_NOTE_EVENT_METHOD_NAME = 'isRemoveNoteEvent';
     
+    const IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME = 'isAddNoteLinksEvent';
+    const IS_GO_TO_NOTE_EVENT_METHOD_NAME = 'isGoToNoteEvent';
+    
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME, IS_LOAD_EVENT_METHOD_NAME, IS_SAVE_EVENT_METHOD_NAME,
         IS_SET_LOAD_READY_EVENT_METHOD_NAME, IS_SET_SAVE_READY_EVENT_METHOD_NAME, 
         IS_LOAD_PREFERENCES_EVENT_METHOD_NAME, IS_LOAD_TAB_STATE_METHOD_NAME, 
         IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME, IS_ADD_NOTE_EVENT_METHOD_NAME,
-        IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME, IS_REMOVE_NOTE_EVENT_METHOD_NAME
+        IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME, IS_REMOVE_NOTE_EVENT_METHOD_NAME,
+        IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, IS_GO_TO_NOTE_EVENT_METHOD_NAME
     ];
 
-    const createEventWithColourAndCheckIt = function (createEventMethodName, checkEventMethodName,
-        useSeveralColours = false) {
+    const createEventWithArgAndCheckIt = function (createEventMethodName, checkEventMethodName, 
+        getActualArgMethodName, arg) {
         const msgEvent = new MenuMessageEvent();
-            
-        const colourClass = useSeveralColours ? 
-            [Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax()] :
-            Randomiser.getRandomNumberUpToMax();
-        const event = msgEvent[createEventMethodName](colourClass);
+        const event = msgEvent[createEventMethodName](arg);
 
         assert(event);
         
         checkEventMethodNames.forEach(m =>
             assert.strictEqual(msgEvent[m](event), m === checkEventMethodName));
 
-        const actualColourClasses = msgEvent.getMarkColourClasses(event);
+        const actualArgs = msgEvent[getActualArgMethodName](event);
 
-        if (useSeveralColours) {
-            assert.strictEqual(actualColourClasses.length, colourClass.length);
-            assert(actualColourClasses.every(ac => colourClass.includes(ac)));
+        if (Array.isArray(arg)) {
+            assert.strictEqual(actualArgs.length, arg.length);
+            assert(actualArgs.every(ac => arg.includes(ac)));
         }
         else {
-            assert.strictEqual(actualColourClasses.length, 1);
-            assert(actualColourClasses.includes(colourClass));
+            assert.strictEqual(actualArgs.length, 1);
+            assert(actualArgs.includes(arg));
         }
     };
-   
+    
     const createTestForCheckingEventWithColour = (createEventMethodName, checkEventMethodName, 
         useSeveralColours = false) => {
         describe('#' + createEventMethodName, () =>
-            it('should build a certain type of an event with a passed colour class', () => 
-                createEventWithColourAndCheckIt(createEventMethodName, checkEventMethodName, useSeveralColours)));
+            it('should build a certain type of an event with passed colour classes', () => {
+                const arg = useSeveralColours ? [Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax()]:
+                    Randomiser.getRandomNumberUpToMax();
+                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
+                    'getMarkColourClasses', arg);
+            })
+        );
     };
 
     createTestForCheckingEventWithColour('createMarkEvent', IS_MARK_EVENT_METHOD_NAME);
@@ -75,6 +80,29 @@ describe('content_script/menuMessageEvent', function () {
     createTestForCheckingEventWithColour('createChangeColourEvent', IS_CHANGE_COLOUR_EVENT_METHOD_NAME);
 
     createTestForCheckingEventWithColour('createMarkReadyEvent', IS_SET_MARK_READY_EVENT_METHOD_NAME, true);
+
+    const createRandomNoteLink = () => {
+        return {
+            id: '' + Randomiser.getRandomNumberUpToMax(),
+            text: '' + Randomiser.getRandomNumberUpToMax()
+        };
+    };
+
+    const createTestForCheckingEventWithCNoteLink = (createEventMethodName, checkEventMethodName, 
+        useSeveralNoteLinks = false) => {
+        describe('#' + createEventMethodName, () =>
+            it('should build a certain type of an event with passed note links', () => {
+                const arg = useSeveralNoteLinks ? [createRandomNoteLink(), createRandomNoteLink()] :
+                    createRandomNoteLink();
+                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
+                    'getNoteLinks', arg);
+            })
+        );
+    };
+
+    createTestForCheckingEventWithCNoteLink('createAddNoteLinksEvent', IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, true);
+
+    createTestForCheckingEventWithCNoteLink('createGoToNoteEvent', IS_GO_TO_NOTE_EVENT_METHOD_NAME);
 
     const createEventAndCheckIt = (createEventMethodName, checkEventMethodName) => {
         const msgEvent = new MenuMessageEvent();
@@ -123,7 +151,9 @@ describe('content_script/menuMessageEvent', function () {
             const changeColourEvent = msgEvent.createChangeColourEvent(changeColourClass); 
             
             const markReadyColourClass = Randomiser.getRandomNumberUpToMax();
-            const markReadyEvent = msgEvent.createMarkReadyEvent([markReadyColourClass]); 
+
+            const expectedColourClasses = [markReadyColourClass];
+            const markReadyEvent = msgEvent.createMarkReadyEvent(expectedColourClasses); 
             
             const unmarkReadyEvent = msgEvent.createUnmarkReadyEvent(); 
             const unmarkEvent = msgEvent.createUnmarkEvent();
@@ -134,9 +164,12 @@ describe('content_script/menuMessageEvent', function () {
             const addNoteReadyEvent = msgEvent.createAddNoteReadyEvent(); 
             const addNoteEvent = msgEvent.createAddNoteEvent();
 
+            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            const addNoteLinksEvent = msgEvent.createAddNoteLinksEvent(expectedNoteLinks);
+
             const _events = msgEvent.combineEvents([changeColourEvent, markReadyEvent, 
                 unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
-                addNoteReadyEvent, addNoteEvent]);
+                addNoteReadyEvent, addNoteEvent, addNoteLinksEvent]);
             
             assert(!msgEvent.isMarkEvent(_events));
             assert(!msgEvent.isLoadEvent(_events));
@@ -145,6 +178,7 @@ describe('content_script/menuMessageEvent', function () {
             assert(!msgEvent.isLoadTabStateEvent(_events));
             assert(!msgEvent.isSetRemoveNoteReadyEvent(_events));
             assert(!msgEvent.isRemoveNoteEvent(_events));
+            assert(!msgEvent.isGoToNoteEvent(_events));
 
             assert(msgEvent.isSetMarkReadyEvent(_events));
             assert(msgEvent.isChangeColourEvent(_events));
@@ -154,10 +188,10 @@ describe('content_script/menuMessageEvent', function () {
             assert(msgEvent.isSaveEvent(_events));
             assert(msgEvent.isSetAddNoteReadyEvent(_events));
             assert(msgEvent.isAddNoteEvent(_events));
+            assert(msgEvent.isAddNoteLinksEvent(_events));
 
-            const colourClasses = msgEvent.getMarkColourClasses(_events);
-            assert.strictEqual(colourClasses.length, 2);
-            assert(colourClasses.every(c => c === changeColourClass || c === markReadyColourClass));
+            assert.deepStrictEqual(msgEvent.getMarkColourClasses(_events), expectedColourClasses);
+            assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
         });
     });
 });
