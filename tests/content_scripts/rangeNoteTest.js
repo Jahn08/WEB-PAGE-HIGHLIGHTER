@@ -185,4 +185,67 @@ describe('content_script/rangeMarker', function () {
             assureNoteValidity(residualNoteText, [residualNoteNode.textContent]);
         });
     });
+
+    describe('#getNoteLinks', function () {
+        
+        it('should return an empty array when there are no note links on a page', () => {
+            const noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 0);
+        });
+
+        it('should return all unique note links existent on a page', () => {
+            const firstNoteText = createNoteWithRandomText(TestPageHelper.getFirstItalicSentenceNode());
+
+            const secondNoteId = '2';
+            const secondNoteText = createNoteWithRandomText(TestPageHelper.getLastParagraphSentenceNode(), secondNoteId);
+
+            const noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 2);
+
+            assert(noteLinks.find(li => li.id === '1' && li.text.endsWith(firstNoteText)));
+            assert(noteLinks.find(li => li.id === secondNoteId && li.text.endsWith(secondNoteText)));
+        });
+    });
+
+    describe('#goToNote', function () {
+        
+        const runCallbackWithMockedScrolling = (callback) => {
+            const scrollIntoViewOriginal = Element.prototype.scrollIntoView;
+
+            let scrolledElement;
+    
+            Element.prototype.scrollIntoView = function() {
+                scrolledElement = this;
+            };
+
+            callback();
+
+            Element.prototype.scrollIntoView = scrollIntoViewOriginal;
+
+            return scrolledElement;
+        };
+
+        it('should scroll towards an existent link note', () => {
+            createNoteWithRandomText(
+                TestPageHelper.getFirstItalicSentenceNode());
+
+            const secondNoteId = '2';
+            const secondNoteText = createNoteWithRandomText(
+                TestPageHelper.getLastParagraphSentenceNode(), secondNoteId);
+            
+            const scrolledElement = runCallbackWithMockedScrolling(() =>
+                RangeNote.goToNote(secondNoteId));
+
+            assert(scrolledElement);
+            assert.strictEqual(RangeNote.hasNote(scrolledElement), true);
+            assert(scrolledElement.textContent.includes(secondNoteText));
+        });
+
+        it('should not scroll when there is no passed link note', () =>
+            assert(!runCallbackWithMockedScrolling(() => 
+                RangeNote.goToNote(Randomiser.getRandomNumber(1000))))
+        );
+    });
 });
