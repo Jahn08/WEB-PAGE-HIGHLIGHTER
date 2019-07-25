@@ -46,35 +46,35 @@ browser.runtime.onMessage.addListener(async msg => {
         }
 
         if (sender.shouldSetSaveMenuReady())
-            menu.showSaveBtn();
+            menu.enableSaveBtn();
         else
-            menu.hideSaveBtn();
+            menu.disableSaveBtn();
 
         if (sender.shouldSetLoadMenuReady())
-            menu.showLoadBtn();
+            menu.enableLoadBtn();
         else
-            menu.hideLoadBtn();
+            menu.disableLoadBtn();
 
         if (sender.shouldSetMarkMenuReady() && (sender.currentColourClasses.length !== 1 || 
             sender.currentColourClasses[0] !== menu.currentColourClass))
-            menu.showMarkingBtn();
+            menu.enableMarkingBtn();
         else
-            menu.hideMarkingBtn();
+            menu.disableMarkingBtn();
         
         if (sender.shouldSetUnmarkMenuReady())
-            menu.showUnmarkingBtn();
+            menu.enableUnmarkingBtn();
         else
-            menu.hideUnmarkingBtn();
+            menu.disableUnmarkingBtn();
 
         if (sender.shouldSetAddNoteMenuReady())
-            menu.showAddingNoteBtn();
+            menu.enableAddingNoteBtn();
         else
-            menu.hideAddingNoteBtn();
+            menu.disableAddingNoteBtn();
 
         if (sender.shouldSetRemoveNoteMenuReady())
-            menu.showRemovingNoteBtn();
+            menu.enableRemovingNoteBtn();
         else
-            menu.hideRemovingNoteBtn();
+            menu.disableRemovingNoteBtn();
         
         if (sender.shouldAddNoteLinks())
             menu.renderNoteLinks(sender.noteLinks);

@@ -32,9 +32,9 @@ class BaseMenuItem {
         browser.menus.remove(this._id);
     }
 
-    updateVisibility(visible) {
+    updateAvailability(isEnabled) {
         this.updateItem({
-            visible: visible === true
+            enabled: isEnabled === true
         });
     }
 
@@ -97,43 +97,40 @@ class ButtonMenuItem extends BaseMenuItem {
         super(id, ButtonMenuItem.TYPE);
     
         this._title = title;
-        this._visible = true;
+        this._enabled = false;
 
         this._parentId = parentId;
     }
 
     static get TYPE() { return 'normal'; }
 
-    hide() { return this._setVisibility(false); }
+    disable() { return this._setAvailability(false); }
 
-    _setVisibility(isVisible) {
-        if (isVisible === this._visible)
+    _setAvailability(isEnabled) {
+        if (isEnabled === this._enabled)
             return false;
 
-        this.updateVisibility(this._visible = isVisible);
+        this.updateAvailability(this._enabled = isEnabled);
         return true;
     }
 
-    show() { return this._setVisibility(true); }
+    enable() { return this._setAvailability(true); }
 
-    addToMenu(onclick, icon = new MenuIcon()) { this._addToMenu(onclick, icon); }
+    addToMenu(onclick, icon = new MenuIcon(), enabled = false) {
+        this._enabled = enabled;
 
-    _addToMenu(onclick, icon, forSelection = false) { 
-        const contexts = [];
+        this._addToMenu(onclick, icon);
+    }
 
-        if (forSelection)
-            contexts.push('selection');
-
+    _addToMenu(onclick, icon) { 
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
             onclick,
-            contexts,
-            title: this._title
+            title: this._title,
+            enabled: this._enabled
         });
     }
-
-    addToSelectionMenu(onclick, icon = new MenuIcon()) { this._addToMenu(onclick, icon, true); }
 
     removeFromMenu() { super._removeFromMenu(); }
 }

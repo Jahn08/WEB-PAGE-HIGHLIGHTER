@@ -20,7 +20,7 @@ export class ContextMenu {
         this._curColourClass = defaultColourClass;
 
         this.onMarking = null;
-        this._markBtn.addToSelectionMenu(async () => {
+        this._markBtn.addToMenu(async () => {
             try {
                 await this._passTabInfoToCallback(this.onMarking, 
                     {colourClass: this._curColourClass });
@@ -39,8 +39,6 @@ export class ContextMenu {
                 console.error('Error while trying to unmark: ' + ex.toString());
             }
         }, new MenuIcon('white-brush'));
-    
-        this._unmarkBtn.hide();
 
         this.onChangingColour = null;
         const changeColour = async (info) => {
@@ -57,7 +55,7 @@ export class ContextMenu {
 
         const paletteMenuItemId = 'palette';
         const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set mark colour');
-        setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId));
+        setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId), true);
 
         this._colourRadios = [];
 
@@ -73,6 +71,8 @@ export class ContextMenu {
                 browser.menus.refresh();
         });
 
+        new SeparatorMenuItem().addToMenu();
+
         this.onAddingNote = null;
         this._addNoteBtn.addToMenu(async () => { 
             try {
@@ -82,7 +82,6 @@ export class ContextMenu {
                 console.error('Error while trying to add a note: ' + ex.toString());
             }
         }/*, new MenuIcon('addNote')*/);
-        this._addNoteBtn.hide();
 
         this.onRemovingNote = null;
         this._removeNoteBtn.addToMenu(async () => { 
@@ -93,7 +92,10 @@ export class ContextMenu {
                 console.error('Error while trying to remove a note: ' + ex.toString());
             }
         }/*, new MenuIcon('removeNote')*/);
-        this._removeNoteBtn.hide();
+
+        this.onGoingToNote = null;
+        this._noteNavigation = null;
+        this._initNoteNavigation();
 
         new SeparatorMenuItem().addToMenu();
 
@@ -106,7 +108,6 @@ export class ContextMenu {
                 console.error('Error while trying to save: ' + ex.toString());
             }
         }, new MenuIcon('save'));
-        this._saveBtn.hide();
 
         this.onLoading = null;
         this._loadBtn.addToMenu(async () => { 
@@ -117,12 +118,8 @@ export class ContextMenu {
                 console.error('Error while trying to load: ' + ex.toString());
             }
         }, new MenuIcon('load'));
-        this._loadBtn.hide();
 
         browser.menus.onHidden.addListener(() => this._makePure());
-
-        this._noteNavigationInstance = null;
-        this.onGoingToNote = null;
     }
 
     async _passTabInfoToCallback(callback, options = {}) {
@@ -153,34 +150,34 @@ export class ContextMenu {
 
     get currentColourClass() { return this._curColourClass; }
 
-    hideMarkingBtn() { this._makeDirty(this._markBtn.hide()); }
+    disableMarkingBtn() { this._makeDirty(this._markBtn.disable()); }
 
     _makeDirty(shouldBeDirty) {
         if (shouldBeDirty)
             this._isDirty = true;
     }
 
-    showMarkingBtn() { this._makeDirty(this._markBtn.show()); }
+    enableMarkingBtn() { this._makeDirty(this._markBtn.enable()); }
 
-    hideUnmarkingBtn() { this._makeDirty(this._unmarkBtn.hide()); }
+    disableUnmarkingBtn() { this._makeDirty(this._unmarkBtn.disable()); }
     
-    showUnmarkingBtn() { this._makeDirty(this._unmarkBtn.show()); }
+    enableUnmarkingBtn() { this._makeDirty(this._unmarkBtn.enable()); }
 
-    hideAddingNoteBtn() { this._makeDirty(this._addNoteBtn.hide()); }
+    disableAddingNoteBtn() { this._makeDirty(this._addNoteBtn.disable()); }
 
-    showAddingNoteBtn() { this._makeDirty(this._addNoteBtn.show()); }
+    enableAddingNoteBtn() { this._makeDirty(this._addNoteBtn.enable()); }
     
-    hideRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.hide()); }
+    disableRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.disable()); }
 
-    showRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.show()); }
+    enableRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.enable()); }
 
-    hideSaveBtn() { this._saveBtn.hide(); }
+    disableSaveBtn() { this._saveBtn.disable(); }
     
-    showSaveBtn() { this._saveBtn.show(); }
+    enableSaveBtn() { this._saveBtn.enable(); }
 
-    hideLoadBtn() { this._loadBtn.hide(); }
+    disableLoadBtn() { this._loadBtn.disable(); }
     
-    showLoadBtn() { this._loadBtn.show(); }
+    enableLoadBtn() { this._loadBtn.enable(); }
 
     checkColourRadio(colourClass) {
         const colourRadio = this._getColourRadio(colourClass);
@@ -196,19 +193,19 @@ export class ContextMenu {
         return this._colourRadios.find(r => r.id === colourClass);
     }
 
-    get _noteNavigation() {
-        if (!this._noteNavigationInstance) 
-            this._noteNavigationInstance = new NoteNavigation(async info => {
-                try {
-                    await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
-                }
-                catch (ex) {
-                    console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
-                        + ex.toString());
-                }
-            });
-
-        return this._noteNavigationInstance;
+    _initNoteNavigation() {
+        if (this._noteNavigation) 
+            return;    
+        
+        this._noteNavigation = new NoteNavigation(async info => {
+            try {
+                await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
+            }
+            catch (ex) {
+                console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
+                    + ex.toString());
+            }
+        });
     }
 
     renderNoteLinks(noteLinks) {
@@ -231,6 +228,18 @@ class NoteNavigation {
         this._noteLinkBtns = [];
 
         this._noteNavigationBtn = null;
+        this._initNavigationBtn();
+    }
+
+    _initNavigationBtn() {
+        if (this._noteNavigationBtn)
+            return;
+
+        const noteLinksMenuId = 'noteNavigation';
+        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId, 'Note Links');
+        this._noteNavigationBtn.addToMenu();
+
+        this._setNavigationBtnAvailability();
     }
 
     render(noteLinks) {
@@ -241,36 +250,22 @@ class NoteNavigation {
             this._noteLinkBtns = [];
         }
         
-        if (!noteLinks.length)
-            return this._removeNavigationButton();
-
+        this._setNavigationBtnAvailability();
         noteLinks.forEach(li => this.appendLink(li.id, li.text));
     }
 
-    _initNavigationBtn() {
-        if (this._noteNavigationBtn)
-            return;
-
-        const noteLinksMenuId = 'noteNavigation';
-        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId, 'Note Links');
-        this._noteNavigationBtn.addToMenu();
-    }
-
-    _removeNavigationButton() {
-        if (!this._noteNavigationBtn || this._noteLinkBtns.length)
-            return;
-
-        this._noteNavigationBtn.removeFromMenu();
-        this._noteNavigationBtn = null;
+    _setNavigationBtnAvailability() {
+        return this._noteLinkBtns.length ? this._noteNavigationBtn.enable() : 
+            this._noteNavigationBtn.disable();
     }
 
     appendLink(noteId, noteText) {
-        this._initNavigationBtn();
-
         const linkBtn = new ButtonMenuItem(noteId, noteText, this._noteNavigationBtn.id);
         this._noteLinkBtns.push(linkBtn);
         
-        linkBtn.addToMenu(this._onGoingToNote);
+        linkBtn.addToMenu(this._onGoingToNote, null, true);
+
+        this._setNavigationBtnAvailability();
     }
 
     removeLink(noteId) {
@@ -282,6 +277,6 @@ class NoteNavigation {
         linkToRemove.removeFromMenu();
         this._noteLinkBtns = this._noteLinkBtns.filter(li => li.id !== noteId);
 
-        this._removeNavigationButton();
+        this._setNavigationBtnAvailability();
     }
 }

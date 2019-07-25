@@ -24,11 +24,11 @@ describe('components/ContextMenu', () => {
             new ContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
-            assert.strictEqual(itemOptions.length, 14);
+            assert.strictEqual(itemOptions.length, 16);
 
-            assert.strictEqual(itemOptions.filter(i => i.type === SEPARATOR_TYPE).length, 1);
+            assert.strictEqual(itemOptions.filter(i => i.type === SEPARATOR_TYPE).length, 2);
 
-            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 7);
+            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 8);
             
             assert.strictEqual(itemOptions.filter(i => i.type === RADIO_TYPE).length, 6);
         });
@@ -86,28 +86,36 @@ describe('components/ContextMenu', () => {
             const browserMocked = mockBrowser();
             const contextMenu = new ContextMenu();
 
-            contextMenu.hideMarkingBtn();
-            contextMenu.hideUnmarkingBtn();
-            contextMenu.hideSaveBtn();
-            contextMenu.hideLoadBtn();
-            contextMenu.hideAddingNoteBtn();
-            contextMenu.hideRemovingNoteBtn();
+            const assertItemsVisibility = (enabled, expectedLength) => {
+                assert.strictEqual(browserMocked.menuOptions
+                    .filter(i => i.type === BTN_TYPE && i.enabled === enabled).length, expectedLength);
+            };
+                
+            assertItemsVisibility(false, 7);
 
-            const btnOptions = browserMocked.menuOptions
-                .filter(i => i.type === BTN_TYPE && i.visible !== undefined);
-            assert.strictEqual(btnOptions.length, 6);
+            contextMenu.enableMarkingBtn();
+            contextMenu.enableUnmarkingBtn();
+            contextMenu.enableLoadBtn();
+
+            assertItemsVisibility(false, 4);
+
+            contextMenu.enableSaveBtn();
+            contextMenu.enableAddingNoteBtn();
+            contextMenu.enableRemovingNoteBtn();
+
+            assertItemsVisibility(true, 7);
+
+            contextMenu.disableMarkingBtn();
+            contextMenu.disableUnmarkingBtn();
+            contextMenu.disableSaveBtn();
+
+            assertItemsVisibility(false, 4);
+
+            contextMenu.disableLoadBtn();
+            contextMenu.disableAddingNoteBtn();
+            contextMenu.disableRemovingNoteBtn();
             
-            const assertItemsVisibility = (visible) => assert(btnOptions.every(b => b.visible === visible));
-            assertItemsVisibility(false);
-
-            contextMenu.showMarkingBtn();
-            contextMenu.showUnmarkingBtn();
-            contextMenu.showLoadBtn();
-            contextMenu.showSaveBtn();
-            contextMenu.showAddingNoteBtn();
-            contextMenu.showRemovingNoteBtn();
-
-            assertItemsVisibility(true);
+            assertItemsVisibility(false, 7);
         });
     });
 

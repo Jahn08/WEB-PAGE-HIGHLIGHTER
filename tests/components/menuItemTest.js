@@ -132,14 +132,6 @@ describe('components/ButtonMenuItem', () => {
         it('should add button items with options to a menu', () => addingBtnItemMenu(ADD_TO_MENU_METHOD_NAME));
     });
 
-    const ADD_TO_SELECTION_MENU_METHOD_NAME = 'addToSelectionMenu';
-    describe('#' + ADD_TO_SELECTION_MENU_METHOD_NAME, () => {
-        it('should add button items with options for selection to a menu', () => {
-            assert(addingBtnItemMenu(ADD_TO_SELECTION_MENU_METHOD_NAME)
-                .every(b => b.contexts && b.contexts.includes('selection')));
-        });
-    });
-
     const buildRandomBtn = () => { 
         const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax());
         btn.addToMenu();
@@ -154,13 +146,13 @@ describe('components/ButtonMenuItem', () => {
             const browserMocked = initMockedBrowser();
 
             const buttons = buildRandomBtnArray();
-            buttons.forEach(btn => btn.hide());
+            buttons.forEach(btn => btn.disable());
             buttons.forEach((btn, index) => {
                 if (index % 2)
-                    btn.show();
+                    btn.enable();
             });
             
-            assert(browserMocked.menuOptions.every(b => b.visible !== undefined));
+            assert(browserMocked.menuOptions.every(b => b.enabled !== undefined));
         });
     });
 
