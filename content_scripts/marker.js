@@ -43,14 +43,14 @@ void function() {
         }
     };
 
+    const renderNoteLinks = () => browser.runtime.sendMessage(
+        MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
+
     const load = async () => {
         MessageControl.show('Page is loading');
         await pageInfo.load();
 
-        const noteLinks = RangeNote.getNoteLinks();
-
-        if (noteLinks.length)
-            browser.runtime.sendMessage(MessageReceiver.addNoteLinks(noteLinks));
+        renderNoteLinks();
 
         MessageControl.show('The page has been loaded successfully');
     };
@@ -66,6 +66,8 @@ void function() {
 
             if (canLoad && (preferences.shouldLoad || pageInfo.shouldLoad()))
                 await performStorageAction(load);
+            else
+                renderNoteLinks();
         }
         catch (ex) {
             console.error('An error occurred while trying to apply the extension preferences: ' + 
