@@ -212,10 +212,10 @@ class RangeNote extends RangeBase {
 
 class NoteLink {
     constructor(id, text) {
+        this._TEXT_LENGTH_LIMIT = 15;
+
         this.id = '' + id;
         this.text = this._formatText(id, text);
-
-        this._TEXT_LENGTH_LIMIT = 15;
     }
 
     _formatText(id, text) {
