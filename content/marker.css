@@ -64,13 +64,13 @@
 }
 
 .marker--note {
-    background-color: cornsilk;
+    background-color: bisque;
     max-width: 20vw;
     min-width: 10vw;
     min-height: 15vh;
     max-height: 25vh;
     overflow: auto;
-    box-shadow: 2px 2px gainsboro;
+    box-shadow: 2px 2px chocolate;
     border-radius: 10px 10px;
     padding-left: 5px;
     position: absolute;
@@ -97,7 +97,9 @@
 }
 
 .marker-has-note {
-    position: relative;
+	position: relative;
+	background: burlywood !important;
+	color: black !important;
 }
 
 .marker-has-note:hover > .marker--note {
