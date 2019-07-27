@@ -7,6 +7,7 @@ A Firefox extension that marks text on a web page. The general functionality:
 * Marking text with several colours through a context menu on a page
 * Saving the marked text and loading it later when accessing the same page
 * Preferences for changing the default colour for marking and autoloading a page, provided it is available in the storage ([more about configuring](#headConfiguration))
+* Adding notes on a page and navigating them through quick scrolling by means of clicking the respective links in the context menu
 
 ## Installing / Getting started
 
