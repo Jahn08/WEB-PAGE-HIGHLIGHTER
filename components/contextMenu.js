@@ -7,14 +7,11 @@ export class ContextMenu {
         this._isDirty = false;
         this._isRendered = false;
     
-        this._markBtn = new ButtonMenuItem('mark', 'Mark selected text');
-        this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark selected text');
+        this._markBtn = new ButtonMenuItem('mark', 'Mark Selected Text');
+        this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark Selected Text');
 
-        this._addNoteBtn = new ButtonMenuItem('add note', 'Add a note');
-        this._removeNoteBtn = new ButtonMenuItem('remove note', 'Remove a note');
-
-        this._saveBtn = new ButtonMenuItem('save', 'Save Page');
-        this._loadBtn = new ButtonMenuItem('load', 'Load Page');
+        this._addNoteBtn = new ButtonMenuItem('add note', 'Add a Note');
+        this._removeNoteBtn = new ButtonMenuItem('remove note', 'Remove a Note');
 
         const defaultColourClass = 'marker-green';
         this._curColourClass = defaultColourClass;
@@ -54,7 +51,7 @@ export class ContextMenu {
         };
 
         const paletteMenuItemId = 'palette';
-        const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set mark colour');
+        const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set Mark Colour');
         setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId), true);
 
         this._colourRadios = [];
@@ -94,30 +91,11 @@ export class ContextMenu {
         }/*, new MenuIcon('removeNote')*/);
 
         this.onGoingToNote = null;
-        this._noteNavigation = null;
         this._initNoteNavigation();
 
-        new SeparatorMenuItem().addToMenu();
-
         this.onSaving = null;
-        this._saveBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onSaving);
-            }
-            catch (ex) {
-                console.error('Error while trying to save: ' + ex.toString());
-            }
-        }, new MenuIcon('save'));
-
         this.onLoading = null;
-        this._loadBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onLoading);
-            }
-            catch (ex) {
-                console.error('Error while trying to load: ' + ex.toString());
-            }
-        }, new MenuIcon('load'));
+        this._initStorageOptions();
 
         browser.menus.onHidden.addListener(() => this._makePure());
     }
@@ -140,6 +118,46 @@ export class ContextMenu {
     }
 
     _shouldBeRefreshed() { return this._isDirty && !this._isRendered; }
+
+    _initNoteNavigation() {
+        if (this._noteNavigation) 
+            return;    
+        
+        this._noteNavigation = new NoteNavigation(async info => {
+            try {
+                await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
+            }
+            catch (ex) {
+                console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
+                    + ex.toString());
+            }
+        });
+    }
+
+    _initStorageOptions() {
+        if (this._storageMenu)
+            return;
+
+        const onSavingFn = async  () => { 
+            try {
+                await this._passTabInfoToCallback(this.onSaving);
+            }
+            catch (ex) {
+                console.error('Error while trying to save: ' + ex.toString());
+            }
+        };
+
+        const onLoadingFn = async () => { 
+            try {
+                await this._passTabInfoToCallback(this.onLoading);
+            }
+            catch (ex) {
+                console.error('Error while trying to load: ' + ex.toString());
+            }
+        };
+
+        this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn);
+    }
 
     _makePure() {
         this._isDirty = false;
@@ -171,13 +189,13 @@ export class ContextMenu {
 
     enableRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.enable()); }
 
-    disableSaveBtn() { this._saveBtn.disable(); }
+    disableSaveBtn() { this._storageMenu.disableSaveBtn(); }
     
-    enableSaveBtn() { this._saveBtn.enable(); }
+    enableSaveBtn() { this._storageMenu.enableSaveBtn(); }
 
-    disableLoadBtn() { this._loadBtn.disable(); }
+    disableLoadBtn() { this._storageMenu.disableLoadBtn(); }
     
-    enableLoadBtn() { this._loadBtn.enable(); }
+    enableLoadBtn() { this._storageMenu.enableLoadBtn(); }
 
     checkColourRadio(colourClass) {
         const colourRadio = this._getColourRadio(colourClass);
@@ -191,21 +209,6 @@ export class ContextMenu {
 
     _getColourRadio(colourClass) {
         return this._colourRadios.find(r => r.id === colourClass);
-    }
-
-    _initNoteNavigation() {
-        if (this._noteNavigation) 
-            return;    
-        
-        this._noteNavigation = new NoteNavigation(async info => {
-            try {
-                await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
-            }
-            catch (ex) {
-                console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
-                    + ex.toString());
-            }
-        });
     }
 
     renderNoteLinks(noteLinks) {
@@ -279,4 +282,49 @@ class NoteNavigation {
 
         this._setNavigationBtnAvailability();
     }
+}
+
+class PageStorageMenu {
+    constructor(onSavingFn, onLoadingFn) {
+        this._storageBtn = null;
+        this._saveBtn = null;
+        this._loadBtn = null;
+
+        this._init(onSavingFn, onLoadingFn);
+    }
+
+    _init(onSavingFn, onLoadingFn) {
+        if (this._storageBtn)
+            return;
+
+        new SeparatorMenuItem().addToMenu();
+
+        const storageOptionId = 'storage';
+        this._storageBtn = new ButtonMenuItem(storageOptionId, 'Page Storage');
+        this._storageBtn.addToMenu();
+
+        this._saveBtn = new ButtonMenuItem('save', 'Save Page', storageOptionId);
+        this._saveBtn.addToMenu(onSavingFn, new MenuIcon('save'));
+
+        this._loadBtn = new ButtonMenuItem('load', 'Load Page', storageOptionId);
+        this._loadBtn.addToMenu(onLoadingFn, new MenuIcon('load'));
+    }
+
+    disableSaveBtn() { this._setParentBtnAvailability(this._saveBtn.disable()); }
+    
+    _setParentBtnAvailability(availabilityChanged) {
+        if (!availabilityChanged)
+            return;
+
+        if (this._saveBtn.isEnabled || this._loadBtn.isEnabled)
+            this._storageBtn.enable();
+        else
+            this._storageBtn.disable();
+    }
+
+    enableSaveBtn() { this._setParentBtnAvailability(this._saveBtn.enable()); }
+
+    disableLoadBtn() { this._setParentBtnAvailability(this._loadBtn.disable()); }
+    
+    enableLoadBtn() { this._setParentBtnAvailability(this._loadBtn.enable()); }
 }

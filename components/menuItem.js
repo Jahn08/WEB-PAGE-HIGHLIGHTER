@@ -115,6 +115,8 @@ class ButtonMenuItem extends BaseMenuItem {
     }
 
     enable() { return this._setAvailability(true); }
+    
+    get isEnabled() { return this._enabled; }
 
     addToMenu(onclick, icon = new MenuIcon(), enabled = false) {
         this._enabled = enabled;

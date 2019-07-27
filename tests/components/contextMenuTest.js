@@ -24,11 +24,11 @@ describe('components/ContextMenu', () => {
             new ContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
-            assert.strictEqual(itemOptions.length, 16);
+            assert.strictEqual(itemOptions.length, 17);
 
             assert.strictEqual(itemOptions.filter(i => i.type === SEPARATOR_TYPE).length, 2);
 
-            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 8);
+            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 9);
             
             assert.strictEqual(itemOptions.filter(i => i.type === RADIO_TYPE).length, 6);
         });
@@ -86,36 +86,36 @@ describe('components/ContextMenu', () => {
             const browserMocked = mockBrowser();
             const contextMenu = new ContextMenu();
 
-            const assertItemsVisibility = (enabled, expectedLength) => {
+            const assertItemsAvailability = (enabled, expectedLength) => {
                 assert.strictEqual(browserMocked.menuOptions
                     .filter(i => i.type === BTN_TYPE && i.enabled === enabled).length, expectedLength);
             };
                 
-            assertItemsVisibility(false, 7);
+            assertItemsAvailability(false, 8);
 
             contextMenu.enableMarkingBtn();
             contextMenu.enableUnmarkingBtn();
             contextMenu.enableLoadBtn();
 
-            assertItemsVisibility(false, 4);
+            assertItemsAvailability(false, 4);
 
             contextMenu.enableSaveBtn();
             contextMenu.enableAddingNoteBtn();
             contextMenu.enableRemovingNoteBtn();
 
-            assertItemsVisibility(true, 7);
+            assertItemsAvailability(true, 8);
 
             contextMenu.disableMarkingBtn();
             contextMenu.disableUnmarkingBtn();
             contextMenu.disableSaveBtn();
 
-            assertItemsVisibility(false, 4);
+            assertItemsAvailability(false, 4);
 
             contextMenu.disableLoadBtn();
             contextMenu.disableAddingNoteBtn();
             contextMenu.disableRemovingNoteBtn();
             
-            assertItemsVisibility(false, 7);
+            assertItemsAvailability(false, 8);
         });
     });
 
