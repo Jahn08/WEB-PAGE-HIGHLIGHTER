@@ -80,6 +80,8 @@ browser.runtime.onMessage.addListener(async msg => {
             menu.renderNoteLinks(sender.noteLinks);
 
         menu.render();
+
+        return true;
     }
     catch (ex) {
         console.error('Error while trying to set menu visibility: ' + ex.toString());

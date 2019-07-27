@@ -90,11 +90,11 @@ void function() {
         return msg;
     };
 
-    document.addEventListener('mousedown', _event => {
+    document.addEventListener('mousedown', async _event => {
         try {
             if (_event.button !== 2)
                 return true;
-        
+
             let msg;
             const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
 
@@ -119,8 +119,8 @@ void function() {
                 msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
                 activeNode = focusedNode;
             }
-
-            browser.runtime.sendMessage(includeLoadSaveEvents(msg));
+            
+            await browser.runtime.sendMessage(includeLoadSaveEvents(msg));
         }
         catch (ex) {
             console.error('An error while trying to set menu visibility: ' + ex.toString());
