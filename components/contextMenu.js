@@ -5,7 +5,6 @@ import { ColourList } from './colourList.js';
 export class ContextMenu {
     constructor() {
         this._isDirty = false;
-        this._isRendered = false;
     
         this._markBtn = new ButtonMenuItem('mark', 'Mark Selected Text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark Selected Text');
@@ -117,7 +116,7 @@ export class ContextMenu {
         return activeTabs[0].id;
     }
 
-    _shouldBeRefreshed() { return this._isDirty && !this._isRendered; }
+    _shouldBeRefreshed() { return this._isDirty; }
 
     _initNoteNavigation() {
         if (this._noteNavigation) 
@@ -161,10 +160,7 @@ export class ContextMenu {
 
     _makePure() {
         this._isDirty = false;
-        this._isRendered = false;
     }
-
-    render() { this._isRendered = true; }
 
     get currentColourClass() { return this._curColourClass; }
 

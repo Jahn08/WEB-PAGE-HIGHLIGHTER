@@ -79,8 +79,6 @@ browser.runtime.onMessage.addListener(async msg => {
         if (sender.shouldAddNoteLinks())
             menu.renderNoteLinks(sender.noteLinks);
 
-        menu.render();
-
         return true;
     }
     catch (ex) {
