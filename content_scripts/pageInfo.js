@@ -89,18 +89,22 @@ class PageInfo {
 
     static getAllSavedPagesInfo() {
         return BrowserStorage.getAll().then(objs => {
+            const props = Object.getOwnPropertyNames(objs);
+
             const pagesInfo = [];
-            
-            for (const prop in objs)
-                if (this._isUriValid(prop)) {
-                    const obj = objs[prop];
-                    
-                    pagesInfo.push({
-                        uri: prop, 
-                        title: obj.title,
-                        date: obj.date 
-                    });
-                }
+
+            ArrayExtension.runForEach(props, prop => {
+                if (!this._isUriValid(prop))
+                    return;
+
+                const obj = objs[prop];
+                
+                pagesInfo.push({
+                    uri: prop, 
+                    title: obj.title,
+                    date: obj.date 
+                });
+            });
 
             return pagesInfo;
         });

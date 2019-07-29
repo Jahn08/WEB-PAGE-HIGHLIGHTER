@@ -31,8 +31,8 @@ class RangeNote extends RangeBase {
     static _appendNoteToRanges(ranges, noteId, text) {
         const successfully = this._appendNoteToRangeNodes(ranges, noteId, text);
 
-        ranges.forEach(r => this._collapseRange(r));
-     
+        ArrayExtension.runForEach(ranges, r => this._collapseRange(r));
+
         return successfully;
     }
 
@@ -40,7 +40,7 @@ class RangeNote extends RangeBase {
         if (!ranges || !ranges.length)
             return false;
 
-        ranges.forEach(range => {            
+        ArrayExtension.runForEach(ranges, range => {            
             const endOffset = range.endOffset;
             const skipLastNode = !endOffset;
     
@@ -172,7 +172,8 @@ class RangeNote extends RangeBase {
             return null;
 
         const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
-        noteNodes.forEach(n => n.childElementCount === 1 ? n.remove() : this._extractLastChildContent(n));
+        ArrayExtension.runForEach(noteNodes, 
+            n => n.childElementCount === 1 ? n.remove() : this._extractLastChildContent(n));
 
         return noteNodes.length > 0 ? noteId : null;        
     }
@@ -200,7 +201,7 @@ class RangeNote extends RangeBase {
         return [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
             const noteId = n.dataset.noteId;
 
-            if (noteId && !uniqueIds.includes(noteId)) {
+            if (noteId && !ArrayExtension.contains(uniqueIds, noteId)) {
                 uniqueIds.push(noteId);
                 return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
             }

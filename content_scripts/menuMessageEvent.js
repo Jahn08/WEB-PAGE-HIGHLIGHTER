@@ -78,7 +78,7 @@ class MenuMessageEvent {
 
     isMarkEvent(msg) { return this._isEvent(msg, this._markEvent); }
 
-    _isEvent(msg, eventName) { return msg && msg.event.includes(eventName); }
+    _isEvent(msg, eventName) { return msg && ArrayExtension.contains(msg.event, eventName); }
 
     getMarkColourClasses(msg) { return msg ? msg[this._COLOUR_CLASS_FIELD]: []; }
 

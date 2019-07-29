@@ -158,7 +158,7 @@ describe('content_script/rangeMarker', function () {
                 TestPageHelper.setRangeForLastParagraphSentenceNode);
 
             const lastPart = TestPageHelper.removeExcessSpaces(TestPageHelper.getLastParagraphSentenceNode().textContent);
-            const expectedText = [PARTLY_SELECTED_NODE_EXPECTED_TEXT, lastPart].join(' ');
+            const expectedText = PARTLY_SELECTED_NODE_EXPECTED_TEXT + ' ' + lastPart;
             checkMarkedNodes(4, expectedText);
         });
     

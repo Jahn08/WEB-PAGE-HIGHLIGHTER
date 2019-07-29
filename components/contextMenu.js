@@ -53,11 +53,11 @@ export class ContextMenu {
         const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set Mark Colour');
         setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId), true);
 
-        this._colourRadios = [];
+        this._colourRadios = new Array(ColourList.colours.length);
 
-        ColourList.colours.forEach((v, index) => {
+        ArrayExtension.runForEach(ColourList.colours, (v, index) => {
             const radio = new RadioSubMenuItem(v.token, setColourBtn.id, v.title);
-            this._colourRadios.push(radio);
+            this._colourRadios[index] = radio;
             
             radio.addToMenu(changeColour, v.icon, index === 0);
         });
@@ -245,12 +245,12 @@ class NoteNavigation {
         noteLinks = noteLinks || [];
         
         if (this._noteLinkBtns.length) {
-            this._noteLinkBtns.forEach(li => li.removeFromMenu());
+            ArrayExtension.runForEach(this._noteLinkBtns, li => li.removeFromMenu());
             this._noteLinkBtns = [];
         }
         
         this._setNavigationBtnAvailability();
-        noteLinks.forEach(li => this.appendLink(li.id, li.text));
+        ArrayExtension.runForEach(noteLinks, li => this.appendLink(li.id, li.text));
     }
 
     _setNavigationBtnAvailability() {

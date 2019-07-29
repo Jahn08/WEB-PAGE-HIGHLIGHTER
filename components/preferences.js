@@ -17,7 +17,7 @@ class PageTable {
         this._pagesInfo = pagesInfo;
         this._sortPagesInfo();
 
-        this._removedPageUris = new Set();
+        this._removedPageUris = [];
 
         const formTableId = 'form--table-pages';
         this._tableBody = document.getElementById(formTableId).tBodies[0];
@@ -46,12 +46,13 @@ class PageTable {
 
         this._sortHeader = null;
 
-        [...document.getElementsByClassName(formTableId + '--cell-header')].forEach(ch => {
-            if (!this._sortHeader)
-                this._sortHeader = ch;
+        ArrayExtension.runForEach([...document.getElementsByClassName(formTableId + '--cell-header')], 
+            ch => {
+                if (!this._sortHeader)
+                    this._sortHeader = ch;
 
-            ch.onclick = this._bindToThis(this._onHeaderCellClick);
-        });
+                ch.onclick = this._bindToThis(this._onHeaderCellClick);
+            });
 
         const hiddenClassName = formTableId + '--row-hidden';
         document.getElementById(pageSectionPrefix + 'txt-search').onchange = 
@@ -142,12 +143,13 @@ class PageTable {
 
         document.querySelectorAll(this._CHECK_TICKED_SELECTOR)
             .forEach(el => {
-                this._removedPageUris.add(this._getCheckboxUri(el));
+                this._removedPageUris.push(this._getCheckboxUri(el));
 
                 el.parentElement.parentElement.remove();
             });
 
-        this._pagesInfo = this._pagesInfo.filter(pi => !this._removedPageUris.has(pi.uri));        
+        this._pagesInfo = this._pagesInfo.filter(pi => 
+            !ArrayExtension.contains(this._removedPageUris, pi.uri));        
     }
 
     _onHeaderCellClick(_event) {
@@ -200,16 +202,17 @@ class PageTable {
     _onSearching(hiddenClassName, _event) {
         const searchText = (_event.target.value || '').toUpperCase();
 
-        [...this._tableBody.rows].forEach(r => {
-            if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
-                r.classList.add(hiddenClassName);
-            else
-                r.classList.remove(hiddenClassName);
-        });
+        ArrayExtension.runForEach([...this._tableBody.rows], 
+            r => {
+                if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
+                    r.classList.add(hiddenClassName);
+                else
+                    r.classList.remove(hiddenClassName);
+            });
     }
 
     get removedPageUris() {
-        return [...this._removedPageUris];
+        return this._removedPageUris;
     }
 }
 

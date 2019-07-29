@@ -66,7 +66,7 @@ class MessageControl {
                 if (!elem)
                     return reject(new Error(`An element to apply animation ${animationName} is undefined`));
 
-                elem.classList.add([elem.id, animationName].join('-'));
+                elem.classList.add(elem.id + '-' + animationName);
                 resolve(elem);
             }, 1000);
         });

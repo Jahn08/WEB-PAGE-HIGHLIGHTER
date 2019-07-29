@@ -20,7 +20,8 @@
         "MessageSender": "readonly",
         "MessageControl": "readonly",
         "BrowserStorage": "readonly",
-        "PageInfo": "readonly"
+        "PageInfo": "readonly",
+        "ArrayExtension": "readonly"
     },
     "rules": {
         "indent": [
