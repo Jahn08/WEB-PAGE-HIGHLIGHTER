@@ -3,7 +3,7 @@ import { Randomiser } from '../tools/randomiser';
 import { EnvLoader } from '../tools/envLoader';
 import { TestPageHelper } from '../tools/testPageHelper';
 
-describe('content_script/rangeMarker', function () {
+describe('content_script/rangeNote', function () {
     this.timeout(0);
 
     before(done => {
@@ -182,6 +182,16 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(RangeNote.removeNote(nodeForNoteRemoval), '1'); 
 
             assureNoteValidity(residualNoteText, [residualNoteNode.textContent]);
+        });
+
+        it('should remove a target node note and create another note with an incremented id', () => {
+            const nodeForNoteRemoval = TestPageHelper.getFirstItalicSentenceNode();
+            createNoteWithText(nodeForNoteRemoval);
+
+            createNoteWithText(TestPageHelper.getLastParagraphSentenceNode(), '2');
+
+            assert.strictEqual(RangeNote.removeNote(nodeForNoteRemoval), '1'); 
+            createNoteWithText(nodeForNoteRemoval, '3');
         });
     });
 

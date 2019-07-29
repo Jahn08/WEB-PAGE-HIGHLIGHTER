@@ -5,11 +5,20 @@ class RangeNote extends RangeBase {
         if (!text || (!ranges.length && !targetNode))
             return null;
 
-        const noteId = 
-            document.querySelectorAll(`.${this.START_NOTE_CLASS_NAME},.${this.SOLID_NOTE_CLASS_NAME}`).length + 1;
+        let maxNoteId = 0;
+        
+        ArrayExtension.runForEach(
+            [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)],
+            el => {
+                const elNoteId = el.dataset.noteId;
+
+                if (elNoteId > maxNoteId)
+                    maxNoteId = Number(elNoteId);
+            });
 
         let success = false;
             
+        const noteId = maxNoteId + 1;
         const noteLink = new NoteLink(noteId, text);
 
         if (ranges.length)
