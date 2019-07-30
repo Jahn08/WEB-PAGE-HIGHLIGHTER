@@ -32,7 +32,7 @@
         }
     ],
 
-    "description": "Adds items to the context menu of your browser in order to highlight pieces of text on a web page to keep such marks after saving the page",
+    "description": "Highlighter to mark text on a site, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
 
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
 
