@@ -51,7 +51,7 @@ export class ContextMenu {
 
         const paletteMenuItemId = 'palette';
         const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set Mark Colour');
-        setColourBtn.addToMenu(null, new MenuIcon(paletteMenuItemId), true);
+        setColourBtn.addToMenu(null, null, true);
 
         this._colourRadios = new Array(ColourList.colours.length);
 
@@ -77,7 +77,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to add a note: ' + ex.toString());
             }
-        }/*, new MenuIcon('addNote')*/);
+        }, new MenuIcon('in-note'));
 
         this.onRemovingNote = null;
         this._removeNoteBtn.addToMenu(async () => { 
@@ -87,7 +87,7 @@ export class ContextMenu {
             catch (ex) {
                 console.error('Error while trying to remove a note: ' + ex.toString());
             }
-        }/*, new MenuIcon('removeNote')*/);
+        }, new MenuIcon('out-note'));
 
         this.onGoingToNote = null;
         this._initNoteNavigation();
