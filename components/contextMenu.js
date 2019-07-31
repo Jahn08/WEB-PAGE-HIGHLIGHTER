@@ -207,9 +207,7 @@ export class ContextMenu {
         return this._colourRadios.find(r => r.id === colourClass);
     }
 
-    renderNoteLinks(noteLinks) {
-        this._noteNavigation.render(noteLinks);
-    }
+    renderNoteLinks(noteLinks) { this._makeDirty(this._noteNavigation.render(noteLinks)); }
 
     appendNoteLink(noteId, noteText) {
         this._noteNavigation.appendLink(noteId, noteText);
@@ -240,22 +238,45 @@ class NoteNavigation {
 
         this._setNavigationBtnAvailability();
     }
+    
+    _setNavigationBtnAvailability() {
+        return this._noteLinkBtns.length ? this._noteNavigationBtn.enable() : 
+            this._noteNavigationBtn.disable();
+    }
 
     render(noteLinks) {
         noteLinks = noteLinks || [];
         
-        if (this._noteLinkBtns.length) {
-            ArrayExtension.runForEach(this._noteLinkBtns, li => li.removeFromMenu());
-            this._noteLinkBtns = [];
-        }
-        
-        this._setNavigationBtnAvailability();
-        ArrayExtension.runForEach(noteLinks, li => this.appendLink(li.id, li.text));
-    }
+        if (!noteLinks.length)
+            return this._noteNavigationBtn.disable();
 
-    _setNavigationBtnAvailability() {
-        return this._noteLinkBtns.length ? this._noteNavigationBtn.enable() : 
-            this._noteNavigationBtn.disable();
+        const updatedBtnIds = [];
+
+        let wasUpdated = false;
+
+        ArrayExtension.runForEach(noteLinks, li => {
+            const existentLink = this._noteLinkBtns.find(btn => btn.id === li.id);
+
+            if (!existentLink) {
+                this.appendLink(li.id, li.text);
+                wasUpdated = true;
+            }
+            else if (existentLink.updateTitle(li.text))
+                wasUpdated = true;
+
+            updatedBtnIds.push(li.id);
+        });
+
+        ArrayExtension.runForEach(this._noteLinkBtns, btn => {
+            const btnId = btn.id;
+
+            if (!updatedBtnIds.includes(btnId)) {
+                this.removeLink(btnId);
+                wasUpdated = true;
+            }
+        });
+
+        return wasUpdated || this._setNavigationBtnAvailability();
     }
 
     appendLink(noteId, noteText) {

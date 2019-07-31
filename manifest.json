@@ -27,8 +27,8 @@
                 "content_scripts/menuMessageEvent.js", "content_scripts/messageReceiver.js", 
                 "content_scripts/rangeBase.js", "content_scripts/rangeMarker.js", 
                 "content_scripts/rangeNote.js", "content_scripts/messageControl.js",
-                "content_scripts/marker.js"],
-            "css": ["content/marker.css"]
+                "content_scripts/index.js"],
+            "css": ["content/index.css"]
         }
     ],
 

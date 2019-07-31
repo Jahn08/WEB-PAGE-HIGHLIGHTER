@@ -152,7 +152,7 @@ describe('components/ContextMenu', () => {
         };
     };
 
-    const menuHasNoteLinks = (expectedNoteLinks, actualMenuOptions) => {
+    const menuHasAvailableNoteLinks = (expectedNoteLinks, actualMenuOptions) => {
         const expectedNoteLinkIds = expectedNoteLinks.map(l => l.id);
         const actualNoteLinkBtns = actualMenuOptions.filter(i => i.type === BTN_TYPE && 
             expectedNoteLinkIds.includes(i.id));
@@ -161,6 +161,11 @@ describe('components/ContextMenu', () => {
             return false;
 
         const parentId = actualNoteLinkBtns[0].parentId;
+        
+        const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
+        
+        if (!parentBtn || !parentBtn.enabled)
+            return false;
 
         if (!actualNoteLinkBtns.every(btn => btn.parentId === parentId) || 
             !actualNoteLinkBtns.every(btn => expectedNoteLinks.find(li => btn.id === li.id && 
@@ -177,9 +182,10 @@ describe('components/ContextMenu', () => {
             const contextMenu = new ContextMenu();
 
             const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            
             contextMenu.renderNoteLinks(expectedNoteLinks);
             
-            assert(menuHasNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
+            assert(menuHasAvailableNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
         });
 
         it('should remove all previous note links in menu while rendering afresh', () => {
@@ -188,12 +194,35 @@ describe('components/ContextMenu', () => {
 
             const noteLinksToRemove = [createRandomNoteLink(), createRandomNoteLink()];
             contextMenu.renderNoteLinks(noteLinksToRemove);
-            
+
             const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
             contextMenu.renderNoteLinks(expectedNoteLinks);
 
-            assert(!menuHasNoteLinks(noteLinksToRemove, browserMocked.menuOptions));
-            assert(menuHasNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
+            assert(!menuHasAvailableNoteLinks(noteLinksToRemove, browserMocked.menuOptions));
+            assert(menuHasAvailableNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
+        });
+
+        const assertParentAvailability = (actualMenuOptions, shouldBeAvailable) => {
+            const parentId = 'noteNavigation';
+            const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
+            assert(parentBtn);
+
+            assert.strictEqual(parentBtn.enabled, shouldBeAvailable);
+        };
+
+        it('should disable the navigational note submenu when rendering an empty list of notes and enable it otherwise', () => {
+            const browserMocked = mockBrowser();
+
+            const contextMenu = new ContextMenu();
+
+            const noteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            contextMenu.renderNoteLinks(noteLinks);
+
+            contextMenu.renderNoteLinks([]);
+            assertParentAvailability(browserMocked.menuOptions, false);
+
+            contextMenu.renderNoteLinks(noteLinks);
+            assertParentAvailability(browserMocked.menuOptions, true);
         });
     });
 
@@ -206,7 +235,7 @@ describe('components/ContextMenu', () => {
             const expectedNoteLink = createRandomNoteLink();
             contextMenu.appendNoteLink(expectedNoteLink.id, expectedNoteLink.text);
             
-            assert(menuHasNoteLinks([expectedNoteLink], browserMocked.menuOptions));
+            assert(menuHasAvailableNoteLinks([expectedNoteLink], browserMocked.menuOptions));
         });
     });
     
@@ -223,8 +252,8 @@ describe('components/ContextMenu', () => {
             const noteLinkToRemove = expectedNoteLinks[0];
             contextMenu.removeNoteLink(noteLinkToRemove.id);
 
-            assert(!menuHasNoteLinks([noteLinkToRemove], browserMocked.menuOptions));
-            assert(menuHasNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), 
+            assert(!menuHasAvailableNoteLinks([noteLinkToRemove], browserMocked.menuOptions));
+            assert(menuHasAvailableNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), 
                 browserMocked.menuOptions));
         });
     });

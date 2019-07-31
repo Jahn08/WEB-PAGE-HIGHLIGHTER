@@ -135,6 +135,16 @@ class ButtonMenuItem extends BaseMenuItem {
     }
 
     removeFromMenu() { super._removeFromMenu(); }
+
+    updateTitle(newTitile) {
+        if (this._title === newTitile)
+            return false;
+
+        this.updateItem({ title: newTitile });
+        this._title = newTitile;
+        
+        return true;
+    }
 }
 
 export { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem };
