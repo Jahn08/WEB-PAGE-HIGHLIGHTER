@@ -21,7 +21,8 @@
         "MessageControl": "readonly",
         "BrowserStorage": "readonly",
         "PageInfo": "readonly",
-        "ArrayExtension": "readonly"
+        "ArrayExtension": "readonly",
+        "BrowserAPI": "readonly"
     },
     "rules": {
         "indent": [

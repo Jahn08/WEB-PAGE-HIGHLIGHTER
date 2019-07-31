@@ -24,7 +24,7 @@ export class BrowserMocked {
             addListener() { }
         };
 
-        global.browser.menus = {
+        global.browser.contextMenus = {
             create: options => this._menuOptions.push(options),
             update: (id, options) => Object.assign(this._menuOptions.find(i => i.id === id), options),
             onShown: eventListener,

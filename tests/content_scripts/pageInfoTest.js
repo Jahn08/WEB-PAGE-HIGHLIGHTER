@@ -94,7 +94,7 @@ describe('content_script/pageInfo', function () {
 
             try {
                 const loadableUri = PageInfo.generateLoadingUrl(location.href);
-                global.document.location = new URL(loadableUri);
+                document.location = new URL(loadableUri);
 
                 assert(new PageInfo().shouldLoad());
             }

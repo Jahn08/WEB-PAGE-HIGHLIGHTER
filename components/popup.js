@@ -5,11 +5,13 @@ class Popup {
         if (Popup._initialised)
             return;
 
+        this._browser = new BrowserAPI();
+
         for (const item of document.getElementsByClassName('panel-list-item'))
             item.addEventListener('click', Popup._clickCallback);
 
         Popup._callOnActiveTab(tab => {
-            browser.tabs.sendMessage(tab.id, MessageSender.startLoadingTabState())
+            Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoadingTabState())
                 .then(msg => {
                     const sender = new MessageSender(msg);
 
@@ -57,7 +59,7 @@ class Popup {
     }
 	
     static _getCurrentWindowTabs() {
-        return browser.tabs.query({ currentWindow: true });
+        return Popup._browser.tabs.query({ currentWindow: true });
     }
 
     static async _clickCallback (e) {
@@ -66,13 +68,15 @@ class Popup {
         try {
             switch(actionId) {
             case 'tabs-saving':
-                await Popup._callOnActiveTab(tab => browser.tabs.sendMessage(tab.id, MessageSender.startSaving()));
+                await Popup._callOnActiveTab(tab => 
+                    Popup._browser.tabs.sendMessage(tab.id, MessageSender.startSaving()));
                 break;
             case 'tabs-loading':
-                await Popup._callOnActiveTab(tab => browser.tabs.sendMessage(tab.id, MessageSender.startLoading()));
+                await Popup._callOnActiveTab(tab => 
+                    Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoading()));
                 break;
             case 'tabs-preferences':
-                await browser.runtime.openOptionsPage();
+                await Popup._browser.runtime.openOptionsPage();
                 break;
             default:
                 return;

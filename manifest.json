@@ -22,7 +22,7 @@
     "content_scripts": [
         {
             "matches": ["*://*/*"],
-            "js": ["content_scripts/arrayExtension.js", 
+            "js": ["content_scripts/browserAPI.js", "content_scripts/arrayExtension.js", 
                 "content_scripts/browserStorage.js", "content_scripts/pageInfo.js", 
                 "content_scripts/menuMessageEvent.js", "content_scripts/messageReceiver.js", 
                 "content_scripts/rangeBase.js", "content_scripts/rangeMarker.js", 
@@ -56,7 +56,7 @@
 
     "permissions": [
         "activeTab",
-        "menus",
+        "contextMenus",
         "storage",
         "tabs",
         "management"

@@ -62,9 +62,11 @@ export class ContextMenu {
             radio.addToMenu(changeColour, v.icon, index === 0);
         });
         
-        browser.menus.onShown.addListener(() => {
+        this._browser = new BrowserAPI();
+
+        this._browser.menus.onShown.addListener(() => {
             if (this._shouldBeRefreshed())
-                browser.menus.refresh();
+                this._browser.menus.refresh();
         });
 
         new SeparatorMenuItem().addToMenu();
@@ -96,7 +98,7 @@ export class ContextMenu {
         this.onLoading = null;
         this._initStorageOptions();
 
-        browser.menus.onHidden.addListener(() => this._makePure());
+        this._browser.menus.onHidden.addListener(() => this._makePure());
     }
 
     async _passTabInfoToCallback(callback, options = {}) {
@@ -108,7 +110,7 @@ export class ContextMenu {
     }
     
     async _getCurrentTabId() {
-        const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const activeTabs = await this._browser.tabs.query({ active: true, currentWindow: true });
 
         if (!activeTabs || !activeTabs.length)
             throw new Error('No active tab was obtained');

@@ -50,7 +50,8 @@ void function() {
         MessageControl.show('The page has been loaded successfully');
     };
 
-    browser.runtime.sendMessage(MessageReceiver.loadPreferences()).then(async settings => {
+    const browserApi = new BrowserAPI();
+    browserApi.runtime.sendMessage(MessageReceiver.loadPreferences()).then(async settings => {
         try {
             Object.assign(preferences, settings);
 
@@ -114,7 +115,7 @@ void function() {
             }
             
             msg = MessageReceiver.combineEvents(msg, MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
-            await browser.runtime.sendMessage(includeLoadSaveEvents(msg));
+            await browserApi.runtime.sendMessage(includeLoadSaveEvents(msg));
         }
         catch (ex) {
             console.error('An error while trying to set menu visibility: ' + ex.toString());
@@ -179,5 +180,5 @@ void function() {
         }
     };
 
-    browser.runtime.onMessage.addListener(processMessage);
+    browserApi.runtime.onMessage.addListener(processMessage);
 }();

@@ -4,7 +4,9 @@ import { Preferences } from '../components/preferences.js';
 
 const menu = new ContextMenu();
 
-const sendMessageToTab = (tabId, msgBody) => browser.tabs.sendMessage(tabId, msgBody);
+const browserApi = new BrowserAPI();
+
+const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody);
 
 menu.onMarking = (info) => sendMessageToTab(info.tabId,
     MessageSender.startMarking(info.colourClass));
@@ -32,7 +34,7 @@ menu.onRemovingNote = (info) =>
 menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
     MessageSender.startGoingToNote(info.noteId));
 
-browser.runtime.onMessage.addListener(async msg => {
+browserApi.runtime.onMessage.addListener(async msg => {
     try {
         const sender = new MessageSender(msg);
     

@@ -10,7 +10,10 @@ class BrowserStorage {
     }
 
     static get _syncStorage() {
-        return browser.storage.sync;
+        if (!this._api)
+            this._api = new BrowserAPI();
+
+        return this._api.storage.sync;
     }
 
     _buildStorageError(msg, name = 'StorageError') {

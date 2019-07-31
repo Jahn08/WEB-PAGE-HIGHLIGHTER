@@ -7,7 +7,7 @@ import { Preferences, RepeatInitError } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 
-describe('content_script/preferences', function () {
+describe('components/preferences', function () {
     this.timeout(0);
 
     const browserMocked = new BrowserMocked();

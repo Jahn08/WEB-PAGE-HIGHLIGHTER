@@ -6,6 +6,8 @@ class BaseMenuItem {
         this._type = type;
 
         this._isAdded = false;
+
+        this._browser = new BrowserAPI();
     }
 
     get id() { return this._id; }
@@ -20,7 +22,7 @@ class BaseMenuItem {
             if (!options.contexts || !options.contexts.length)
                 options.contexts = ['all'];
 
-            browser.menus.create(options);
+            this._browser.menus.create(options);
 
             return this._isAdded = true, this._isAdded;
         }
@@ -29,7 +31,7 @@ class BaseMenuItem {
     }
 
     _removeFromMenu() {
-        browser.menus.remove(this._id);
+        this._browser.menus.remove(this._id);
     }
 
     updateAvailability(isEnabled) {
@@ -39,7 +41,7 @@ class BaseMenuItem {
     }
 
     updateItem(options) {
-        browser.menus.update(this._id, options);
+        this._browser.menus.update(this._id, options);
     }
 }
 
