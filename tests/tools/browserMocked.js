@@ -11,11 +11,19 @@ export class BrowserMocked {
     }
 
     resetBrowserStorage() {
-        const syncStorage = { 
-            sync: new StorageMocked() 
-        };
-        global.browser.storage = syncStorage;
-        
+        let syncStorage;
+
+        if (global.browser.storage) {
+            syncStorage = global.browser.storage;
+            syncStorage.sync.clear();
+        }
+        else {
+            syncStorage = { 
+                sync: new StorageMocked() 
+            };
+            global.browser.storage = syncStorage;
+        }
+
         return syncStorage.sync;
     }
 

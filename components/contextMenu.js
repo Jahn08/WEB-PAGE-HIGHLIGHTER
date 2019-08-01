@@ -110,7 +110,7 @@ export class ContextMenu {
     }
     
     async _getCurrentTabId() {
-        const activeTabs = await this._browser.tabs.query({ active: true, currentWindow: true });
+        const activeTabs = await this._browser.tabs.getActiveTabs();
 
         if (!activeTabs || !activeTabs.length)
             throw new Error('No active tab was obtained');

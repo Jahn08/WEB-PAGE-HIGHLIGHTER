@@ -49,17 +49,14 @@ class Popup {
         return document.getElementById('tabs-' + token);
     }
 
-    static _callOnActiveTab (callback) {
+    static _callOnActiveTab(callback) {
         Popup._getCurrentWindowTabs().then(tabs => {
-            for (const tab of tabs) {
-                if (tab.active)
-                    return callback(tab, tabs);
-            }
+            return callback(tabs[0]);
         });
     }
 	
     static _getCurrentWindowTabs() {
-        return Popup._browser.tabs.query({ currentWindow: true });
+        return Popup._browser.tabs.getActiveTabs();
     }
 
     static async _clickCallback (e) {

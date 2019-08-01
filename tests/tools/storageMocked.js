@@ -36,4 +36,8 @@ export class StorageMocked {
     get length() {
         return Object.getOwnPropertyNames(this._items).length;
     }
+
+    clear() {
+        this._items = {};
+    }
 }
