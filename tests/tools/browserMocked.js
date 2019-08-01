@@ -15,16 +15,16 @@ export class BrowserMocked {
 
         if (global.browser.storage) {
             syncStorage = global.browser.storage;
-            syncStorage.sync.clear();
+            syncStorage.local.clear();
         }
         else {
             syncStorage = { 
-                sync: new StorageMocked() 
+                local: new StorageMocked() 
             };
             global.browser.storage = syncStorage;
         }
 
-        return syncStorage.sync;
+        return syncStorage.local;
     }
 
     setBrowserMenu() {

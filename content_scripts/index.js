@@ -180,5 +180,5 @@ void function() {
         }
     };
 
-    browserApi.runtime.onMessage.addListener(processMessage);
+    browserApi.runtime.onMessage(processMessage);
 }();

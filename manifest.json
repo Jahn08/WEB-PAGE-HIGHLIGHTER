@@ -11,7 +11,7 @@
         "default_popup": "views/popup.html",
         "default_icon": "icons/highlighter.svg"
     },
-
+    
     "browser_specific_settings": {
         "gecko": {
             "id": "highlighter@mail.com",
@@ -58,6 +58,7 @@
         "activeTab",
         "contextMenus",
         "storage",
+        "unlimitedStorage",
         "tabs",
         "management"
     ],

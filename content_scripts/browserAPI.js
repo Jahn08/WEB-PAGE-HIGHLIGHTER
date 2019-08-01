@@ -76,14 +76,24 @@ class RuntimeAPI {
 
     openOptionsPage() { this._runtime.openOptionsPage(); }
 
-    get onMessage() { return this._runtime.onMessage; }
+    onMessage(callback) { 
+        if (this._useCallback) {
+            this._runtime.onMessage.addListener((msg, sender, sendResponse) => {
+                callback(msg).then(sendResponse);
+
+                return true;
+            });
+        }
+        
+        this._runtime.onMessage.addListener(callback);
+    }
 }
 
 class StorageSyncAPI {
     constructor(api, useCallback) {
-        this._storage = api.storage.sync;
-
         this._useCallback = useCallback;
+
+        this._storage = api.storage.local;
     }
 
     set(obj) {

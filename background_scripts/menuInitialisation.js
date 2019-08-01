@@ -34,7 +34,7 @@ menu.onRemovingNote = (info) =>
 menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
     MessageSender.startGoingToNote(info.noteId));
 
-browserApi.runtime.onMessage.addListener(async msg => {
+browserApi.runtime.onMessage(async msg => {
     try {
         const sender = new MessageSender(msg);
     
