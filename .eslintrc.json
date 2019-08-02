@@ -22,7 +22,8 @@
         "BrowserStorage": "readonly",
         "PageInfo": "readonly",
         "ArrayExtension": "readonly",
-        "BrowserAPI": "readonly"
+        "BrowserAPI": "readonly",
+        "LZWCompressor": "readonly"
     },
     "rules": {
         "indent": [

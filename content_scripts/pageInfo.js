@@ -88,26 +88,46 @@ class PageInfo {
     }
 
     static getAllSavedPagesInfo() {
+        return this._getAllSavedPagesInfo();
+    }
+
+    static _getAllSavedPagesInfo(includeHtml = false) {
         return BrowserStorage.getAll().then(objs => {
             const props = Object.getOwnPropertyNames(objs);
 
             const pagesInfo = [];
+
+            const htmlPropName = this.HTML_PROP_NAME;
 
             ArrayExtension.runForEach(props, prop => {
                 if (!this._isUriValid(prop))
                     return;
 
                 const obj = objs[prop];
-                
-                pagesInfo.push({
+
+                const pageInfo = {
                     uri: prop, 
                     title: obj.title,
-                    date: obj.date 
-                });
+                    date: obj.date
+                };
+
+                if (includeHtml)
+                    pageInfo[htmlPropName] = obj[htmlPropName];
+                
+                pagesInfo.push(pageInfo);
             });
 
             return pagesInfo;
         });
+    }
+
+    static getAllSavedPagesFullInfo() {
+        return this._getAllSavedPagesInfo(true);
+    }
+
+    static excludeHtml(pagesInfo) {
+        ArrayExtension.runForEach(pagesInfo, pi => delete pi[this.HTML_PROP_NAME]);
+        return pagesInfo;
     }
 
     static generateLoadingUrl(url) {

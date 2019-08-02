@@ -15,6 +15,7 @@ class RepeatInitError extends Error {
 class PageTable {
     constructor(pagesInfo = []) {
         this._pagesInfo = pagesInfo;
+
         this._sortPagesInfo();
 
         this._removedPageUris = [];
@@ -37,12 +38,20 @@ class PageTable {
 
         this._render();
 
-        const pageSectionPrefix = 'form--section-page--';
-        this._showPageBtn = document.getElementById(pageSectionPrefix + 'btn-show');
+        this._PAGE_SECTION_PREFIX = 'form--section-page--';
+
+        const pageSectionBtnPrefix = this._PAGE_SECTION_PREFIX + 'btn-';
+        this._showPageBtn = document.getElementById(pageSectionBtnPrefix + 'show');
         this._showPageBtn.onclick = this._bindToThis(this._onShowPageBtnClick);
 
-        this._removePageBtn = document.getElementById(pageSectionPrefix + 'btn-remove');
+        this._removePageBtn = document.getElementById(pageSectionBtnPrefix + 'remove');
         this._removePageBtn.onclick = this._bindToThis(this._onRemovePageBtnClick);
+
+        this._exportPageLink = null;
+        this._exportPageBtn = document.getElementById(pageSectionBtnPrefix + 'export');
+        this._exportPageBtn.onclick = this._bindToThis(this._onExportPageBtnClick);
+
+        this._pagesArchive = null;
 
         this._sortHeader = null;
 
@@ -55,7 +64,7 @@ class PageTable {
             });
 
         const hiddenClassName = formTableId + '--row-hidden';
-        document.getElementById(pageSectionPrefix + 'txt-search').onchange = 
+        document.getElementById(this._PAGE_SECTION_PREFIX + 'txt-search').onchange = 
             this._bindToThis(this._onSearching, [hiddenClassName]);
     }
 
@@ -68,7 +77,8 @@ class PageTable {
     }
 
     _render() {
-        this._tableBody.append(...this._pagesInfo.map(this._bindToThis(this._renderPageInfoRow)));
+        const renderingRowFn = this._bindToThis(this._renderPageInfoRow);
+        this._tableBody.append(...this._pagesInfo.map(renderingRowFn));
     }
 
     _onCheckAllClick(_event) {
@@ -152,6 +162,33 @@ class PageTable {
             !ArrayExtension.contains(this._removedPageUris, pi.uri));        
     }
 
+    _onExportPageBtnClick() {
+        if (!this._pagesInfo.length)
+            return;
+
+        if (!this._exportPageLink) {
+            this._exportPageLink = document.getElementById(this._PAGE_SECTION_PREFIX + 'link-export');
+            this._exportPageLink.download = 'highlighterStorage.hltr';
+        }
+
+        this._useArchiveLink(url => {
+            this._exportPageLink.href = url;
+            this._exportPageLink.click();
+        });
+    }
+
+    _useArchiveLink(callback) {
+        let archiveUrl;
+
+        try {
+            callback(archiveUrl = URL.createObjectURL(this._pagesArchive));
+        }
+        finally {
+            if (archiveUrl)
+                URL.revokeObjectURL(archiveUrl);
+        }
+    }
+
     _onHeaderCellClick(_event) {
         const cell = _event.target;
 
@@ -213,6 +250,28 @@ class PageTable {
 
     get removedPageUris() {
         return this._removedPageUris;
+    }
+
+    initialiseExport(pagesFullInfo) {
+        if (this._pagesArchive || !pagesFullInfo.length)
+            return;
+
+        this._generatePagesArchive(pagesFullInfo).then(data => {
+            this._pagesArchive = data;
+            this._exportPageBtn.disabled = false;
+        }).catch(err => console.error('An error while trying to form a package of pages for export: ' + err.toString()));
+    }
+
+    _generatePagesArchive(pagesInfo) {
+        return new Promise((resolve, reject) => {
+            try {
+                const archive = new Blob([LZWCompressor.compress(JSON.stringify(pagesInfo))]);
+                resolve(archive);
+            }
+            catch(err) {
+                reject(err);
+            }
+        });
     }
 }
 
@@ -280,6 +339,20 @@ class Preferences {
         return new BrowserStorage(Preferences.STORAGE_KEY).get();
     }
 
+    _initPageTable() {
+        return PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
+            this._pageTable = new PageTable(pagesInfo)
+        );
+    }
+
+    initialiseExport() {
+        if (!this._pageTable)
+            return;
+    
+        PageInfo.getAllSavedPagesFullInfo().then(pagesInfo => 
+            this._pageTable.initialiseExport(pagesInfo));
+    }
+
     save() {
         return Promise.all([this._savePreferencesIntoStorage(),
             this._removePageInfoFromStorage()]);
@@ -337,12 +410,6 @@ class Preferences {
 		
         if (colourRadio)
             colourRadio.checked = true;
-    }
-
-    _initPageTable() {
-        return PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
-            this._pageTable = new PageTable(pagesInfo)
-        );
     }
 }
 
