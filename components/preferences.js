@@ -51,6 +51,12 @@ class PageTable {
         this._exportPageBtn = document.getElementById(pageSectionBtnPrefix + 'export');
         this._exportPageBtn.onclick = this._bindToThis(this._onExportPageBtnClick);
 
+        this._filePageBtn = document.getElementById(pageSectionBtnPrefix + 'file');
+        this._filePageBtn.onchange = this._bindToThis(this._onChoosePackageFileBtnClick);
+
+        this._importPageBtn = document.getElementById(pageSectionBtnPrefix + 'import');
+        this._importPageBtn.onclick = this._bindToThis(this._onImportPageBtnClick);
+
         this._pagesArchive = null;
 
         this._sortHeader = null;
@@ -162,6 +168,58 @@ class PageTable {
             !ArrayExtension.contains(this._removedPageUris, pi.uri));        
     }
 
+    _onChoosePackageFileBtnClick() {
+        const importPackage = this._filePageBtn.files[0];
+
+        if (!importPackage || !importPackage.size)
+            return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                this._importPageBtn.disabled = true;
+
+                const result = event.target.result;
+
+                if (!result)
+                    throw new Error('The result of reading the file is unavailable');
+
+                let importedPages = JSON.parse(event.target.result);
+
+                if (!importedPages.length)
+                    throw new Error('No information is found to be imported');
+
+                if (this._pagesInfo.length)
+                {
+                    if (confirm('Providing there are pages equal to your current ones, ' + 
+                        'would you like to update them?'))
+                        this._pagesInfo = this._pagesInfo.filter(imp => 
+                            !importedPages.find(pi => pi.uri === imp.uri));
+                    else
+                        importedPages = importedPages.filter(imp => 
+                            !this._pagesInfo.find(pi => pi.uri === imp.uri));
+                }
+                
+                this._pagesInfo = this._pagesInfo.concat(PageInfo.appendSavedPages(importedPages));
+                this._sortPagesInfo();
+
+                this._clearTableRows();
+                this._render();
+            }
+            catch (err) {
+                alert('Importing page files failed. The file format is likely to be corrupted: ' + 
+                    err.toString());
+                this._importPageBtn.disabled = false;
+            }
+        };
+
+        reader.readAsText(new Blob([importPackage]));
+    }
+
+    _onImportPageBtnClick() {
+        this._filePageBtn.click();
+    }
+
     _onExportPageBtnClick() {
         if (!this._pagesInfo.length)
             return;
@@ -265,7 +323,7 @@ class PageTable {
     _generatePagesArchive(pagesInfo) {
         return new Promise((resolve, reject) => {
             try {
-                const archive = new Blob([LZWCompressor.compress(JSON.stringify(pagesInfo))]);
+                const archive = new Blob([JSON.stringify(pagesInfo)]);
                 resolve(archive);
             }
             catch(err) {

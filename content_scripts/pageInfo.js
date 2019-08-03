@@ -33,7 +33,7 @@ class PageInfo {
     }
 
     get _serialisedHtml() {
-        return btoa(unescape(encodeURIComponent(document.body.innerHTML)));
+        return LZWCompressor.compress(document.body.innerHTML);
     }
 
     async canLoad() {
@@ -59,7 +59,7 @@ class PageInfo {
     }
 
     _deserialiseHtml(serialisedHtml) {
-        return decodeURIComponent(escape(atob(serialisedHtml)));
+        return LZWCompressor.decompress(serialisedHtml);
     }
 
     _renderHtml(html) {
@@ -125,16 +125,65 @@ class PageInfo {
         return this._getAllSavedPagesInfo(true);
     }
 
-    static excludeHtml(pagesInfo) {
-        ArrayExtension.runForEach(pagesInfo, pi => delete pi[this.HTML_PROP_NAME]);
-        return pagesInfo;
-    }
-
     static generateLoadingUrl(url) {
         return url + this._LOADING_HASH;
     }
 
     static remove(pageUris = []) {
         return BrowserStorage.remove(pageUris);
+    }
+
+    static appendSavedPages(pagesInfo) {
+        const htmlPropName = this.HTML_PROP_NAME;
+
+        const importedFiles = [];
+
+        ArrayExtension.runForEach(pagesInfo, pi => {
+            if (!this._isUriValid(pi.uri))
+                return;
+              
+            pi.date = this._getValidTicks(pi.date);
+            
+            if (!pi.title)
+                pi.title = this._fetchTitleFromUri(pi.uri);
+
+            new BrowserStorage(pi.uri).set({
+                [htmlPropName]: pi[htmlPropName],
+                date: pi.date,
+                title: pi.title
+            });
+
+            importedFiles.push(this._excludeHtml(pi));
+        });
+
+        return importedFiles;
+    }
+
+    static _getValidTicks(ticks) {
+        try {
+            const date = new Date(ticks);
+            
+            if (date.getFullYear() < 2019 || date.getMonth() < 6)
+                ticks = Date.now();
+        }
+        catch (err) {
+            ticks = Date.now();
+        }
+
+        return ticks;
+    }
+
+    static _fetchTitleFromUri(uri) {
+        const startIndex = uri.lastIndexOf('/') + 1;
+        
+        if (!startIndex || startIndex === uri.length)
+            return 'Unknown';
+        
+        return uri.substring(startIndex);
+    }
+
+    static _excludeHtml(pageInfo) {
+        delete pageInfo[this.HTML_PROP_NAME];
+        return pageInfo;
     }
 }

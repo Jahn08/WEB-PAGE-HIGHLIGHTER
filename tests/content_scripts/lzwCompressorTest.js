@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { EnvLoader } from '../tools/envLoader';
+import { TestPageHelper } from '../tools/testPageHelper';
 
 describe('content_script/lzwCompressor', function() {
     
@@ -35,6 +36,21 @@ describe('content_script/lzwCompressor', function() {
 
             const outcome = LZWCompressor.decompress(LZWCompressor.compress(originalHtml));
             assert.strictEqual(outcome, originalHtml);
+        });
+
+        it('should decompress strings as parts of an object in JSON', () => {
+            const originalHtml = document.body.outerHTML;
+
+            const originalObj = {
+                htmlCompressed: LZWCompressor.compress(originalHtml), 
+                paragraph: TestPageHelper.getLastParagraphSentenceNode().innerHTML,
+                sentence: TestPageHelper.getFirstItalicSentenceNode().innerHTML
+            };
+
+            const originalObjJson = JSON.stringify(originalObj);
+            const obj = JSON.parse(originalObjJson);
+            assert.strictEqual(obj.htmlCompressed, originalObj.htmlCompressed);
+            assert.strictEqual(LZWCompressor.decompress(obj.htmlCompressed), originalHtml);
         });
     });
 });

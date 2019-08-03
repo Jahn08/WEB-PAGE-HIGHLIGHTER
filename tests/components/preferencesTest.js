@@ -20,7 +20,8 @@ describe('components/preferences', function () {
     
     before(done => {
         EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
-            .then(() => done())
+            .then(() => EnvLoader.loadClass('./content_scripts/lzwCompressor.js', 'LZWCompressor')
+                .then(() => done()))
             .catch(done);
     });
 
