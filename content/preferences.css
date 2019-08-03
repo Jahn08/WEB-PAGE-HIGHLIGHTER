@@ -51,10 +51,6 @@
     box-shadow: 2px 2px gainsboro;
 }
 
-.form--section-page button {
-    font-size: large;
-}
-
 .form--table-pages--cell-header-asc::after {
     content: ' ▾';
 }
