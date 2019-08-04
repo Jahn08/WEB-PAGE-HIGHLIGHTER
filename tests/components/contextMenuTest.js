@@ -126,11 +126,12 @@ describe('components/ContextMenu', () => {
             const contextMenu = new ContextMenu();
 
             const colourInfos = ColourList.colours;
-            const expectedColour = colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)];
-            
+            const expectedColour = Randomiser.getRandomArrayItem(colourInfos);
+
             contextMenu.checkColourRadio(expectedColour.token);
 
-            const actualColourRadio = browserMocked.menuOptions.find(i => i.type === RADIO_TYPE && i.id === expectedColour.token);
+            const actualColourRadio = browserMocked.menuOptions.find(
+                i => i.type === RADIO_TYPE && i.id === expectedColour.token);
             assert(actualColourRadio);
             assert.deepStrictEqual(actualColourRadio.checked, true);
         });

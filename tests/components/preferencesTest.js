@@ -147,7 +147,7 @@ describe('components/preferences', function () {
             const expectedValues = { 
                 shouldWarn: Randomiser.getRandomBoolean(),
                 shouldLoad: Randomiser.getRandomBoolean(),
-                defaultColourToken: colourInfos[Randomiser.getRandomNumber(colourInfos.length - 1)].token
+                defaultColourToken: Randomiser.getRandomArrayItem(colourInfos).token
             };
 
             new BrowserStorage(Preferences.STORAGE_KEY).set(expectedValues);
@@ -207,7 +207,7 @@ describe('components/preferences', function () {
                         const searchField = document.getElementById('form--section-page--txt-search');
                         assert(searchField);
                         
-                        const pageInfoToFind = pagesInfo[Randomiser.getRandomNumber(pagesInfo.length)];
+                        const pageInfoToFind = Randomiser.getRandomArrayItem(pagesInfo);
                         
                         const titleToSearch = '' + pageInfoToFind.title;
                         const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
@@ -265,7 +265,7 @@ describe('components/preferences', function () {
             const colourRadios = getColourRadios();
             colourRadios.find(r => r.checked).checked = false;
 
-            const expectedColourRadio = colourRadios[Randomiser.getRandomNumber(colourRadios.length - 1)];
+            const expectedColourRadio = Randomiser.getRandomArrayItem(colourRadios);
             expectedColourRadio.checked = true;
 
             const expectedWarnCheck = Randomiser.getRandomBoolean();
@@ -317,11 +317,24 @@ describe('components/preferences', function () {
 
                     await preferences.save();
 
-                    const pageInfos = await PageInfo.getAllSavedPagesInfo();
-                    
+                    const pageInfos = await PageInfo.getAllSavedPagesFullInfo();
                     assert.deepStrictEqual(pageInfos, 
                         expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));
                 }));
         });
+    });
+
+    describe('#initialiseExport', function () {
+        it('should initialise export enabling the respective button');
+        
+        it('should leave the export button disabled if there are no pages being stored');
+
+        it('should export all pages when clicking on the export button');
+
+        it('should initiate importing by opening a dialog to opt for a package file');
+
+        it('should import all pages from a package file and update current ones');
+
+        it('should import all pages from a package file without updating current ones');
     });
 });

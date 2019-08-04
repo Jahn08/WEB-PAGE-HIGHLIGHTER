@@ -4,6 +4,7 @@ import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
 import { StorageHelper } from '../tools/storageHelper.js';
+import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
@@ -105,9 +106,22 @@ describe('content_script/pageInfo', function () {
     });
 
     describe('#getAllSavedPagesInfo', function () {
-        it('should get previously saved page info items from the storage', () =>
+        it('should get previously saved page info items without html from the storage', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
                 const actualPageInfos = await PageInfo.getAllSavedPagesInfo();
+
+                expectedPageInfos.forEach(pi => delete pi[PageInfo.HTML_PROP_NAME]);
+                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
+            })
+        );
+    });
+
+    describe('#getAllSavedPagesFullInfo', function () {
+        it('should get previously saved page info items with html from the storage', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
+                const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
+
+                assert(actualPageInfos.every(pi => pi[PageInfo.HTML_PROP_NAME]));
                 assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
             })
         );
@@ -119,7 +133,7 @@ describe('content_script/pageInfo', function () {
                 const urisForRemoval = [pageInfos[0], pageInfos[pageInfos.length - 1]].map(pi => pi.uri);
                 await PageInfo.remove(urisForRemoval);
                 
-                const actualPageInfos = await PageInfo.getAllSavedPagesInfo();
+                const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
                 assert.deepStrictEqual(actualPageInfos, pageInfos.filter(pi => !urisForRemoval.includes(pi.uri)));
             })
         );
@@ -128,9 +142,101 @@ describe('content_script/pageInfo', function () {
             Expectation.expectResolution(StorageHelper.saveTestPageInfo(5), async pageInfos => {
                 await PageInfo.remove([]);
                 
-                const actualPageInfos = await PageInfo.getAllSavedPagesInfo();
+                const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
                 assert.deepStrictEqual(actualPageInfos, pageInfos);
             })
         );
+    });
+
+    describe('#savePages', function () {
+        const copyPageArray = (sourceArray) => sourceArray.map(p => Object.assign({}, p));
+
+        it('should save pages into storage', () => {
+            const testPages = PageInfoHelper.createPageInfoArray();
+            const expectedPages = copyPageArray(testPages);
+
+            const savedPages = PageInfo.savePages(testPages);
+            assert(savedPages);
+            assert.strictEqual(savedPages.length, expectedPages.length);
+            
+            assert.deepStrictEqual(savedPages, testPages);
+
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
+                storedPages => assert.deepStrictEqual(storedPages, expectedPages));
+        });
+
+        it('should save pages into storage excluding those with invalid uris', () => {
+            const testPages = PageInfoHelper.createPageInfoArray();
+
+            const pageWithInvalidUri = Randomiser.getRandomArrayItem(testPages);
+            pageWithInvalidUri.uri = Randomiser.getRandomNumberUpToMax();
+
+            const expectedPages = copyPageArray(testPages);
+
+            const savedPages = PageInfo.savePages(testPages);
+            assert(savedPages);
+            assert.strictEqual(savedPages.length, expectedPages.length - 1);
+
+            assert(!savedPages.find(p => p.uri === pageWithInvalidUri.uri));
+
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
+                storedPages => assert(!storedPages.find(p => p.uri === pageWithInvalidUri.uri)));
+        });
+
+        it('should save pages into storage substituting invalid dates with nowadays', () => {
+            const testPages = PageInfoHelper.createPageInfoArray();
+
+            const pageWithInvalidDate = Randomiser.getRandomArrayItem(testPages);
+            pageWithInvalidDate.date = Randomiser.getRandomNumberUpToMax();
+
+            const expectedPages = copyPageArray(testPages);
+
+            const savedPages = PageInfo.savePages(testPages);
+            assert(savedPages);
+            assert.strictEqual(savedPages.length, expectedPages.length);
+
+            const assureExpectedDate = (actualPages) => {
+                const nowString = new Date(Date.now()).toUTCString();
+
+                const actualPage = actualPages.find(p => p.uri === pageWithInvalidDate.uri);
+                assert.strictEqual(new Date(actualPage.date).toUTCString(), nowString);
+            };
+
+            assureExpectedDate(savedPages);
+
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
+                storedPages => assureExpectedDate(storedPages));
+        });
+
+        it('should save pages into storage substituting empty titles with default ones', () => {
+            const testPages = PageInfoHelper.createPageInfoArray();
+
+            const pageWithDefaultTitle = testPages[0];
+            pageWithDefaultTitle.title = undefined;
+            pageWithDefaultTitle.uri = new URL(pageWithDefaultTitle.uri).origin;
+
+            const pageWithUriTitle = testPages[1];
+            pageWithUriTitle.title = '';
+
+            const expectedPages = copyPageArray(testPages);
+
+            const savedPages = PageInfo.savePages(testPages);
+            assert(savedPages);
+            assert.strictEqual(savedPages.length, expectedPages.length);
+
+            const assureExpectedTitles = (actualPages) => {
+                let actualPage = actualPages.find(p => p.uri === pageWithDefaultTitle.uri);
+                assert.strictEqual(actualPage.title, 'Unknown');
+    
+                actualPage = actualPages.find(p => p.uri === pageWithUriTitle.uri);
+                assert.strictEqual(actualPage.title, 
+                    new URL(pageWithUriTitle.uri).pathname.substring(1));
+            };
+
+            assureExpectedTitles(savedPages);
+            
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
+                storedPages => assureExpectedTitles(storedPages));
+        });
     });
 });

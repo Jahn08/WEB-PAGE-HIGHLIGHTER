@@ -133,7 +133,7 @@ class PageInfo {
         return BrowserStorage.remove(pageUris);
     }
 
-    static appendSavedPages(pagesInfo) {
+    static savePages(pagesInfo) {
         const htmlPropName = this.HTML_PROP_NAME;
 
         const importedFiles = [];
@@ -141,7 +141,7 @@ class PageInfo {
         ArrayExtension.runForEach(pagesInfo, pi => {
             if (!this._isUriValid(pi.uri))
                 return;
-              
+            
             pi.date = this._getValidTicks(pi.date);
             
             if (!pi.title)
@@ -160,26 +160,17 @@ class PageInfo {
     }
 
     static _getValidTicks(ticks) {
-        try {
-            const date = new Date(ticks);
-            
-            if (date.getFullYear() < 2019 || date.getMonth() < 6)
-                ticks = Date.now();
-        }
-        catch (err) {
-            ticks = Date.now();
-        }
-
-        return ticks;
+        return isNaN(new Date(ticks)) ? Date.now() : ticks;
     }
 
     static _fetchTitleFromUri(uri) {
-        const startIndex = uri.lastIndexOf('/') + 1;
+        const pathName = new URL(uri).pathname;
+        const startIndex = pathName.lastIndexOf('/') + 1;
         
-        if (!startIndex || startIndex === uri.length)
+        if (!startIndex || startIndex === pathName.length)
             return 'Unknown';
         
-        return uri.substring(startIndex);
+        return pathName.substring(startIndex);
     }
 
     static _excludeHtml(pageInfo) {

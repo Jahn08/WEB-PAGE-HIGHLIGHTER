@@ -8,7 +8,7 @@ describe('content_script/arrayExtension', function() {
         const array = new Array(length);
 
         for (let i = 0; i < length; ++i)
-            array.push(Randomiser.getRandomNumberUpToMax());
+            array[i] = Randomiser.getRandomNumberUpToMax();
 
         return array;
     };
@@ -47,8 +47,8 @@ describe('content_script/arrayExtension', function() {
 
         it('should return true for an element contained in an array', () => {
             const array = buildRandomArray();
-            const someValue = array[Randomiser.getRandomNumber(array.length) - 1];
-            
+            const someValue = Randomiser.getRandomArrayItem(array);
+
             assert.strictEqual(ArrayExtension.contains(array, someValue), true);
         });
 

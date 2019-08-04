@@ -200,7 +200,7 @@ class PageTable {
                             !this._pagesInfo.find(pi => pi.uri === imp.uri));
                 }
                 
-                this._pagesInfo = this._pagesInfo.concat(PageInfo.appendSavedPages(importedPages));
+                this._pagesInfo = this._pagesInfo.concat(PageInfo.savePages(importedPages));
                 this._sortPagesInfo();
 
                 this._clearTableRows();
