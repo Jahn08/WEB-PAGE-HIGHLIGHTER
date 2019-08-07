@@ -20,8 +20,11 @@ export class StorageHelper {
         };
     }
 
-    static saveTestPageInfo (numberOfItems = 3) {
+    static saveTestPageInfo (numberOfItems = 3, predeterminedUri = null) {
         const expectedPageData = PageInfoHelper.createPageInfoArray(numberOfItems);
+
+        if (predeterminedUri)
+            expectedPageData[0].uri = predeterminedUri;
 
         return Promise.all(expectedPageData.map(pi => new BrowserStorage(pi.uri).set(pi)))
             .then(() => { return expectedPageData; });

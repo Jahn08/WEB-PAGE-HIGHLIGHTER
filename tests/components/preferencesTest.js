@@ -3,9 +3,11 @@ import { EnvLoader } from '../tools/envLoader.js';
 import { Randomiser } from '../tools/randomiser';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
-import { Preferences, RepeatInitError } from '../../components/preferences.js';
+import { FileTransfer } from '../tools/fileTransfer.js';
+import { Preferences, RepeatInitError, PagePackageError } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
+import fs from 'fs';
 
 describe('components/preferences', function () {
     this.timeout(0);
@@ -302,8 +304,8 @@ describe('components/preferences', function () {
         const getRemovingPageInfoBtn = () => 
             document.getElementById('form--section-page--btn-remove');
             
-        it('should save the preferences page removing several pages', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo()
+        it('should save the preferences page removing several pages', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo()
                 .then(async expectedPageData => {
                     const preferences = new Preferences();
 
@@ -320,21 +322,207 @@ describe('components/preferences', function () {
                     const pageInfos = await PageInfo.getAllSavedPagesFullInfo();
                     assert.deepStrictEqual(pageInfos, 
                         expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));
-                }));
-        });
+                }))
+        );
     });
 
     describe('#initialiseExport', function () {
-        it('should initialise export enabling the respective button');
+
+        before(() => {
+            FileTransfer.configureGlobals();
+        });
+
+        const getExportBtn = () => document.getElementById('form--section-page--btn-export');
+
+        const initPreferencesWithExport = async (predeterminedUri = null) =>
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5, predeterminedUri), 
+                async pagesInfo => {
+                    const preferences = new Preferences();
+
+                    await preferences.load();
+
+                    await preferences.initialiseExport();
+
+                    return pagesInfo;
+                });
+
+        it('should initialise export enabling the respective button', () =>
+            initPreferencesWithExport().then(() => {
+                const exportBtn = getExportBtn();
+                assert.strictEqual(exportBtn.disabled, false);
+            })
+        );
         
-        it('should leave the export button disabled if there are no pages being stored');
+        it('should leave the export button disabled if there are no pages being stored', () => {
+            const preferences = new Preferences();
 
-        it('should export all pages when clicking on the export button');
+            return Expectation.expectResolution(preferences.load()
+                .then(() => preferences.initialiseExport()), 
+            () => {
+                const exportBtn = getExportBtn();
+                assert.strictEqual(exportBtn.disabled, true);
+            });
+        });
 
-        it('should initiate importing by opening a dialog to opt for a package file');
+        it('should reject if the page table is not initialised', () =>
+            Expectation.expectRejection(new Preferences().initialiseExport(), 
+                new PagePackageError(PagePackageError.WRONG_INITIALISATION_TYPE))
+        );
 
-        it('should import all pages from a package file and update current ones');
+        it('should set up an export link when clicking on the export button', () =>
+            initPreferencesWithExport().then(() => { 
+                const exportLink = document.getElementById(
+                    'form--section-page--link-export');
+                assert(exportLink);
 
-        it('should import all pages from a package file without updating current ones');
+                let linkWasClicked = false;
+                exportLink.onclick = () => linkWasClicked = !linkWasClicked;
+
+                let expectedUrl;
+                URL.createObjectURL = exportPackage => {
+                    assert(exportPackage);
+                    assert(exportPackage.size);
+
+                    return expectedUrl = Randomiser.getRandomNumberUpToMax();
+                };
+
+                let urlWasRevoked = false;
+                URL.revokeObjectURL = url => {
+                    assert(url);
+                    assert.strictEqual(url, expectedUrl);
+                    
+                    urlWasRevoked = !urlWasRevoked;
+                };
+
+                const btn = getExportBtn();
+                btn.dispatchEvent(createClickEvent());
+
+                assert.strictEqual(linkWasClicked, true);
+                assert.strictEqual(urlWasRevoked, true);
+
+                assert.strictEqual(exportLink.href, '' + expectedUrl);
+                assert(exportLink.download.endsWith('.hltr'));
+            })
+        );
+
+        const getImportBtn = () => document.getElementById('form--section-page--btn-import');
+
+        const getFileImportBtn = () => document.getElementById('form--section-page--btn-file');
+
+        it('should initiate importing by opening a dialog to opt for a package file', () =>
+            Expectation.expectResolution(new Preferences().load()
+                .then(() => {
+                    let fileDialogIsOpen = false;
+
+                    const fileBtn = getFileImportBtn();
+                    fileBtn.onclick = () => fileDialogIsOpen = !fileDialogIsOpen;
+
+                    const importBtn = getImportBtn();
+                    assert.strictEqual(importBtn.disabled, false);
+
+                    importBtn.dispatchEvent(createClickEvent());
+
+                    assert.strictEqual(fileDialogIsOpen, true);
+                }))
+        );
+
+        it('should import nothing if no import file is chosen', () =>
+            initPreferencesWithExport().then(() => {
+                const fileBtn = getFileImportBtn();
+    
+                let errorWasThrown = false;
+                global.alert = () => errorWasThrown = true;
+    
+                fileBtn.dispatchEvent(createChangeEvent());
+
+                assert.strictEqual(getImportBtn().disabled, false);
+                assert.strictEqual(errorWasThrown, false);
+            })
+        );
+
+        const testImportingWithEmptyPackage = (inputFileContent, resultPackage = null) => {
+            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContent);
+            FileTransfer.fileReaderClass.setResultPackage(resultPackage);
+
+            global.alert = msg => {
+                assert(msg);
+
+                const expectedError = new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
+                assert(msg.includes(expectedError.toString()));
+            };
+
+            fileBtn.dispatchEvent(createChangeEvent());
+            assert.strictEqual(getImportBtn().disabled, false);
+
+            assert.deepStrictEqual(FileTransfer.fileReaderClass.passedBlob, 
+                fileBtn.files[0]);
+        };
+
+        it('should throw an exception if an imported package file is empty', () =>
+            initPreferencesWithExport().then(pagesInfo => testImportingWithEmptyPackage(pagesInfo))
+        );
+
+        it('should throw an exception if an imported package file contains no pages', () =>
+            initPreferencesWithExport().then(pagesInfo => 
+                testImportingWithEmptyPackage(pagesInfo, []))
+        );
+
+        const TEST_URI = 'https://en.wikipedia.org/wiki/2019_Altamira_prison_riot';
+        const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
+            .toString('utf8');
+
+        const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
+            const pageToUpdate = pagesInfo.find(pi => pi.uri === TEST_URI);
+            assert(pageToUpdate);
+
+            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
+
+            FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
+
+            let confirmed = false;
+            global.confirm = msg => {
+                assert(msg);
+                
+                confirmed = !confirmed;
+                return shouldUpdateExistentPages;
+            };
+
+            fileBtn.dispatchEvent(createChangeEvent());
+
+            assert.strictEqual(confirmed, true);
+            assert.strictEqual(getImportBtn().disabled, false);
+
+            const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
+            assertPageTableValues(fullInfo);
+            
+            const importedPages = JSON.parse(IMPORTED_DATA_JSON);
+                
+            importedPages.forEach(imp => {
+                const savedPage = fullInfo.find(pi => pi.uri === imp.uri);
+
+                if (imp.uri !== pageToUpdate.uri) {
+                    assert.deepStrictEqual(savedPage, imp);
+                    return;
+                }
+
+                if (shouldUpdateExistentPages) {
+                    assert.deepStrictEqual(savedPage, imp);
+                    assert.notDeepStrictEqual(imp, pageToUpdate);
+                }
+                else {
+                    assert.notDeepStrictEqual(savedPage, imp);
+                    assert.deepStrictEqual(savedPage, pageToUpdate);
+                }
+            });
+        };
+
+        it('should import all pages from a package file and update current ones', () =>
+            initPreferencesWithExport(TEST_URI).then(testImportingData)
+        );
+
+        it('should import all pages from a package file without updating current ones', () =>
+            initPreferencesWithExport(TEST_URI)
+                .then(pagesInfo => testImportingData(pagesInfo, false))
+        );
     });
 });

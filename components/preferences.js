@@ -12,6 +12,36 @@ class RepeatInitError extends Error {
     }
 }
 
+class PagePackageError extends Error {
+    constructor(type) {
+        let msg;
+
+        switch(type) {
+        case PagePackageError.WRONG_INITIALISATION_TYPE:
+            msg = 'Preferences should be loaded before initialising the export system';
+            break;
+        case PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE:
+            msg = 'No information is found to be imported';
+            break;
+        default:
+            msg = 'Unknown';
+            break;
+        }
+
+        super(msg);
+
+        this.name = PagePackageError.NAME;
+    }
+
+    static get NAME() {
+        return 'ExportError';
+    }
+
+    static get WRONG_INITIALISATION_TYPE() { return 1; }
+
+    static get EMPTY_IMPORT_PACKAGE_TYPE() { return 2; }
+}
+
 class PageTable {
     constructor(pagesInfo = []) {
         this._pagesInfo = pagesInfo;
@@ -181,13 +211,10 @@ class PageTable {
 
                 const result = event.target.result;
 
-                if (!result)
-                    throw new Error('The result of reading the file is unavailable');
+                let importedPages;
 
-                let importedPages = JSON.parse(event.target.result);
-
-                if (!importedPages.length)
-                    throw new Error('No information is found to be imported');
+                if (!result || !(importedPages = JSON.parse(result)) || !importedPages.length)
+                    throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
                 if (this._pagesInfo.length)
                 {
@@ -209,6 +236,8 @@ class PageTable {
             catch (err) {
                 alert('Importing page files failed. The file format is likely to be corrupted: ' + 
                     err.toString());
+            }
+            finally {
                 this._importPageBtn.disabled = false;
             }
         };
@@ -312,9 +341,9 @@ class PageTable {
 
     initialiseExport(pagesFullInfo) {
         if (this._pagesArchive || !pagesFullInfo.length)
-            return;
+            return Promise.resolve();
 
-        this._generatePagesArchive(pagesFullInfo).then(data => {
+        return this._generatePagesArchive(pagesFullInfo).then(data => {
             this._pagesArchive = data;
             this._exportPageBtn.disabled = false;
         }).catch(err => console.error('An error while trying to form a package of pages for export: ' + err.toString()));
@@ -405,9 +434,9 @@ class Preferences {
 
     initialiseExport() {
         if (!this._pageTable)
-            return;
+            return Promise.reject(new PagePackageError(PagePackageError.WRONG_INITIALISATION_TYPE));
     
-        PageInfo.getAllSavedPagesFullInfo().then(pagesInfo => 
+        return PageInfo.getAllSavedPagesFullInfo().then(pagesInfo => 
             this._pageTable.initialiseExport(pagesInfo));
     }
 
@@ -471,4 +500,4 @@ class Preferences {
     }
 }
 
-export { RepeatInitError, Preferences };
+export { RepeatInitError, PagePackageError, Preferences };
