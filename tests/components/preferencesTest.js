@@ -440,8 +440,26 @@ describe('components/preferences', function () {
             })
         );
 
-        const testImportingWithEmptyPackage = (inputFileContent, resultPackage = null) => {
-            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContent);
+        it('should alert if an imported package file has a wrong file extension', () =>
+            initPreferencesWithExport().then(pagesInfo => {
+                const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), pagesInfo,
+                    Randomiser.getRandomNumberUpToMax() + '.json');
+
+                let wasAlerted = false;                    
+                global.alert = msg => {
+                    assert(msg);
+                    wasAlerted = !wasAlerted;
+                };
+    
+                fileBtn.dispatchEvent(createChangeEvent());
+
+                assert.strictEqual(getImportBtn().disabled, false);
+                assert.strictEqual(wasAlerted, true);
+            })
+        );
+
+        const testImportingWithEmptyPackage = (inputFileContents, resultPackage = null) => {
+            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContents);
             FileTransfer.fileReaderClass.setResultPackage(resultPackage);
 
             global.alert = msg => {
@@ -454,8 +472,8 @@ describe('components/preferences', function () {
             fileBtn.dispatchEvent(createChangeEvent());
             assert.strictEqual(getImportBtn().disabled, false);
 
-            assert.deepStrictEqual(FileTransfer.fileReaderClass.passedBlob, 
-                fileBtn.files[0]);
+            assert.strictEqual(FileTransfer.fileReaderClass.passedBlob.size, 
+                fileBtn.files[0].size);
         };
 
         it('should throw an exception if an imported package file is empty', () =>
@@ -467,7 +485,7 @@ describe('components/preferences', function () {
                 testImportingWithEmptyPackage(pagesInfo, []))
         );
 
-        const TEST_URI = 'https://en.wikipedia.org/wiki/2019_Altamira_prison_riot';
+        const TEST_URI = 'https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER';
         const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
             .toString('utf8');
 

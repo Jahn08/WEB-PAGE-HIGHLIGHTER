@@ -1,3 +1,5 @@
+import { Randomiser } from './randomiser.js';
+
 class FileReader {
     constructor() {
         this.onload = null;
@@ -42,14 +44,16 @@ export class FileTransfer {
         return FileReader;
     }
 
-    static addFileToInput(fileInput, contentObj = {}) {
+    static addFileToInput(fileInput, fileContents, fileName = null) {
         Object.defineProperty(fileInput, 'files', {
             writable: true,
             enumerable: true
         });
 
-        fileInput.files = [new Blob([JSON.stringify(contentObj)])];
+        const file = new Blob([JSON.stringify(fileContents)]);
+        file.name = fileName || Randomiser.getRandomNumberUpToMax() + '.hltr';
 
+        fileInput.files = [file];
         return fileInput;
     }
 }

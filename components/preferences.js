@@ -87,6 +87,7 @@ class PageTable {
         this._importPageBtn = document.getElementById(pageSectionBtnPrefix + 'import');
         this._importPageBtn.onclick = this._bindToThis(this._onImportPageBtnClick);
 
+        this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
 
         this._sortHeader = null;
@@ -204,6 +205,13 @@ class PageTable {
         if (!importPackage || !importPackage.size)
             return;
         
+        const errorPrefix = 'Importing pages failed: ';
+
+        if (!importPackage.name.toLowerCase().endsWith(this._PAGES_ARCHIVE_EXTENSION)) {
+            alert(errorPrefix + 'the file is not of the proper format');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
@@ -234,8 +242,7 @@ class PageTable {
                 this._render();
             }
             catch (err) {
-                alert('Importing page files failed. The file format is likely to be corrupted: ' + 
-                    err.toString());
+                alert(errorPrefix + err.toString());
             }
             finally {
                 this._importPageBtn.disabled = false;
@@ -255,7 +262,7 @@ class PageTable {
 
         if (!this._exportPageLink) {
             this._exportPageLink = document.getElementById(this._PAGE_SECTION_PREFIX + 'link-export');
-            this._exportPageLink.download = 'highlighterStorage.hltr';
+            this._exportPageLink.download = 'highlighterStorage' + this._PAGES_ARCHIVE_EXTENSION;
         }
 
         this._useArchiveLink(url => {
