@@ -84,8 +84,12 @@ class PageTable {
         this._filePageBtn = document.getElementById(pageSectionBtnPrefix + 'file');
         this._filePageBtn.onchange = this._bindToThis(this._onChoosePackageFileBtnClick);
 
-        this._importPageBtn = document.getElementById(pageSectionBtnPrefix + 'import');
-        this._importPageBtn.onclick = this._bindToThis(this._onImportPageBtnClick);
+        this._importPageBtns = [...document.getElementsByClassName(pageSectionBtnPrefix + 'import')];
+        ArrayExtension.runForEach(this._importPageBtns, 
+            btn => btn.onclick = this._bindToThis(this._onImportPageBtnClick));
+        this._importIsUpsertable = false;
+
+        this._statusLabel = null;
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
@@ -205,54 +209,88 @@ class PageTable {
         if (!importPackage || !importPackage.size)
             return;
         
-        const errorPrefix = 'Importing pages failed: ';
+        const errorPrefix = 'Importing pages has failed: ';
 
         if (!importPackage.name.toLowerCase().endsWith(this._PAGES_ARCHIVE_EXTENSION)) {
-            alert(errorPrefix + 'the file is not of the proper format');
+            this._showStatus(errorPrefix + 'the file is not of the proper format');
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-                this._importPageBtn.disabled = true;
+                this._updateImportBtnsAvailability(false);
 
                 const result = event.target.result;
 
-                let importedPages;
+                let pagesToImport;
 
-                if (!result || !(importedPages = JSON.parse(result)) || !importedPages.length)
+                if (!result || !(pagesToImport = JSON.parse(result)) || !pagesToImport.length)
                     throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
                 if (this._pagesInfo.length)
                 {
-                    if (confirm('Providing there are pages equal to your current ones, ' + 
-                        'would you like to update them?'))
+                    if (this._importIsUpsertable)
                         this._pagesInfo = this._pagesInfo.filter(imp => 
-                            !importedPages.find(pi => pi.uri === imp.uri));
+                            !pagesToImport.find(pi => pi.uri === imp.uri));
                     else
-                        importedPages = importedPages.filter(imp => 
+                        pagesToImport = pagesToImport.filter(imp => 
                             !this._pagesInfo.find(pi => pi.uri === imp.uri));
                 }
                 
-                this._pagesInfo = this._pagesInfo.concat(PageInfo.savePages(importedPages));
+                const importedPages = PageInfo.savePages(pagesToImport);
+                this._pagesInfo = this._pagesInfo.concat(importedPages);
                 this._sortPagesInfo();
 
                 this._clearTableRows();
                 this._render();
+
+                this._showStatus('A number of sucessfully imported pages is ' + importedPages.length, 
+                    false);
             }
             catch (err) {
-                alert(errorPrefix + err.toString());
+                this._showStatus(errorPrefix + err.toString());
             }
             finally {
-                this._importPageBtn.disabled = false;
+                this._updateImportBtnsAvailability(true);
+                this._importIsUpsertable = false;
             }
         };
 
         reader.readAsText(new Blob([importPackage]));
     }
 
-    _onImportPageBtnClick() {
+    _showStatus(text, isWarning = true) {
+        const statusLabelId = 'form-section-status--label';
+
+        if (!this._statusLabel)
+            this._statusLabel = document.getElementById(statusLabelId);        
+        
+        this._statusLabel.innerHTML = text;
+
+        const statusWarningClass = statusLabelId + '-warning';
+        
+        if (isWarning)
+            this._statusLabel.classList.add(statusWarningClass);
+        else
+            this._statusLabel.classList.remove(statusWarningClass);
+    }
+
+    _hideStatus() {
+        if (this._statusLabel && this._statusLabel.innerHTML)
+            this._statusLabel.innerHTML = null;
+    }
+
+    _updateImportBtnsAvailability(isAvailable) {
+        ArrayExtension.runForEach(this._importPageBtns, 
+            btn => btn.disabled = !isAvailable);
+    }
+
+    _onImportPageBtnClick(_event) {
+        this._importIsUpsertable = _event.target.dataset.upsertable || false;
+
+        this._hideStatus();
+
         this._filePageBtn.click();
     }
 

@@ -404,10 +404,18 @@ describe('components/preferences', function () {
                 assert(exportLink.download.endsWith('.hltr'));
             })
         );
-
-        const getImportBtn = () => document.getElementById('form--section-page--btn-import');
+        
+        const getImportBtn = (isUpsertable = false) =>
+            [...document.getElementsByClassName('form--section-page--btn-import')].find(btn => {
+                const upsertable = btn.dataset.upsertable;
+                return isUpsertable ? upsertable === 'true': !upsertable; 
+            });
 
         const getFileImportBtn = () => document.getElementById('form--section-page--btn-file');
+
+        const getStatusLabel = () => document.getElementById('form-section-status--label');
+
+        const assertStatusIsEmpty = () => assert(!getStatusLabel().innerHTML);
 
         it('should initiate importing by opening a dialog to opt for a package file', () =>
             Expectation.expectResolution(new Preferences().load()
@@ -423,6 +431,8 @@ describe('components/preferences', function () {
                     importBtn.dispatchEvent(createClickEvent());
 
                     assert.strictEqual(fileDialogIsOpen, true);
+
+                    assertStatusIsEmpty();
                 }))
         );
 
@@ -437,24 +447,33 @@ describe('components/preferences', function () {
 
                 assert.strictEqual(getImportBtn().disabled, false);
                 assert.strictEqual(errorWasThrown, false);
+
+                assertStatusIsEmpty();
             })
         );
+
+        const STATUS_WARNING_CLASS = 'form-section-status--label-warning';
+
+        const assertStatusIsWarning = (expectedSubstring = null) => {
+            const statusLabel = getStatusLabel();
+
+            const warning = statusLabel.innerHTML;
+            assert(warning);
+            assert(statusLabel.classList.contains(STATUS_WARNING_CLASS));
+
+            if (expectedSubstring)
+                assert(warning.includes(expectedSubstring));
+        };
 
         it('should alert if an imported package file has a wrong file extension', () =>
             initPreferencesWithExport().then(pagesInfo => {
                 const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), pagesInfo,
                     Randomiser.getRandomNumberUpToMax() + '.json');
-
-                let wasAlerted = false;                    
-                global.alert = msg => {
-                    assert(msg);
-                    wasAlerted = !wasAlerted;
-                };
     
                 fileBtn.dispatchEvent(createChangeEvent());
 
                 assert.strictEqual(getImportBtn().disabled, false);
-                assert.strictEqual(wasAlerted, true);
+                assertStatusIsWarning();
             })
         );
 
@@ -462,18 +481,14 @@ describe('components/preferences', function () {
             const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContents);
             FileTransfer.fileReaderClass.setResultPackage(resultPackage);
 
-            global.alert = msg => {
-                assert(msg);
-
-                const expectedError = new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
-                assert(msg.includes(expectedError.toString()));
-            };
-
             fileBtn.dispatchEvent(createChangeEvent());
             assert.strictEqual(getImportBtn().disabled, false);
 
             assert.strictEqual(FileTransfer.fileReaderClass.passedBlob.size, 
                 fileBtn.files[0].size);
+
+            const expectedError = new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
+            assertStatusIsWarning(expectedError.toString());
         };
 
         it('should throw an exception if an imported package file is empty', () =>
@@ -487,28 +502,22 @@ describe('components/preferences', function () {
 
         const TEST_URI = 'https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER';
         const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
-            .toString('utf8');
+            .toString('utf8');    
 
         const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
             const pageToUpdate = pagesInfo.find(pi => pi.uri === TEST_URI);
             assert(pageToUpdate);
 
+            const importBtn = getImportBtn(shouldUpdateExistentPages);
+            importBtn.click();
+
             const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
 
             FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
 
-            let confirmed = false;
-            global.confirm = msg => {
-                assert(msg);
-                
-                confirmed = !confirmed;
-                return shouldUpdateExistentPages;
-            };
-
             fileBtn.dispatchEvent(createChangeEvent());
 
-            assert.strictEqual(confirmed, true);
-            assert.strictEqual(getImportBtn().disabled, false);
+            assert.strictEqual(importBtn.disabled, false);
 
             const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
             assertPageTableValues(fullInfo);
@@ -532,6 +541,14 @@ describe('components/preferences', function () {
                     assert.deepStrictEqual(savedPage, pageToUpdate);
                 }
             });
+
+            const statusLabel = getStatusLabel();
+    
+            const statusMsg = statusLabel.innerHTML;
+            assert(statusMsg);
+            assert(statusMsg.endsWith(shouldUpdateExistentPages ? '1' : '0'));
+
+            assert(!statusLabel.classList.contains(STATUS_WARNING_CLASS));
         };
 
         it('should import all pages from a package file and update current ones', () =>

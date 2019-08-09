@@ -62,3 +62,15 @@
 .form--table-pages--row-hidden {
     display: none;
 }
+
+#form-section-status {
+    margin: 5px;
+}
+
+#form-section-status--label {
+    color: green;
+}
+
+.form-section-status--label-warning {
+    color: brown !important;    
+}

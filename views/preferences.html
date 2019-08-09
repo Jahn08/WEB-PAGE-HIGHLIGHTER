@@ -39,12 +39,17 @@
                     <tbody style="width:inherit"></tbody>
                 </table>
 
-                <div class="form--section-page">
+                <div id="form-section-status">
+                    <label id="form-section-status--label"></label>
+                </div>
+
+                <div>
                     <button disabled id="form--section-page--btn-show" type="button" title="Open in a New Tab">Open</button>
                     <button disabled id="form--section-page--btn-remove" type="button" title="Remove">Remove</button>
 
                     <input id="form--section-page--btn-file" style="display: none" type="file" accept=".hltr" />
-                    <button id="form--section-page--btn-import" type="button" title="Import">Import</button>
+                    <button class="form--section-page--btn-import" type="button" title="Import adding only new pages">Import / Insert</button>
+                    <button class="form--section-page--btn-import" data-upsertable="true" type="button" title="Import updating existent pages">Import / Update</button>
                     
                     <a id="form--section-page--link-export" style="display: none"></a>
                     <button disabled id="form--section-page--btn-export" type="button" title="Export">Export</button>
