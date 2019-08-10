@@ -128,6 +128,15 @@ describe('components/preferences', function () {
         });
     };
 
+    const getRemovingPageInfoBtn = () => 
+        document.getElementById('form--section-page--btn-remove');
+
+    const getImportBtn = (isUpsertable = false) =>
+        [...document.getElementsByClassName('form--section-page--btn-import')].find(btn => {
+            const upsertable = btn.dataset.upsertable;
+            return isUpsertable ? upsertable === 'true': !upsertable; 
+        });
+
     describe('#load', function () {
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
@@ -192,12 +201,58 @@ describe('components/preferences', function () {
             );
         });
 
+        it('should disable the upsertable import button after loading empty page data', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(0),
+                () => new Preferences().load()
+                    .then(() => {
+                        assert(!getImportBtn().disabled);
+                        assert(getImportBtn(true).disabled);
+                    })
+            );
+        });
+
+        it('should load saved page data and enable buttons for import', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
+                () => new Preferences().load()
+                    .then(() => {
+                        assert(!getImportBtn().disabled);
+                        assert(!getImportBtn(true).disabled);
+                    })
+            );
+        });
+
         it('should load saved page data and disable button for showing several uris', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
                         tickPageInfoCheck(2);
                         assert(getShowingUriBtn().disabled);
+                    })
+            );
+        });
+
+        it('should load saved page data and enable button for removing several pages', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
+                () => new Preferences().load()
+                    .then(() => {
+                        tickPageInfoCheck(2);
+                        assert(!getRemovingPageInfoBtn().disabled);
+                    })
+            );
+        });
+
+        const getAllPagesCheck = () => document.getElementById('form--table-pages--check-all');
+
+        it('should load saved page data and enable button for removing when all pages are checked', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
+                () => new Preferences().load()
+                    .then(() => {
+                        const allPagesCheck = getAllPagesCheck();
+                        
+                        allPagesCheck.checked = true;
+                        allPagesCheck.dispatchEvent(createChangeEvent());
+
+                        assert(!getRemovingPageInfoBtn().disabled);
                     })
             );
         });
@@ -300,10 +355,7 @@ describe('components/preferences', function () {
                     ));
                 });
         });
-
-        const getRemovingPageInfoBtn = () => 
-            document.getElementById('form--section-page--btn-remove');
-            
+        
         it('should save the preferences page removing several pages', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageInfo()
                 .then(async expectedPageData => {
@@ -402,12 +454,6 @@ describe('components/preferences', function () {
             })
         );
         
-        const getImportBtn = (isUpsertable = false) =>
-            [...document.getElementsByClassName('form--section-page--btn-import')].find(btn => {
-                const upsertable = btn.dataset.upsertable;
-                return isUpsertable ? upsertable === 'true': !upsertable; 
-            });
-
         const getFileImportBtn = () => document.getElementById('form--section-page--btn-file');
 
         const getAssertedStatusLabel = (expectedMsgNumber = 1) => { 

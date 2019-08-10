@@ -62,7 +62,7 @@ class PageTable {
         this._CHECK_TICKED_SELECTOR = `.${this._CHECK_CLASS_NAME}${this._CHECKED_MODIFIER}`;
         
         this._checkAllBtn = document.getElementById(this._CHECK_CLASS_NAME + '-all');
-        this._checkAllBtn.onclick = this._bindToThis(this._onCheckAllClick);
+        this._checkAllBtn.onchange = this._bindToThis(this._onCheckAllClick);
 
         this._TABLE_CELL_NAME = 'td';
 
@@ -89,6 +89,8 @@ class PageTable {
             btn => btn.onclick = this._bindToThis(this._onImportPageBtnClick));
         this._importIsUpsertable = false;
 
+        this._updateImportBtnsAvailability(true);
+        
         this._statusLabel = null;
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
@@ -128,7 +130,14 @@ class PageTable {
             this._CHECKED_MODIFIER;
         
         document.querySelectorAll('.' + this._CHECK_CLASS_NAME + modifier)
-            .forEach(el => el.checked = shouldCheck);
+            .forEach(el => { 
+                if (el.checked === shouldCheck)
+                    return;
+
+                el.checked = shouldCheck;
+            });
+
+        this._onRowCheck();
     }
 
     _renderPageInfoRow(pageInfo) {
@@ -148,14 +157,15 @@ class PageTable {
         return row;
     }
 
-    _onRowCheck() {
+    _onRowCheck(event) {
         const checkedNumber = 
             document.querySelectorAll(this._CHECK_TICKED_SELECTOR).length;
         
         this._showPageBtn.disabled = checkedNumber !== 1;
         this._removePageBtn.disabled = checkedNumber === 0;
 
-        this._checkAllBtn.checked = checkedNumber == this._pagesInfo.length;
+        if (event)
+            this._checkAllBtn.checked = checkedNumber == this._pagesInfo.length;
     }
 
     _createLabelCell(text, title = null) {
@@ -283,11 +293,20 @@ class PageTable {
 
     _updateImportBtnsAvailability(isAvailable) {
         ArrayExtension.runForEach(this._importPageBtns, 
-            btn => btn.disabled = !isAvailable);
+            btn => { 
+                if (isAvailable)
+                    isAvailable = !this._isUpsertableBtn(btn) || this._pagesInfo.length > 0;
+
+                btn.disabled = !isAvailable;
+            });
+    }
+
+    _isUpsertableBtn(btn) {
+        return btn.dataset.upsertable === 'true';
     }
 
     _onImportPageBtnClick(_event) {
-        this._importIsUpsertable = _event.target.dataset.upsertable || false;
+        this._importIsUpsertable = this._isUpsertableBtn(_event.target);
 
         this._hideStatus();
 
