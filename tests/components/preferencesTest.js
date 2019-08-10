@@ -334,8 +334,9 @@ describe('components/preferences', function () {
 
         const getExportBtn = () => document.getElementById('form--section-page--btn-export');
 
-        const initPreferencesWithExport = async (predeterminedUri = null) =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5, predeterminedUri), 
+        const initPreferencesWithExport = async (predeterminedUri = null, storedPagesNumber = 5) =>
+            Expectation.expectResolution(
+                StorageHelper.saveTestPageInfo(storedPagesNumber, predeterminedUri), 
                 async pagesInfo => {
                     const preferences = new Preferences();
 
@@ -353,16 +354,12 @@ describe('components/preferences', function () {
             })
         );
         
-        it('should leave the export button disabled if there are no pages being stored', () => {
-            const preferences = new Preferences();
-
-            return Expectation.expectResolution(preferences.load()
-                .then(() => preferences.initialiseExport()), 
-            () => {
+        it('should leave the export button disabled if there are no pages being stored', () =>
+            initPreferencesWithExport(null, 0).then(() => {
                 const exportBtn = getExportBtn();
                 assert.strictEqual(exportBtn.disabled, true);
-            });
-        });
+            })
+        );
 
         it('should reject if the page table is not initialised', () =>
             Expectation.expectRejection(new Preferences().initialiseExport(), 
@@ -413,9 +410,14 @@ describe('components/preferences', function () {
 
         const getFileImportBtn = () => document.getElementById('form--section-page--btn-file');
 
-        const getStatusLabel = () => document.getElementById('form-section-status--label');
+        const getAssertedStatusLabel = (expectedMsgNumber = 1) => { 
+            const statusSection = document.getElementById('form-section-status');
+            assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
 
-        const assertStatusIsEmpty = () => assert(!getStatusLabel().innerHTML);
+            return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
+        };
+
+        const assertStatusIsEmpty = () => assert(!getAssertedStatusLabel(0));
 
         it('should initiate importing by opening a dialog to opt for a package file', () =>
             Expectation.expectResolution(new Preferences().load()
@@ -455,9 +457,9 @@ describe('components/preferences', function () {
         const STATUS_WARNING_CLASS = 'form-section-status--label-warning';
 
         const assertStatusIsWarning = (expectedSubstring = null) => {
-            const statusLabel = getStatusLabel();
+            const statusLabel = getAssertedStatusLabel();
 
-            const warning = statusLabel.innerHTML;
+            const warning = statusLabel.innerText;
             assert(warning);
             assert(statusLabel.classList.contains(STATUS_WARNING_CLASS));
 
@@ -504,6 +506,13 @@ describe('components/preferences', function () {
         const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
             .toString('utf8');    
 
+        const startImporting = () => {
+            FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
+
+            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
+            fileBtn.dispatchEvent(createChangeEvent());
+        };
+
         const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
             const pageToUpdate = pagesInfo.find(pi => pi.uri === TEST_URI);
             assert(pageToUpdate);
@@ -511,11 +520,7 @@ describe('components/preferences', function () {
             const importBtn = getImportBtn(shouldUpdateExistentPages);
             importBtn.click();
 
-            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
-
-            FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
-
-            fileBtn.dispatchEvent(createChangeEvent());
+            startImporting();
 
             assert.strictEqual(importBtn.disabled, false);
 
@@ -542,9 +547,9 @@ describe('components/preferences', function () {
                 }
             });
 
-            const statusLabel = getStatusLabel();
+            const statusLabel = getAssertedStatusLabel();
     
-            const statusMsg = statusLabel.innerHTML;
+            const statusMsg = statusLabel.innerText;
             assert(statusMsg);
             assert(statusMsg.endsWith(shouldUpdateExistentPages ? '1' : '0'));
 
@@ -559,5 +564,25 @@ describe('components/preferences', function () {
             initPreferencesWithExport(TEST_URI)
                 .then(pagesInfo => testImportingData(pagesInfo, false))
         );
+        
+        it('should reinitialise an export button after importing', () => {
+            initPreferencesWithExport(null, 0)
+                .then(() =>  {
+                    startImporting();
+                    const exportBtn = getExportBtn();
+
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            try {
+                                assert.strictEqual(exportBtn.disabled, false);
+                                resolve();
+                            }
+                            catch(ex) {
+                                reject(ex);
+                            }
+                        }, 100);
+                    });
+                });
+        });
     });
 });

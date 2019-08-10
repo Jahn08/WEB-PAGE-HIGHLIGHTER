@@ -21,6 +21,9 @@ export class StorageHelper {
     }
 
     static saveTestPageInfo (numberOfItems = 3, predeterminedUri = null) {
+        if (!numberOfItems)
+            return Promise.resolve();
+
         const expectedPageData = PageInfoHelper.createPageInfoArray(numberOfItems);
 
         if (predeterminedUri)

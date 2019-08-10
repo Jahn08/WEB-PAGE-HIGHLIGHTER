@@ -245,6 +245,9 @@ class PageTable {
                 this._clearTableRows();
                 this._render();
 
+                if (importedPages.length)
+                    this.initialiseExport();
+
                 this._showStatus('A number of sucessfully imported pages is ' + importedPages.length, 
                     false);
             }
@@ -252,8 +255,8 @@ class PageTable {
                 this._showStatus(errorPrefix + err.toString());
             }
             finally {
-                this._updateImportBtnsAvailability(true);
                 this._importIsUpsertable = false;
+                this._updateImportBtnsAvailability(true);
             }
         };
 
@@ -261,24 +264,21 @@ class PageTable {
     }
 
     _showStatus(text, isWarning = true) {
-        const statusLabelId = 'form-section-status--label';
+        const statusSectionId = 'form-section-status';
 
         if (!this._statusLabel)
-            this._statusLabel = document.getElementById(statusLabelId);        
-        
-        this._statusLabel.innerHTML = text;
+            this._statusLabel = document.getElementById(statusSectionId);        
 
-        const statusWarningClass = statusLabelId + '-warning';
-        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = text;
+
+        const statusLabelClass = statusSectionId + '--label';
+        labelEl.className = statusLabelClass;
+
         if (isWarning)
-            this._statusLabel.classList.add(statusWarningClass);
-        else
-            this._statusLabel.classList.remove(statusWarningClass);
-    }
-
-    _hideStatus() {
-        if (this._statusLabel && this._statusLabel.innerHTML)
-            this._statusLabel.innerHTML = null;
+            labelEl.classList.add(statusLabelClass + '-warning');
+            
+        this._statusLabel.append(labelEl);
     }
 
     _updateImportBtnsAvailability(isAvailable) {
@@ -292,6 +292,11 @@ class PageTable {
         this._hideStatus();
 
         this._filePageBtn.click();
+    }
+
+    _hideStatus() {
+        if (this._statusLabel && this._statusLabel.innerHTML)
+            this._statusLabel.innerHTML = null;
     }
 
     _onExportPageBtnClick() {
@@ -384,14 +389,18 @@ class PageTable {
         return this._removedPageUris;
     }
 
-    initialiseExport(pagesFullInfo) {
-        if (this._pagesArchive || !pagesFullInfo.length)
-            return Promise.resolve();
+    initialiseExport() {
+        return PageInfo.getAllSavedPagesFullInfo().then(pagesFullInfo =>  {
+            if (!pagesFullInfo.length) {
+                this._exportPageBtn.disabled = true;
+                return Promise.resolve();
+            }
 
-        return this._generatePagesArchive(pagesFullInfo).then(data => {
-            this._pagesArchive = data;
-            this._exportPageBtn.disabled = false;
-        }).catch(err => console.error('An error while trying to form a package of pages for export: ' + err.toString()));
+            return this._generatePagesArchive(pagesFullInfo).then(data => {
+                this._pagesArchive = data;
+                this._exportPageBtn.disabled = false;
+            }).catch(err => this._showStatus('Forming a package of pages for export has failed: ' + err.toString()));
+        });
     }
 
     _generatePagesArchive(pagesInfo) {
@@ -481,8 +490,7 @@ class Preferences {
         if (!this._pageTable)
             return Promise.reject(new PagePackageError(PagePackageError.WRONG_INITIALISATION_TYPE));
     
-        return PageInfo.getAllSavedPagesFullInfo().then(pagesInfo => 
-            this._pageTable.initialiseExport(pagesInfo));
+        return this._pageTable.initialiseExport();
     }
 
     save() {

@@ -63,12 +63,14 @@
     display: none;
 }
 
-#form-section-status {
-    margin: 5px;
+.form-section-separated {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
-#form-section-status--label {
+.form-section-status--label {
     color: green;
+    display: block;
 }
 
 .form-section-status--label-warning {
