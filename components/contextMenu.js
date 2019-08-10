@@ -4,8 +4,6 @@ import { ColourList } from './colourList.js';
 
 export class ContextMenu {
     constructor() {
-        this._isDirty = false;
-    
         this._markBtn = new ButtonMenuItem('mark', 'Mark Selected Text');
         this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark Selected Text');
 
@@ -64,11 +62,6 @@ export class ContextMenu {
         
         this._browser = new BrowserAPI();
 
-        this._browser.menus.onShown.addListener(() => {
-            if (this._shouldBeRefreshed())
-                this._browser.menus.refresh();
-        });
-
         new SeparatorMenuItem().addToMenu();
 
         this.onAddingNote = null;
@@ -97,8 +90,6 @@ export class ContextMenu {
         this.onSaving = null;
         this.onLoading = null;
         this._initStorageOptions();
-
-        this._browser.menus.onHidden.addListener(() => this._makePure());
     }
 
     async _passTabInfoToCallback(callback, options = {}) {
@@ -117,8 +108,6 @@ export class ContextMenu {
 
         return activeTabs[0].id;
     }
-
-    _shouldBeRefreshed() { return this._isDirty; }
 
     _initNoteNavigation() {
         if (this._noteNavigation) 
@@ -160,32 +149,23 @@ export class ContextMenu {
         this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn);
     }
 
-    _makePure() {
-        this._isDirty = false;
-    }
-
     get currentColourClass() { return this._curColourClass; }
 
-    disableMarkingBtn() { this._makeDirty(this._markBtn.disable()); }
+    disableMarkingBtn() { this._markBtn.disable(); }
 
-    _makeDirty(shouldBeDirty) {
-        if (shouldBeDirty)
-            this._isDirty = true;
-    }
+    enableMarkingBtn() { this._markBtn.enable(); }
 
-    enableMarkingBtn() { this._makeDirty(this._markBtn.enable()); }
-
-    disableUnmarkingBtn() { this._makeDirty(this._unmarkBtn.disable()); }
+    disableUnmarkingBtn() { this._unmarkBtn.disable(); }
     
-    enableUnmarkingBtn() { this._makeDirty(this._unmarkBtn.enable()); }
+    enableUnmarkingBtn() { this._unmarkBtn.enable(); }
 
-    disableAddingNoteBtn() { this._makeDirty(this._addNoteBtn.disable()); }
+    disableAddingNoteBtn() { this._addNoteBtn.disable(); }
 
-    enableAddingNoteBtn() { this._makeDirty(this._addNoteBtn.enable()); }
-    
-    disableRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.disable()); }
+    enableAddingNoteBtn() { this._addNoteBtn.enable(); }
 
-    enableRemovingNoteBtn() { this._makeDirty(this._removeNoteBtn.enable()); }
+    disableRemovingNoteBtn() { this._removeNoteBtn.disable(); }
+
+    enableRemovingNoteBtn() { this._removeNoteBtn.enable(); }
 
     disableSaveBtn() { this._storageMenu.disableSaveBtn(); }
     
@@ -209,7 +189,7 @@ export class ContextMenu {
         return this._colourRadios.find(r => r.id === colourClass);
     }
 
-    renderNoteLinks(noteLinks) { this._makeDirty(this._noteNavigation.render(noteLinks)); }
+    renderNoteLinks(noteLinks) { this._noteNavigation.render(noteLinks); }
 
     appendNoteLink(noteId, noteText) {
         this._noteNavigation.appendLink(noteId, noteText);

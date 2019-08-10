@@ -19,21 +19,6 @@ class ContextMenuAPI {
     update(id, options) {
         this._menus.update(id, options);
     }
-
-    refresh() {
-        if (this._menus.refresh)
-            this._menus.refresh();
-    }
-
-    get onHidden() { return this._menus.onHidden || this._eventStub; }
-
-    get _eventStub() {
-        return {
-            addListener: () => {}
-        };
-    }
-
-    get onShown() { return this._menus.onShown || this._eventStub; }
 }
 
 class TabsAPI {

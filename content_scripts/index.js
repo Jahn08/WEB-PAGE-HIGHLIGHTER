@@ -84,7 +84,15 @@ void function() {
         return msg;
     };
 
-    document.addEventListener('mousedown', async _event => {
+    const sleep = milliseconds => {
+        const start = new Date().getTime();
+    
+        for (let i = 0; i < 1e7; i++)
+            if ((new Date().getTime() - start) > milliseconds)
+                break;
+    };
+
+    document.addEventListener('mousedown', _event => {
         try {
             if (_event.button !== 2)
                 return true;
@@ -115,7 +123,9 @@ void function() {
             }
             
             msg = MessageReceiver.combineEvents(msg, MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
-            await browserApi.runtime.sendMessage(includeLoadSaveEvents(msg));
+            browserApi.runtime.sendMessage(includeLoadSaveEvents(msg));
+
+            sleep(10);
         }
         catch (ex) {
             console.error('An error while trying to set menu visibility: ' + ex.toString());
