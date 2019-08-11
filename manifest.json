@@ -9,7 +9,7 @@
         "browser_style": true,
         "default_title": "Highlighter",
         "default_popup": "views/popup.html",
-        "default_icon": "icons/highlighter.svg"
+        "default_icon": "icons/highlighter48.png"
     },
     
     "browser_specific_settings": {
@@ -38,8 +38,8 @@
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
 
     "icons": {
-        "48" : "icons/highlighter.svg",
-        "96" : "icons/highlighter.svg"
+        "48" : "icons/highlighter48.png",
+        "96" : "icons/highlighter96.png"
     },
 
     "manifest_version": 2,

@@ -1,4 +1,4 @@
-![alt text](https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER/blob/master/icons/highlighter.svg)
+![alt text](https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER/blob/master/icons/highlighter48.png)
 
 # WEB-PAGE-HIGHLIGHTER
 
