@@ -171,7 +171,8 @@ class RangeNote extends RangeBase {
     }
 
     static _elementHasNote(targetNode) {
-        return targetNode && targetNode.classList.contains(this.HAS_NOTE_CLASS_NAME);
+        return targetNode && targetNode.classList && 
+            targetNode.classList.contains(this.HAS_NOTE_CLASS_NAME);
     }
 
     static removeNote(targetNode) {
@@ -182,7 +183,8 @@ class RangeNote extends RangeBase {
 
         const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
         ArrayExtension.runForEach(noteNodes, 
-            n => n.childElementCount === 1 ? n.remove() : this._extractLastChildContent(n));
+            n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n):
+                n.remove());
 
         return noteNodes.length > 0 ? noteId : null;        
     }

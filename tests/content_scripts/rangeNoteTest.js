@@ -160,15 +160,19 @@ describe('content_script/rangeNote', function () {
         const testRemovingNoteForNode = (targetNode) => {
             createNoteWithText(targetNode);
 
-            assert.strictEqual(RangeNote.removeNote(targetNode), '1');
+            assert.strictEqual(RangeNote.removeNote(targetNode.parentElement), '1');
             assert.strictEqual(document.querySelectorAll('[class*=note]').length, 0);
         };
 
-        it('should remove a note surrounding a node', () =>
+        it('should remove a note surrounding a text node', () =>
+            testRemovingNoteForNode(TestPageHelper.getFirstItalicSentenceNode().firstChild)
+        );
+        
+        it('should remove a note surrounding an element', () =>
             testRemovingNoteForNode(TestPageHelper.getFirstItalicSentenceNode())
         );
 
-        it('should remove a note surrounding several nodes', () =>
+        it('should remove a note surrounding several elements', () =>
             testRemovingNoteForNode(TestPageHelper.getLastParagraphSentenceNode())
         );
 
