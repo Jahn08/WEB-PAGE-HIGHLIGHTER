@@ -148,7 +148,7 @@ void function() {
                     
                     if (!RangeMarker.domContainsMarkers()) {
                         domWasChanged = false;
-                        this._domIsPure = true;
+                        this._domIsPure = this._canLoad ? undefined : true;
                     }
                 }
                 else if (receiver.shouldChangeColour())
