@@ -4,23 +4,10 @@ export class MessageSender {
     constructor (msg) {
         this._msg = msg;
 
-        this._curColourClasses = [];
-
         this._noteLinks = [];
     }
 
-    shouldSetMarkMenuReady() { 
-        const markingIsAvailable = msgEvent.isSetMarkReadyEvent(this._msg);
-        
-        if (markingIsAvailable)
-            this._setColourClasses();
-
-        return markingIsAvailable;
-    }
-
-    _setColourClasses() { this._curColourClasses = msgEvent.getMarkColourClasses(this._msg); }
-
-    get currentColourClasses() { return this._curColourClasses; }
+    shouldSetMarkMenuReady() { return msgEvent.isSetMarkReadyEvent(this._msg); }
 
     shouldSetUnmarkMenuReady() { return msgEvent.isSetUnmarkReadyEvent(this._msg); }
 

@@ -57,8 +57,7 @@ browserApi.runtime.onMessage(async msg => {
         else
             menu.disableLoadBtn();
 
-        if (sender.shouldSetMarkMenuReady() && (sender.currentColourClasses.length !== 1 || 
-            sender.currentColourClasses[0] !== menu.currentColourClass))
+        if (sender.shouldSetMarkMenuReady())
             menu.enableMarkingBtn();
         else
             menu.disableMarkingBtn();

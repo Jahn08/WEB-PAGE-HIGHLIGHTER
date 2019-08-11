@@ -12,7 +12,7 @@ class MessageReceiver {
     }
 
     _setColourClass() { 
-        this._markColourClass = MessageReceiver.msgEvent.getMarkColourClasses(this._msg)[0];
+        this._markColourClass = MessageReceiver.msgEvent.getMarkColourClass(this._msg);
         return this._markColourClass ? true: false;
     }
 
@@ -22,8 +22,8 @@ class MessageReceiver {
 
     shouldUnmark() { return MessageReceiver.msgEvent.isUnmarkEvent(this._msg); }
 
-    static setMarkMenuReady(curColourClasses = []) { 
-        return MessageReceiver.msgEvent.createMarkReadyEvent(curColourClasses); 
+    static setMarkMenuReady() { 
+        return MessageReceiver.msgEvent.createMarkReadyEvent(); 
     }
 
     static setUnmarkMenuReady() { return MessageReceiver.msgEvent.createUnmarkReadyEvent(); }

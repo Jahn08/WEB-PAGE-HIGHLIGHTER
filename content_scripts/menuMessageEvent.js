@@ -26,10 +26,10 @@ class MenuMessageEvent {
         this._goToNoteEvent = 'goToNote';
     }
 
-    createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, [colourClass]); }
+    createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
 
-    _createEventWithColour(eventName, colourClasses) {
-        return this._createEventWithArgs(eventName, colourClasses, this._COLOUR_CLASS_FIELD);
+    _createEventWithColour(eventName, colourClass) {
+        return this._createEventWithArgs(eventName, colourClass, this._COLOUR_CLASS_FIELD);
     }
 
     get _COLOUR_CLASS_FIELD() {
@@ -60,8 +60,8 @@ class MenuMessageEvent {
         return validMsgs.reduce((p, c) => {
             p.event.push(...c.event);
 
-            this._combineArrays(p, c, this._COLOUR_CLASS_FIELD);
-            this._combineArrays(p, c, this._NOTE_LINK_FIELD);
+            this._combineProps(p, c, this._COLOUR_CLASS_FIELD);
+            this._combineProps(p, c, this._NOTE_LINK_FIELD);
             
             return p;
         }, { event: [] });
@@ -71,7 +71,7 @@ class MenuMessageEvent {
         return 'noteLink';
     }
 
-    _combineArrays(targetObj, sourceObj, propName) {
+    _combineProps(targetObj, sourceObj, propName) {
         if (sourceObj[propName])
             targetObj[propName] = sourceObj[propName];
     }
@@ -80,14 +80,14 @@ class MenuMessageEvent {
 
     _isEvent(msg, eventName) { return msg && ArrayExtension.contains(msg.event, eventName); }
 
-    getMarkColourClasses(msg) { return msg ? msg[this._COLOUR_CLASS_FIELD]: []; }
+    getMarkColourClass(msg) { return msg ? msg[this._COLOUR_CLASS_FIELD]: null; }
 
-    createMarkReadyEvent(curColourClasses) {
-        return this._createEventWithColour(this._markReadyEvent, curColourClasses);
-    }
+    createMarkReadyEvent() { return this._createEvent(this._markReadyEvent); }
     isSetMarkReadyEvent(msg) { return this._isEvent(msg, this._markReadyEvent); }
 
-    createChangeColourEvent(colourClass) { return this._createEventWithColour(this._changeColourEvent, [colourClass]); }   
+    createChangeColourEvent(colourClass) { 
+        return this._createEventWithColour(this._changeColourEvent, colourClass); 
+    }   
     isChangeColourEvent(msg) { return this._isEvent(msg, this._changeColourEvent); }
 
     createUnmarkReadyEvent() { return this._createEvent(this._unmarkReadyEvent); }

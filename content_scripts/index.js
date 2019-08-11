@@ -79,7 +79,7 @@ void function() {
     
                 if (curColourClasses)
                 {
-                    msg = MessageReceiver.combineEvents(MessageReceiver.setMarkMenuReady(curColourClasses), 
+                    msg = MessageReceiver.combineEvents(MessageReceiver.setMarkMenuReady(), 
                         MessageReceiver.setAddNoteMenuReady());
     
                     if (curColourClasses.length)
