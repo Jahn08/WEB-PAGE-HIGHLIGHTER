@@ -141,34 +141,21 @@ void function() {
                 this._activeNode = null;
     
                 let domWasChanged = false;
-    
+                let isElementRemoval = false;
+
                 let outcome;
-    
+                
                 if (receiver.shouldMark())
                     domWasChanged = RangeMarker.markSelectedNodes(receiver.markColourClass);
-                else if (receiver.shouldUnmark()) {
-                    domWasChanged = RangeMarker.unmarkSelectedNodes(curNode);
-                    
-                    if (!RangeMarker.domContainsMarkers()) {
-                        domWasChanged = false;
-                        this._domIsPure = this._canLoad ? undefined : true;
-                    }
-                }
+                else if (receiver.shouldUnmark() && RangeMarker.unmarkSelectedNodes(curNode))
+                    isElementRemoval = true;
                 else if (receiver.shouldChangeColour())
                     domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                         curNode);
-                else if (receiver.shouldAddNote()) {
-                    outcome = RangeNote.createNote(prompt('New note text:'), curNode);
-    
-                    if (outcome)
-                        domWasChanged = true;
-                }
-                else if (receiver.shouldRemoveNote()) {
-                    outcome = RangeNote.removeNote(curNode);
-    
-                    if (outcome)
-                        domWasChanged = true;
-                }
+                else if (receiver.shouldAddNote() && RangeNote.createNote(prompt('New note text:'), curNode))
+                    domWasChanged = true;
+                else if (receiver.shouldRemoveNote() && RangeNote.removeNote(curNode))
+                    isElementRemoval = true;
                 else if (receiver.shouldSave())
                     await this._performStorageAction(this._save);
                 else if (receiver.shouldLoad())
@@ -180,7 +167,9 @@ void function() {
                 else
                     throw new Error(`The message '${JSON.stringify(msg)}' has a wrong format and cannot be processed`);
     
-                if (domWasChanged)
+                if (isElementRemoval && this._domHasOnlyOwnElements())
+                    this._domIsPure = this._canLoad ? undefined : true;
+                else if (domWasChanged || isElementRemoval)
                     this._domIsPure = false;
     
                 return outcome;
@@ -189,6 +178,10 @@ void function() {
                 console.error(err.toString());
                 throw err;
             }
+        }
+
+        _domHasOnlyOwnElements() {
+            return !RangeMarker.domContainsMarkers() && !RangeNote.getNoteLinks().length;
         }
 
         async _save() {
