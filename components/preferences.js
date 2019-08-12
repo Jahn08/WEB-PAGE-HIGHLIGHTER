@@ -137,7 +137,7 @@ class PageTable {
                 el.checked = shouldCheck;
             });
 
-        this._onRowCheck();
+        this._updatePageButtonsAvailability();
     }
 
     _renderPageInfoRow(pageInfo) {
@@ -147,7 +147,7 @@ class PageTable {
         check.dataset.uri = pageInfo.uri;
         check.className = this._CHECK_CLASS_NAME;
         check.type = 'checkbox';
-        check.onchange = this._bindToThis(this._onRowCheck);
+        check.onchange = this._bindToThis(this._updatePageButtonsAvailability);
 
         const checkCell = document.createElement(this._TABLE_CELL_NAME);
         checkCell.append(check);
@@ -157,15 +157,15 @@ class PageTable {
         return row;
     }
 
-    _onRowCheck(event) {
+    _updatePageButtonsAvailability(isFromRowCheckedEvent = false) {
         const checkedNumber = 
             document.querySelectorAll(this._CHECK_TICKED_SELECTOR).length;
         
         this._showPageBtn.disabled = checkedNumber !== 1;
         this._removePageBtn.disabled = checkedNumber === 0;
 
-        if (event)
-            this._checkAllBtn.checked = checkedNumber == this._pagesInfo.length;
+        if (isFromRowCheckedEvent)
+            this._checkAllBtn.checked = checkedNumber === this._pagesInfo.length;
     }
 
     _createLabelCell(text, title = null) {
@@ -210,7 +210,15 @@ class PageTable {
             });
 
         this._pagesInfo = this._pagesInfo.filter(pi => 
-            !ArrayExtension.contains(this._removedPageUris, pi.uri));        
+            !ArrayExtension.contains(this._removedPageUris, pi.uri));
+            
+        this._showPageBtn.disabled = true;
+        this._removePageBtn.disabled = true;
+
+        if (!this._pagesInfo.length) {
+            this._updateImportBtnsAvailability(true);
+            this._exportPageBtn.disabled = true;
+        }
     }
 
     _onChoosePackageFileBtnClick() {
@@ -250,6 +258,11 @@ class PageTable {
                 
                 const importedPages = PageInfo.savePages(pagesToImport);
                 this._pagesInfo = this._pagesInfo.concat(importedPages);
+
+                const presentPageUris = this._pagesInfo.map(p => p.uri);
+                this._removedPageUris = this._removedPageUris.filter(
+                    removedUri => !presentPageUris.includes(removedUri));
+
                 this._sortPagesInfo();
 
                 this._clearTableRows();
@@ -267,6 +280,7 @@ class PageTable {
             finally {
                 this._importIsUpsertable = false;
                 this._updateImportBtnsAvailability(true);
+                this._filePageBtn.value = null;
             }
         };
 

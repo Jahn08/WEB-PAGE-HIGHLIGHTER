@@ -137,6 +137,8 @@ describe('components/preferences', function () {
             return isUpsertable ? upsertable === 'true': !upsertable; 
         });
 
+    const getAllPagesCheck = () => document.getElementById('form--table-pages--check-all');
+
     describe('#load', function () {
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
@@ -240,8 +242,6 @@ describe('components/preferences', function () {
                     })
             );
         });
-
-        const getAllPagesCheck = () => document.getElementById('form--table-pages--check-all');
 
         it('should load saved page data and enable button for removing when all pages are checked', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
@@ -389,14 +389,14 @@ describe('components/preferences', function () {
         const initPreferencesWithExport = async (predeterminedUri = null, storedPagesNumber = 5) =>
             Expectation.expectResolution(
                 StorageHelper.saveTestPageInfo(storedPagesNumber, predeterminedUri), 
-                async pagesInfo => {
+                async pages => {
                     const preferences = new Preferences();
 
                     await preferences.load();
 
                     await preferences.initialiseExport();
 
-                    return pagesInfo;
+                    return { pages, preferences };
                 });
 
         it('should initialise export enabling the respective button', () =>
@@ -514,8 +514,8 @@ describe('components/preferences', function () {
         };
 
         it('should alert if an imported package file has a wrong file extension', () =>
-            initPreferencesWithExport().then(pagesInfo => {
-                const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), pagesInfo,
+            initPreferencesWithExport().then(result => {
+                const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), result.pages,
                     Randomiser.getRandomNumberUpToMax() + '.json');
     
                 fileBtn.dispatchEvent(createChangeEvent());
@@ -540,12 +540,12 @@ describe('components/preferences', function () {
         };
 
         it('should throw an exception if an imported package file is empty', () =>
-            initPreferencesWithExport().then(pagesInfo => testImportingWithEmptyPackage(pagesInfo))
+            initPreferencesWithExport().then(result => testImportingWithEmptyPackage(result.pages))
         );
 
         it('should throw an exception if an imported package file contains no pages', () =>
-            initPreferencesWithExport().then(pagesInfo => 
-                testImportingWithEmptyPackage(pagesInfo, []))
+            initPreferencesWithExport().then(result => 
+                testImportingWithEmptyPackage(result.pages, []))
         );
 
         const TEST_URI = 'https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER';
@@ -603,32 +603,62 @@ describe('components/preferences', function () {
         };
 
         it('should import all pages from a package file and update current ones', () =>
-            initPreferencesWithExport(TEST_URI).then(testImportingData)
+            initPreferencesWithExport(TEST_URI).then(result => testImportingData(result.pages))
         );
 
         it('should import all pages from a package file without updating current ones', () =>
             initPreferencesWithExport(TEST_URI)
-                .then(pagesInfo => testImportingData(pagesInfo, false))
+                .then(result => testImportingData(result.pages, false))
         );
         
-        it('should reinitialise an export button after importing', () => {
-            initPreferencesWithExport(null, 0)
-                .then(() =>  {
-                    startImporting();
-                    const exportBtn = getExportBtn();
+        it('should reinitialise an export button after importing', () =>
+            initPreferencesWithExport(null, 0).then(() =>  {
+                startImporting();
+                const exportBtn = getExportBtn();
 
-                    return new Promise((resolve, reject) => {
-                        setTimeout(() => {
-                            try {
-                                assert.strictEqual(exportBtn.disabled, false);
-                                resolve();
-                            }
-                            catch(ex) {
-                                reject(ex);
-                            }
-                        }, 100);
-                    });
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        try {
+                            assert.strictEqual(exportBtn.disabled, false);
+                            resolve();
+                        }
+                        catch(ex) {
+                            reject(ex);
+                        }
+                    }, 100);
                 });
-        });
+            })
+        );
+
+        it('should disable export and upsertable import buttons after removing all pages', () =>
+            initPreferencesWithExport().then(() => {
+                const allPagesCheck = getAllPagesCheck();
+                allPagesCheck.checked = true;
+                allPagesCheck.dispatchEvent(createChangeEvent());
+
+                getRemovingPageInfoBtn().dispatchEvent(createClickEvent());
+
+                assert.strictEqual(getExportBtn().disabled, true);
+                assert.strictEqual(getImportBtn(true).disabled, true);
+                assert.strictEqual(getImportBtn().disabled, false);
+            })
+        );
+
+        it('should import a removed page and let it be saved again', () =>
+            initPreferencesWithExport(TEST_URI).then(async result => {
+                const allPagesCheck = getAllPagesCheck();
+                allPagesCheck.checked = true;
+                allPagesCheck.dispatchEvent(createChangeEvent());
+
+                getRemovingPageInfoBtn().dispatchEvent(createClickEvent());
+                await result.preferences.save();
+
+                startImporting();
+                
+                const storedPages = await PageInfo.getAllSavedPagesInfo();
+                assert.strictEqual(storedPages.length, 1);
+                assert.strictEqual(storedPages[0].uri, TEST_URI);
+            })
+        );
     });
 });
