@@ -6,8 +6,8 @@ const menu = new ContextMenu();
 
 const browserApi = new BrowserAPI();
 
-const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody).catch(error => 
-    console.error(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}: ${error.toString()}`));
+const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody).then(() =>
+    browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`));
 
 menu.onMarking = (info) => sendMessageToTab(info.tabId,
     MessageSender.startMarking(info.colourClass));
@@ -85,5 +85,6 @@ browserApi.runtime.onMessage(async msg => {
     }
     catch (ex) {
         console.error('Error while trying to set menu visibility: ' + ex.toString());
+        throw ex;
     }
 });
