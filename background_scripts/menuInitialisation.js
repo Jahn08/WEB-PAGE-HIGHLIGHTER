@@ -6,7 +6,8 @@ const menu = new ContextMenu();
 
 const browserApi = new BrowserAPI();
 
-const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody);
+const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody).then(() =>
+    browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`));
 
 menu.onMarking = (info) => sendMessageToTab(info.tabId,
     MessageSender.startMarking(info.colourClass));

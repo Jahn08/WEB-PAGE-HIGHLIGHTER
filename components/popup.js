@@ -30,6 +30,7 @@ class Popup {
                     if (sectionIsVisible)
                         Popup._showControl(Popup._getControl('separator'));
 
+                    Popup._browser.runtime.logLastError('An error while trying to get button states');
                 });
         });
 
@@ -61,7 +62,8 @@ class Popup {
 
     static async _clickCallback (e) {
         const actionId = e.currentTarget.id;
-	
+        const msgPrefix = `An error occured while performing an action '${actionId}'`;
+
         try {
             switch(actionId) {
             case 'tabs-saving':
@@ -78,11 +80,12 @@ class Popup {
             default:
                 return;
             }
-			
+            
+            Popup._browser.runtime.logLastError(msgPrefix);
             window.close();
         }
         catch (ex) {
-            console.error(`An error occured while performing an action '${actionId}': ${ex.toString()}`);
+            console.error(`${msgPrefix}: ${ex.toString()}`);
         }
     }
 }

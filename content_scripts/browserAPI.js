@@ -30,7 +30,11 @@ class TabsAPI {
 
     sendMessage(id, msg) {
         if (this._useCallback)
-            return new Promise(resolve => this._tabs.sendMessage(id, msg, resolve));
+            return new Promise(resolve => {
+                this._tabs.sendMessage(id, msg, result => {
+                    resolve(result);
+                });
+            });
 
         return this._tabs.sendMessage(id, msg);
     }
@@ -52,11 +56,29 @@ class RuntimeAPI {
         this._useCallback = useCallback;
     }
 
-    sendMessage(id, msg) {
+    sendMessage(msg) {
         if (this._useCallback)
-            return new Promise(resolve => this._runtime.sendMessage(id, msg, resolve));
+            return new Promise((resolve, reject) => {
+                this._runtime.sendMessage(undefined, msg, result => {
+                    const error = this._getLastError();
 
-        return this._runtime.sendMessage(id, msg);
+                    if (error)
+                        reject(error);
+                    else
+                        resolve(result);
+                });
+            });
+
+        return this._runtime.sendMessage(undefined, msg);
+    }
+
+    _getLastError() {
+        const error = this._runtime.lastError;
+
+        if (!error)
+            return null;
+
+        return error instanceof Error ? error: new Error(JSON.stringify(error));
     }
 
     openOptionsPage() { this._runtime.openOptionsPage(); }
@@ -68,9 +90,20 @@ class RuntimeAPI {
 
                 return true;
             });
+
+            return;
         }
         
         this._runtime.onMessage.addListener(callback);
+    }
+
+    logLastError(msgPrefix) {
+        const error = this._getLastError();
+
+        if (!error)
+            return;
+
+        console.error(`${msgPrefix}: ${error.toString()}`);
     }
 }
 
