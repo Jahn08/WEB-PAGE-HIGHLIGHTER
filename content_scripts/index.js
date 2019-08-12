@@ -39,12 +39,12 @@ void function() {
                         console.error('An error occurred while trying to apply the extension preferences: ' + 
                             ex.toString());
                     }
-                });
+                }).catch(error => console.error('An error while trying to get preferences: ' + error.toString()));
         }
 
         _warnIfDomIsDirty(event) {
             if (this._domIsPure === false)
-                return event.returnValue = 'You discard all unsaved changes on this page when leaving.';
+                return event.returnValue = 'You will discard all unsaved changes on this page when leaving.';
         }
     
         async _performStorageAction(callback) {
@@ -68,6 +68,8 @@ void function() {
         }
 
         _setUpContextMenu(event) {
+            const errorPrefix = 'An error while trying to set menu visibility: ';
+
             try {
                 if (event.button !== 2)
                     return true;
@@ -98,12 +100,13 @@ void function() {
                 }
                 
                 msg = MessageReceiver.combineEvents(msg, MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
-                this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg));
+                this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg))
+                    .catch(error => console.error(errorPrefix + error.toString()));
     
                 this._sleep(10);
             }
             catch (ex) {
-                console.error('An error while trying to set menu visibility: ' + ex.toString());
+                console.error(errorPrefix + ex.toString());
             }
         }
 

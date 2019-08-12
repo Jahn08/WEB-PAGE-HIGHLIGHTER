@@ -30,7 +30,14 @@ class TabsAPI {
 
     sendMessage(id, msg) {
         if (this._useCallback)
-            return new Promise(resolve => this._tabs.sendMessage(id, msg, resolve));
+            return new Promise((resolve, reject) => {
+                this._tabs.sendMessage(id, msg, result => {
+                    resolve(result);
+
+                    if (this._runtime.lastError)
+                        reject(this._runtime.lastError);
+                });
+            });
 
         return this._tabs.sendMessage(id, msg);
     }
@@ -52,11 +59,18 @@ class RuntimeAPI {
         this._useCallback = useCallback;
     }
 
-    sendMessage(id, msg) {
+    sendMessage(msg) {
         if (this._useCallback)
-            return new Promise(resolve => this._runtime.sendMessage(id, msg, resolve));
+            return new Promise((resolve, reject) => {
+                this._runtime.sendMessage(undefined, msg, result => {
+                    resolve(result);
 
-        return this._runtime.sendMessage(id, msg);
+                    if (this._runtime.lastError)
+                        reject(this._runtime.lastError);
+                });
+            });
+
+        return this._runtime.sendMessage(undefined, msg);
     }
 
     openOptionsPage() { this._runtime.openOptionsPage(); }
@@ -68,6 +82,8 @@ class RuntimeAPI {
 
                 return true;
             });
+
+            return;
         }
         
         this._runtime.onMessage.addListener(callback);

@@ -29,8 +29,7 @@ class Popup {
 
                     if (sectionIsVisible)
                         Popup._showControl(Popup._getControl('separator'));
-
-                });
+                }).catch(error => console.error('An error while trying to get button states: ' + error.toString()));
         });
 
         Popup._initialised = true;
