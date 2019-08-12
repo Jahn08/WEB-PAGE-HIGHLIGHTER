@@ -143,19 +143,25 @@ void function() {
                 let domWasChanged = false;
                 let isElementRemoval = false;
 
-                let outcome;
+                let noteInfo;
                 
                 if (receiver.shouldMark())
                     domWasChanged = RangeMarker.markSelectedNodes(receiver.markColourClass);
-                else if (receiver.shouldUnmark() && RangeMarker.unmarkSelectedNodes(curNode))
-                    isElementRemoval = true;
+                else if (receiver.shouldUnmark()) {
+                    if (RangeMarker.unmarkSelectedNodes(curNode))
+                        isElementRemoval = true;
+                }
                 else if (receiver.shouldChangeColour())
                     domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                         curNode);
-                else if (receiver.shouldAddNote() && RangeNote.createNote(prompt('New note text:'), curNode))
-                    domWasChanged = true;
-                else if (receiver.shouldRemoveNote() && RangeNote.removeNote(curNode))
-                    isElementRemoval = true;
+                else if (receiver.shouldAddNote()) {
+                    if ((noteInfo = RangeNote.createNote(prompt('New note text:'), curNode)))
+                        domWasChanged = true;
+                }
+                else if (receiver.shouldRemoveNote()) {
+                    if ((noteInfo = RangeNote.removeNote(curNode)))
+                        isElementRemoval = true;
+                }
                 else if (receiver.shouldSave())
                     await this._performStorageAction(this._save);
                 else if (receiver.shouldLoad())
@@ -172,7 +178,7 @@ void function() {
                 else if (domWasChanged || isElementRemoval)
                     this._domIsPure = false;
     
-                return outcome;
+                return noteInfo;
             }
             catch (err) {
                 console.error(err.toString());
