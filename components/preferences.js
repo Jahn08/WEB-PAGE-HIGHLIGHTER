@@ -107,8 +107,10 @@ class PageTable {
             });
 
         const hiddenClassName = formTableId + '--row-hidden';
-        document.getElementById(this._PAGE_SECTION_PREFIX + 'txt-search').onchange = 
-            this._bindToThis(this._onSearching, [hiddenClassName]);
+        this.searchField = document.getElementById(this._PAGE_SECTION_PREFIX + 'txt-search');
+        this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
+
+        document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
     }
 
     _isRendered() {
@@ -416,6 +418,17 @@ class PageTable {
                 else
                     r.classList.remove(hiddenClassName);
             });
+    }
+
+    _stopEnterClickButForSearch(hiddenClassName, event) {
+        if (event.keyCode !== 13)
+            return true;
+
+        if (event.target === this.searchField)
+            this._onSearching(hiddenClassName, event);
+
+        event.preventDefault();
+        return false;
     }
 
     get removedPageUris() {
