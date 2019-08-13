@@ -421,7 +421,7 @@ class PageTable {
     }
 
     _stopEnterClickButForSearch(hiddenClassName, event) {
-        if (event.keyCode !== 13)
+        if (event.key !== 'Enter')
             return true;
 
         if (event.target === this.searchField)

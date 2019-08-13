@@ -257,21 +257,21 @@ describe('components/preferences', function () {
             );
         });
         
-        it('should load saved page data and filter the results afterwards', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
+        const testSearching = activateSearchFn =>
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
                 pagesInfo => new Preferences().load()
                     .then(() => {
                         const searchField = document.getElementById('form--section-page--txt-search');
                         assert(searchField);
                         
                         const pageInfoToFind = Randomiser.getRandomArrayItem(pagesInfo);
-                        
+
                         const titleToSearch = '' + pageInfoToFind.title;
                         const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
                         
                         searchField.value = textToSearch;
-                        searchField.dispatchEvent(createChangeEvent());
-
+                        activateSearchFn(searchField);
+                        
                         const tableBody = getPageTableBody();
 
                         const targetText = textToSearch.toUpperCase();
@@ -280,7 +280,15 @@ describe('components/preferences', function () {
                             .every(r => r.classList.contains('form--table-pages--row-hidden')));
                     })
             );
-        });
+
+        it('should load saved page data and filter the results by clicking enter in the respective field', 
+            () => testSearching(searchField =>
+                searchField.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+        );
+
+        it('should load saved page data and filter the results by changing text in the respective field', 
+            () => testSearching(searchField => searchField.dispatchEvent(createChangeEvent()))
+        );
 
         it('should load saved page data and sort the results by date afterwards', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
