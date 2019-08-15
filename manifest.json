@@ -7,14 +7,14 @@
 
     "browser_action": {
         "browser_style": true,
-        "default_title": "Highlighter",
+        "default_title": "Highbrighter",
         "default_popup": "views/popup.html",
         "default_icon": "icons/highlighter48.png"
     },
     
     "browser_specific_settings": {
         "gecko": {
-            "id": "highlighter@mail.com",
+            "id": "highbrighter@email.com",
             "strict_min_version": "60.0"
         }
     },
@@ -33,7 +33,7 @@
         }
     ],
 
-    "description": "Highlighter to mark text on a site, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
+    "description": "Highbrighter to mark text, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
 
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
 
@@ -44,7 +44,7 @@
 
     "manifest_version": 2,
 
-    "name": "Highlighter",
+    "name": "Highbrighter",
     
     "omnibox": {
         "keyword": "highlighter"
@@ -60,9 +60,7 @@
         "activeTab",
         "contextMenus",
         "storage",
-        "unlimitedStorage",
-        "tabs",
-        "management"
+        "unlimitedStorage"
     ],
 
     "version": "1.0"
