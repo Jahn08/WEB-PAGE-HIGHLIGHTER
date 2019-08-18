@@ -1,4 +1,5 @@
 import { ColourList } from './colourList.js';
+import { PageLocalisation } from './pageLocalisation.js';
 
 class RepeatInitError extends Error {
     constructor() {
@@ -16,15 +17,17 @@ class PagePackageError extends Error {
     constructor(type) {
         let msg;
 
+        const locale = new BrowserAPI().locale;
+
         switch(type) {
         case PagePackageError.WRONG_INITIALISATION_TYPE:
-            msg = 'Preferences should be loaded before initialising the export system';
+            msg = locale.getString('package-init-error');
             break;
         case PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE:
-            msg = 'No information is found to be imported';
+            msg = locale.getString('package-empty-info-error');
             break;
         default:
-            msg = 'Unknown';
+            msg = locale.getString('package-unknown-error');
             break;
         }
 
@@ -65,6 +68,8 @@ class PageTable {
         this._checkAllBtn.onchange = this._bindToThis(this._onCheckAllClick);
 
         this._TABLE_CELL_NAME = 'td';
+
+        this._locale = new BrowserAPI().locale;
 
         this._render();
 
@@ -229,10 +234,8 @@ class PageTable {
         if (!importPackage || !importPackage.size)
             return;
         
-        const errorPrefix = 'Importing pages has failed: ';
-
         if (!importPackage.name.toLowerCase().endsWith(this._PAGES_ARCHIVE_EXTENSION)) {
-            this._showStatus(errorPrefix + 'the file is not of the proper format');
+            this._showStatus(this._locale.getString('import-wrong-format-error'));
             return;
         }
 
@@ -273,11 +276,12 @@ class PageTable {
                 if (importedPages.length)
                     this.initialiseExport();
 
-                this._showStatus('A number of sucessfully imported pages is ' + importedPages.length, 
+                this._showStatus(
+                    this._locale.getStringWithArgs('import-inserted-page-count', importedPages.length),
                     false);
             }
             catch (err) {
-                this._showStatus(errorPrefix + err.toString());
+                this._showStatus(this._locale.getStringWithArgs('import-error', err.toString()));
             }
             finally {
                 this._importIsUpsertable = false;
@@ -445,7 +449,8 @@ class PageTable {
             return this._generatePagesArchive(pagesFullInfo).then(data => {
                 this._pagesArchive = data;
                 this._exportPageBtn.disabled = false;
-            }).catch(err => this._showStatus('Forming a package of pages for export has failed: ' + err.toString()));
+            }).catch(err => 
+                this._showStatus(this._locale.getStringWithArgs('export-error', err.toString())));
         });
     }
 
@@ -473,6 +478,8 @@ class Preferences {
         this._loadingCheck = this._getCheckbox('loading');
 
         this._storage = new BrowserStorage(Preferences.STORAGE_KEY);
+
+        PageLocalisation.setLocaleStrings(new BrowserAPI().locale);
     }
 	
     static get STORAGE_KEY() {
@@ -498,6 +505,8 @@ class Preferences {
             image.src = '../' + c.icon.relativeFilePath;
 
             const label = document.createElement('label');
+            label.className = PageLocalisation.LOCALE_CLASS_NAME;
+            label.name = c.token;
             label.innerHTML = c.title;
 
             groupEl.append(radio, image, label);

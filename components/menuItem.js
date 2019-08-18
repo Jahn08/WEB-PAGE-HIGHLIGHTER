@@ -22,6 +22,9 @@ class BaseMenuItem {
             if (!options.contexts || !options.contexts.length)
                 options.contexts = ['all'];
 
+            if (!options.title)
+                options.title = this._browser.locale.getString(this._id);
+
             this._browser.menus.create(options);
 
             return this._isAdded = true, this._isAdded;
@@ -57,7 +60,7 @@ class SeparatorMenuItem extends BaseMenuItem {
 }
 
 class RadioSubMenuItem extends BaseMenuItem {
-    constructor(id, parentId, title) {
+    constructor(id, parentId, title = null) {
         super(id, RadioSubMenuItem.TYPE);
 
         this._parentId = parentId;
@@ -95,7 +98,7 @@ class RadioSubMenuItem extends BaseMenuItem {
 }
 
 class ButtonMenuItem extends BaseMenuItem {
-    constructor (id, title, parentId = null) {
+    constructor (id, parentId = null, title = null) {
         super(id, ButtonMenuItem.TYPE);
     
         this._title = title;

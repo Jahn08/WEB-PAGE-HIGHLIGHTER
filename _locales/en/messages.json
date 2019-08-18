@@ -1,0 +1,239 @@
+{
+    "mark": {
+        "message": "Mark Selected Text",
+        "description": "Title for a context menu item marking selected text"
+    },
+
+    "unmark": {
+        "message": "Unmark Selected Text",
+        "description": "Title for a context menu item unmarking selected text"
+    },
+
+    "palette": {
+        "message": "Set Mark Colour",
+        "description": "Title for a context menu section revealing colours to set the current marking one"
+    },
+
+    "marker-green": {
+        "message": "Green",
+        "description": "Title for a context menu item choosing green as a current colour"
+    },
+    
+    "marker-red": {
+        "message": "Red",
+        "description": "Title for a context menu item choosing red as a current colour"
+    },
+    
+    "marker-pink": {
+        "message": "Pink",
+        "description": "Title for a context menu item choosing pink as a current colour"
+    },
+
+    "marker-orange": {
+        "message": "Orange",
+        "description": "Title for a context menu item choosing orange as a current colour"
+    },
+
+    "marker-yellow": {
+        "message": "Yellow",
+        "description": "Title for a context menu item choosing yellow as a current colour"
+    },
+    
+    "marker-blue": {
+        "message": "Blue",
+        "description": "Title for a context menu item choosing blue as a current colour"
+    },
+
+    "note-add": {
+        "message": "Add a Note",
+        "description": "Title for a context menu item adding a note"
+    },
+
+    "note-add-prompt": {
+        "message": "New note text:",
+        "description": "Message for prompting a user to enter text for a new note"
+    },
+
+    "note-remove": {
+        "message": "Remove a Note",
+        "description": "Title for a context menu item removing a note"
+    },
+
+    "note-navigation": {
+        "message": "Note Links",
+        "description": "Title for a context menu section revealing links to scroll page notes into view"
+    },
+
+    "storage": {
+        "message": "Page Storage",
+        "description": "Title for a context menu section revealing storage options"
+    },
+
+    "save": {
+        "message": "Save Page",
+        "description": "Title for a context menu item saving marks and notes on a page"
+    },
+
+    "save-error": {
+        "message": "An error occurred while trying to save the page: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "save-success-msg": {
+        "message": "The page has been saved successfully",
+        "description": "What user sees after a page has been saved to storage"
+    },
+
+    "load": {
+        "message": "Load Page",
+        "description": "Title for a context menu item loading marks and notes on a page"
+    },
+
+    "load-msg": {
+        "message": "Page is loading",
+        "description": "What user sees when a page is being loaded from storage"
+    },
+
+    "load-success-msg": {
+        "message": "The page has been loaded successfully",
+        "description": "What user sees after a page has been loaded from storage"
+    },
+
+    "preferences": {
+        "message": "Preferences",
+        "description": "Title for a context menu item relocating to the preferences page"
+    },
+
+    "preferences-option-warning": {
+        "message": "Warn about unsaved changes",
+        "description": "Description of a preferences option managing warnings about unsaved changes on a page"
+    },
+    
+    "preferences-option-auto-load": {
+        "message": "Load a page automatically from storage",
+        "description": "Description of a preferences option managing autoloading a page"
+    },
+
+    "preferences-option-default-colour": {
+        "message": "Default colour:",
+        "description": "Description of a preferences option setting a default colour"
+    },
+
+    "page-unload-warn": {
+        "message": "You will discard all unsaved changes on this page when leaving",
+        "description": "Warning when there is a try to leave a page with unsaved changes"
+    }, 
+
+    "preferences-page-table": {
+        "message": "Saved pages:",
+        "description": "Label for a table listing all saved pages in the preferences"
+    },
+    
+    "preferences-page-table-page-header": {
+        "message": "Page",
+        "description": "Label for a page table column header featuring a page name"
+    },
+
+    "preferences-page-table-date-header": {
+        "message": "Date",
+        "description": "Label for a page table column header showing a date when a page was saved"
+    },
+
+    "preferences-search": {
+        "message": "Search",
+        "description": "Placeholder for a field filtering saved pages"
+    },
+
+    "preferences-page-show-btn": {
+        "message": "Open",
+        "description": "Label for a button showing a saved page in a new tab"
+    },
+
+    "preferences-page-show-btn-title": {
+        "message": "Open in a New Tab"
+    },
+
+    "preferences-page-remove-btn": {
+        "message": "Remove",
+        "description": "Label for a button removing a saved page"
+    },
+
+    "preferences-page-insert-btn": {
+        "message": "Import / Insert",
+        "description": "Label for a button inserting a page package into storage"
+    },
+
+    "preferences-page-insert-btn-title": {
+        "message": "Import adding only new pages"
+    },
+
+    "preferences-page-unpsert-btn": {
+        "message": "Import / Update",
+        "description": "Label for a button upserting a page package into storage"
+    },
+
+    "preferences-page-unpsert-btn-title": {
+        "message": "Import updating existent pages"
+    },
+
+    "preferences-page-export-btn": {
+        "message": "Export",
+        "description": "Label for a button exporting saved pages as a page package"
+    },
+    
+    "preferences-save-btn": {
+        "message": "Save",
+        "description": "Label for a button saving all the preferences"
+    },
+    
+    "import-inserted-page-count": {
+        "message": "A number of sucessfully imported pages is $count$",
+        "description": "Status featuring a number of successfully imported pages",
+        "placeholders": {
+            "count" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "import-wrong-format-error": {
+        "message": "Importing pages has failed: the file is not of the proper format"
+    },
+
+    "import-error": {
+        "message": "Importing pages has failed: the file is not of the proper format: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "export-error": {
+        "message": "Forming a package of pages for export has failed: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "package-init-error": {
+        "message": "Preferences should be loaded before initialising the export system",
+        "description": "Error message when export initialisation has failed"
+    },
+
+    "package-empty-info-error": {
+        "message": "No information is found to be imported",
+        "description": "Error message when an imported package is empty"
+    },
+
+    "package-unknown-error": {
+        "message": "Unknown",
+        "description": "Error message for an unknown failure while operating page packages"
+    }
+}

@@ -8,32 +8,38 @@
         <form>
             <div>
                 <input id="form--check-warning" type="checkbox" checked="checked" />
-                <label>Warning about unsaved changes</label>
+                <label class="locale" id="preferences-option-warning">Warn about unsaved changes</label>
             </div>
             <div>
                 <input id="form--check-loading" type="checkbox" />
-                <label>Loading a page automatically from the storage</label>
+                <label class="locale" id="preferences-option-auto-load">
+                    Load a page automatically from storage
+                </label>
             </div>
             <hr />
             <div>
-                <label>Default colour:</label>
+                <label class="locale" id="preferences-option-default-colour">Default colour:</label>
                 <div id="form--section-colours"></div>
             </div>
             <hr />
             <div>
-                <label>Saved pages:</label>
+                <label class="locale" id="preferences-page-table">Saved pages:</label>
                 
                 <div>
                     <span>🔍</span>
-                    <input type="text" placeholder="Search" id="form--section-page--txt-search" />
+                    <input type="text" class="locale" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-page--txt-search" />
                 </div>
                 
                 <table id="form--table-pages" style="width:100%">
                     <thead style="width:inherit">
                             <tr>
                                 <th><input id="form--table-pages--check-all" type="checkbox" /></th>
-                                <th class='form--table-pages--cell-header form--table-pages--cell-header-asc' data-sort-field="title">Page</th>
-                                <th class='form--table-pages--cell-header' data-sort-field="date">Date</th>
+                                <th class="form--table-pages--cell-header form--table-pages--cell-header-asc locale" data-sort-field="title" id="preferences-page-table-page-header">
+                                    Page
+                                </th>
+                                <th class="form--table-pages--cell-header locale" data-sort-field="date" id="preferences-page-table-date-header">
+                                    Date
+                                </th>
                             </tr>
                     </thead>
                     <tbody style="width:inherit"></tbody>
@@ -42,21 +48,29 @@
                 <div id="form-section-status" class="form-section-separated"></div>
 
                 <div class="form-section-separated ">
-                    <button disabled id="form--section-page--btn-show" type="button" title="Open in a New Tab">Open</button>
-                    <button disabled id="form--section-page--btn-remove" type="button" title="Remove">Remove</button>
+                    <button class="locale" name="preferences-page-show-btn" disabled id="form--section-page--btn-show" type="button" data-locale-add-attr="title" title="Open in a New Tab">
+                        Open
+                    </button>
+                    <button class="locale" name="preferences-page-remove-btn" disabled id="form--section-page--btn-remove" type="button" data-locale-add-attr="title" title="Remove">
+                        Remove
+                    </button>
                 </div>
 
                 <div class="form-section-separated ">
                     <input id="form--section-page--btn-file" style="display: none" type="file" accept=".hltr" />
-                    <button disabled class="form--section-page--btn-import" type="button" title="Import adding only new pages">Import / Insert</button>
-                    <button disabled class="form--section-page--btn-import" data-upsertable="true" type="button" title="Import updating existent pages">Import / Update</button>
+                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-insert-btn" type="button" data-locale-add-attr="title" title="Import adding only new pages">
+                        Import / Insert
+                    </button>
+                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-unpsert-btn" data-upsertable="true" type="button" data-locale-add-attr="title" title="Import updating existent pages">
+                        Import / Update
+                    </button>
                     
                     <a id="form--section-page--link-export" style="display: none"></a>
-                    <button disabled id="form--section-page--btn-export" type="button" title="Export">Export</button>
+                    <button disabled id="form--section-page--btn-export" class="locale" name="preferences-page-export-btn" data-locale-add-attr="title" type="button" title="Export">Export</button>
                 </div>
             </div>
             <hr />
-            <button type="submit" id="form--btn-submit" disabled>Save</button>
+            <button class="locale" name="preferences-save-btn" type="submit" id="form--btn-submit" disabled>Save</button>
         </form>
 
 		<script src="../content_scripts/lzwCompressor.js"></script>

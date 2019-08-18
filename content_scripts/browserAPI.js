@@ -136,6 +136,20 @@ class StorageSyncAPI {
     }
 }
 
+class LocaleAPI {
+    constructor(api) {
+        this._locale = api.i18n;
+    }
+
+    getString(key) {
+        return this._locale.getMessage(key);
+    }
+
+    getStringWithArgs(key, arg1, arg2 = null) {
+        return this._locale.getMessage(key, arg1, arg2);
+    }
+}
+
 class BrowserAPI {
     constructor() {
         this._isFirefox = true;
@@ -145,6 +159,7 @@ class BrowserAPI {
         this._tabs = null;
         this._runtime = null;
         this._storage = null;
+        this._locale = null;
     }
     
     _chooseApi() {
@@ -187,5 +202,12 @@ class BrowserAPI {
             this._storage = new StorageSyncAPI(this._api, this._useCallback);
 
         return this._storage; 
+    }
+
+    get locale() {
+        if (!this._locale)
+            this._locale = new LocaleAPI(this._api);
+
+        return this._locale; 
     }
 }

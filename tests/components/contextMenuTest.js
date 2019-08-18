@@ -204,7 +204,7 @@ describe('components/ContextMenu', () => {
         });
 
         const assertParentAvailability = (actualMenuOptions, shouldBeAvailable) => {
-            const parentId = 'noteNavigation';
+            const parentId = 'note-navigation';
             const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
             assert(parentBtn);
 

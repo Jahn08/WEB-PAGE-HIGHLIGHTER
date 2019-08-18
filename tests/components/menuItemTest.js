@@ -105,7 +105,7 @@ describe('components/ButtonMenuItem', () => {
             if (!withParent)
                 btnOptions.parentId = null;
 
-            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.title, btnOptions.parentId);
+            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.parentId, btnOptions.title);
             buttons.push(newBtn);
             newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icon);
 
@@ -133,7 +133,8 @@ describe('components/ButtonMenuItem', () => {
     });
 
     const buildRandomBtn = () => { 
-        const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), Randomiser.getRandomNumberUpToMax());
+        const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), 
+            Randomiser.getRandomNumberUpToMax());
         btn.addToMenu();
 
         return btn;

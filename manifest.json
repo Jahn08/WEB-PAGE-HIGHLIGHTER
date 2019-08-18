@@ -14,7 +14,7 @@
     
     "browser_specific_settings": {
         "gecko": {
-            "id": "highbrighter@email.com",
+            "id": "highlighter@email.com",
             "strict_min_version": "60.0"
         }
     },
@@ -33,6 +33,8 @@
         }
     ],
 
+    "default_locale": "en",
+    
     "description": "Highbrighter to mark text, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
 
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",

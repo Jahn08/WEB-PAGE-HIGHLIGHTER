@@ -1,4 +1,5 @@
 import { MessageSender } from '../components/messageSender.js';
+import { PageLocalisation } from '../components/pageLocalisation.js';
 
 class Popup {
     static initialise() {
@@ -6,6 +7,8 @@ class Popup {
             return;
 
         this._browser = new BrowserAPI();
+
+        PageLocalisation.setLocaleStrings(this._browser.locale);
 
         for (const item of document.getElementsByClassName('panel-list-item'))
             item.addEventListener('click', Popup._clickCallback);

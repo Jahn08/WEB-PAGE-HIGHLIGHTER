@@ -44,7 +44,7 @@ void function() {
 
         _warnIfDomIsDirty(event) {
             if (this._domIsPure === false)
-                return event.returnValue = 'You will discard all unsaved changes on this page when leaving.';
+                return event.returnValue = this._browserApi.locale.getString('page-unload-warn');
         }
     
         async _performStorageAction(callback) {
@@ -61,10 +61,10 @@ void function() {
         }
 
         async _load() {
-            MessageControl.show('Page is loading');
+            MessageControl.show(this._browserApi.locale.getString('load-msg'));
             await this._pageInfo.load();
             
-            MessageControl.show('The page has been loaded successfully');
+            MessageControl.show(this._browserApi.locale.getString('load-success-msg'));
         }
 
         _setUpContextMenu(event) {
@@ -155,7 +155,8 @@ void function() {
                     domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
                         curNode);
                 else if (receiver.shouldAddNote()) {
-                    if ((noteInfo = RangeNote.createNote(prompt('New note text:'), curNode)))
+                    if ((noteInfo = RangeNote.createNote(
+                        prompt(this._browserApi.locale.getString('note-add-prompt')), curNode)))
                         domWasChanged = true;
                 }
                 else if (receiver.shouldRemoveNote()) {
@@ -193,11 +194,10 @@ void function() {
         async _save() {
             try {
                 await this._pageInfo.save();
-                MessageControl.show('The page has been saved successfully');
+                MessageControl.show(this._browserApi.locale.getString('save-success-msg'));
             }
             catch (err) {
-                alert(`An error occurred while trying to save the page: "${err.toString()}". ` +
-                    'Please, consider going to the preferences to remove redundant saved pages');
+                alert(this._browserApi.locale.getStringWithArgs('save-error', err.toString()));
             }
         }
     }

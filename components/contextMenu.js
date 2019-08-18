@@ -4,11 +4,11 @@ import { ColourList } from './colourList.js';
 
 export class ContextMenu {
     constructor() {
-        this._markBtn = new ButtonMenuItem('mark', 'Mark Selected Text');
-        this._unmarkBtn = new ButtonMenuItem('unmark', 'Unmark Selected Text');
+        this._markBtn = new ButtonMenuItem('mark');
+        this._unmarkBtn = new ButtonMenuItem('unmark');
 
-        this._addNoteBtn = new ButtonMenuItem('add note', 'Add a Note');
-        this._removeNoteBtn = new ButtonMenuItem('remove note', 'Remove a Note');
+        this._addNoteBtn = new ButtonMenuItem('note-add');
+        this._removeNoteBtn = new ButtonMenuItem('note-remove');
 
         const defaultColourClass = 'marker-green';
         this._curColourClass = defaultColourClass;
@@ -48,13 +48,13 @@ export class ContextMenu {
         };
 
         const paletteMenuItemId = 'palette';
-        const setColourBtn = new ButtonMenuItem(paletteMenuItemId, 'Set Mark Colour');
+        const setColourBtn = new ButtonMenuItem(paletteMenuItemId);
         setColourBtn.addToMenu(null, null, true);
 
         this._colourRadios = new Array(ColourList.colours.length);
 
         ArrayExtension.runForEach(ColourList.colours, (v, index) => {
-            const radio = new RadioSubMenuItem(v.token, setColourBtn.id, v.title);
+            const radio = new RadioSubMenuItem(v.token, setColourBtn.id);
             this._colourRadios[index] = radio;
             
             radio.addToMenu(changeColour, v.icon, index === 0);
@@ -214,8 +214,8 @@ class NoteNavigation {
         if (this._noteNavigationBtn)
             return;
 
-        const noteLinksMenuId = 'noteNavigation';
-        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId, 'Note Links');
+        const noteLinksMenuId = 'note-navigation';
+        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId);
         this._noteNavigationBtn.addToMenu();
 
         this._setNavigationBtnAvailability();
@@ -262,7 +262,7 @@ class NoteNavigation {
     }
 
     appendLink(noteId, noteText) {
-        const linkBtn = new ButtonMenuItem(noteId, noteText, this._noteNavigationBtn.id);
+        const linkBtn = new ButtonMenuItem(noteId, this._noteNavigationBtn.id, noteText);
         this._noteLinkBtns.push(linkBtn);
         
         linkBtn.addToMenu(this._onGoingToNote, null, true);
@@ -299,13 +299,13 @@ class PageStorageMenu {
         new SeparatorMenuItem().addToMenu();
 
         const storageOptionId = 'storage';
-        this._storageBtn = new ButtonMenuItem(storageOptionId, 'Page Storage');
+        this._storageBtn = new ButtonMenuItem(storageOptionId);
         this._storageBtn.addToMenu();
 
-        this._saveBtn = new ButtonMenuItem('save', 'Save Page', storageOptionId);
+        this._saveBtn = new ButtonMenuItem('save', storageOptionId);
         this._saveBtn.addToMenu(onSavingFn, new MenuIcon('save'));
 
-        this._loadBtn = new ButtonMenuItem('load', 'Load Page', storageOptionId);
+        this._loadBtn = new ButtonMenuItem('load', storageOptionId);
         this._loadBtn.addToMenu(onLoadingFn, new MenuIcon('load'));
     }
 

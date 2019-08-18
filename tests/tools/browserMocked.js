@@ -1,13 +1,53 @@
 import { Randomiser } from '../tools/randomiser.js';
 import { StorageMocked } from '../tools/storageMocked.js';
+import fs from 'fs';
 
 export class BrowserMocked {
     constructor() {
         global.browser = {};
         
+        this._initLocaleApi();
+
         this._menuOptions = [];
 
         this._tabQueries = [];
+    }
+
+    static get _localeMessages() {
+        if (!this._messages)
+            this._messages = JSON.parse(fs.readFileSync('./_locales/en/messages.json')
+                .toString('utf8'));
+        
+        return this._messages;
+    }
+
+    _initLocaleApi() {
+        global.browser = {
+            i18n: {
+                getMessage(name) {
+                    const msg = BrowserMocked._localeMessages[name];
+                    const argLength = arguments.length;
+
+                    if (!msg)
+                        return '';
+
+                    let msgContent = msg.message;
+
+                    if (argLength > 1) {
+                        const searchPattern = /\$\w+\$/gi;
+
+                        for (let i = 1; i < argLength; ++i) {
+                            const arg = arguments[i];
+
+                            if (arg != null)
+                                msgContent = msgContent.replace(searchPattern, arg);
+                        }
+                    }
+
+                    return msgContent;
+                }
+            }
+        };
     }
 
     resetBrowserStorage() {

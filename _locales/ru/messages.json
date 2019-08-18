@@ -1,0 +1,234 @@
+{
+    "mark": {
+        "message": "Отметить выделенный текст",
+        "description": "Title for a context menu item marking selected text"
+    },
+
+    "unmark": {
+        "message": "Удалить отмеченный текст",
+        "description": "Title for a context menu item unmarking selected text"
+    },
+
+    "palette": {
+        "message": "Выбрать цвет маркера",
+        "description": "Title for a context menu section revealing colours to set the current marking one"
+    },
+
+    "marker-green": {
+        "message": "Зелёный",
+        "description": "Title for a context menu item choosing green as a current colour"
+    },
+    
+    "marker-red": {
+        "message": "Красный",
+        "description": "Title for a context menu item choosing red as a current colour"
+    },
+    
+    "marker-pink": {
+        "message": "Розовый",
+        "description": "Title for a context menu item choosing pink as a current colour"
+    },
+
+    "marker-orange": {
+        "message": "Оранжевый",
+        "description": "Title for a context menu item choosing orange as a current colour"
+    },
+
+    "marker-yellow": {
+        "message": "Жёлтый",
+        "description": "Title for a context menu item choosing yellow as a current colour"
+    },
+    
+    "marker-blue": {
+        "message": "Синий",
+        "description": "Title for a context menu item choosing blue as a current colour"
+    },
+
+    "note-add": {
+        "message": "Новая заметка",
+        "description": "Title for a context menu item adding a note"
+    },
+
+    "note-add-prompt": {
+        "message": "Текст новой заметки:",
+        "description": "Message for prompting a user to enter text for a new note"
+    },
+
+    "note-remove": {
+        "message": "Удалить заметку",
+        "description": "Title for a context menu item removing a note"
+    },
+
+    "note-navigation": {
+        "message": "Заметки",
+        "description": "Title for a context menu section revealing links to scroll page notes into view"
+    },
+
+    "storage": {
+        "message": "Хранилище",
+        "description": "Title for a context menu section revealing storage options"
+    },
+
+    "save": {
+        "message": "Сохранить страницу",
+        "description": "Title for a context menu item saving marks and notes on a page"
+    },
+
+    "save-error": {
+        "message": "Ошибка сохранения страницы: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "save-success-msg": {
+        "message": "Страница успешно сохранена",
+        "description": "What user sees after a page has been saved to storage"
+    },
+
+    "load": {
+        "message": "Загрузить страницу",
+        "description": "Title for a context menu item loading marks and notes on a page"
+    },
+
+    "load-msg": {
+        "message": "Страница загружается",
+        "description": "What user sees when a page is being loaded from storage"
+    },
+
+    "load-success-msg": {
+        "message": "Страница успешно загружена",
+        "description": "What user sees after a page has been loaded from storage"
+    },
+
+    "preferences": {
+        "message": "Настройки",
+        "description": "Title for a context menu item relocating to the preferences page"
+    },
+
+    "preferences-option-warning": {
+        "message": "Предупреждать о несохранённых изменениях на странице",
+        "description": "Description of a preferences option managing warnings about unsaved changes on a page"
+    },
+    
+    "preferences-option-auto-load": {
+        "message": "Загружать страницу из хранилища автоматически",
+        "description": "Description of a preferences option managing autoloading a page"
+    },
+
+    "preferences-option-default-colour": {
+        "message": "Цвет маркера по умолчанию:",
+        "description": "Description of a preferences option setting a default colour"
+    },
+
+    "page-unload-warn": {
+        "message": "You will discard all unsaved changes on this page when leaving",
+        "description": "Warning when there is a try to leave a page with unsaved changes"
+    }, 
+
+    "preferences-page-table": {
+        "message": "Сохранённые страницы:",
+        "description": "Label for a table listing all saved pages in the preferences"
+    },
+    
+    "preferences-page-table-page-header": {
+        "message": "Страница",
+        "description": "Label for a page table column header featuring a page name"
+    },
+
+    "preferences-page-table-date-header": {
+        "message": "Дата сохранения",
+        "description": "Label for a page table column header showing a date when a page was saved"
+    },
+
+    "preferences-search": {
+        "message": "Поиск",
+        "description": "Placeholder for a field filtering saved pages"
+    },
+
+    "preferences-page-show-btn": {
+        "message": "Открыть",
+        "description": "Label for a button showing a saved page in a new tab"
+    },
+
+    "preferences-page-show-btn-title": {
+        "message": "Открыть в новой вкладке"
+    },
+
+    "preferences-page-remove-btn": {
+        "message": "Удалить",
+        "description": "Label for a button removing a saved page"
+    },
+
+    "preferences-page-insert-btn": {
+        "message": "Импорт / Добавить",
+        "description": "Label for a button inserting a page package into storage"
+    },
+
+    "preferences-page-insert-btn-title": {
+        "message": "Импортировать только новые страницы"
+    },
+
+    "preferences-page-unpsert-btn": {
+        "message": "Импорт / Обновить",
+        "description": "Label for a button upserting a page package into storage"
+    },
+
+    "preferences-page-unpsert-btn-title": {
+        "message": "Импортировать страницы и обновить существующие"
+    },
+
+    "preferences-page-export-btn": {
+        "message": "Экспорт",
+        "description": "Label for a button exporting saved pages as a page package"
+    },
+    
+    "preferences-save-btn": {
+        "message": "Сохранить",
+        "description": "Label for a button saving all the preferences"
+    },
+    
+    "import-inserted-page-count": {
+        "message": "Количество успешно импортированных страниц $count$",
+        "description": "Status featuring a number of successfully imported pages",
+        "placeholders": {
+            "count" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "import-wrong-format-error": {
+        "message": "Ошибка импорта: неверный формат файла пакета страниц"
+    },
+
+    "import-error": {
+        "message": "Ошибка импорта: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "export-error": {
+        "message": "Инициализация экспорта завершилась неудачей: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "package-empty-info-error": {
+        "message": "Отсутствует информация для импорта",
+        "description": "Error message when an imported package is empty"
+    },
+
+    "package-unknown-error": {
+        "message": "Неизвестная ошибка",
+        "description": "Error message for an unknown failure while operating page packages"
+    }
+}
