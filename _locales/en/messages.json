@@ -235,5 +235,10 @@
     "package-unknown-error": {
         "message": "Unknown",
         "description": "Error message for an unknown failure while operating page packages"
+    },
+
+    "description": {
+        "message": "Highbrighter to mark text, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
+        "description": "Description of the extension from manifest.json"
     }
 }

@@ -35,7 +35,7 @@
 
     "default_locale": "en",
     
-    "description": "Highbrighter to mark text, add notes and navigate them through context menu. All the changes to a page can be saved and then loaded",
+    "description": "__MSG_description__",
 
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
 
