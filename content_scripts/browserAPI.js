@@ -139,14 +139,24 @@ class StorageSyncAPI {
 class LocaleAPI {
     constructor(api) {
         this._locale = api.i18n;
+
+        this._restrictionPattern = /-/g;
     }
 
     getString(key) {
-        return this._locale.getMessage(key);
+        return this._getMessage(key);
+    }
+
+    _getMessage(key, ...args) {
+        if (!key)
+            return '';
+
+        const properKey = ('' + key).replace(this._restrictionPattern, '_');
+        return this._locale.getMessage(properKey, args);
     }
 
     getStringWithArgs(key, arg1, arg2 = null) {
-        return this._locale.getMessage(key, arg1, arg2);
+        return this._getMessage(key, arg1, arg2);
     }
 }
 
