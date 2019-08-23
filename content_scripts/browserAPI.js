@@ -152,7 +152,7 @@ class LocaleAPI {
             return '';
 
         const properKey = ('' + key).replace(this._restrictionPattern, '_');
-        return this._locale.getMessage(properKey, args);
+        return this._locale.getMessage(properKey, args.filter(a => a != null));
     }
 
     getStringWithArgs(key, arg1, arg2 = null) {
