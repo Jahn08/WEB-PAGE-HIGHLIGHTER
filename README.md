@@ -12,7 +12,7 @@ A Mozilla Firefox and Google Chrome extension that marks text on a web page. The
 
 ## <a name="headInstalling"></a>Installing / Getting started
 
-The application is available on [the official site for Firefox extensions](https://addons.mozilla.org/en-US/firefox/addon/highbrighter/) as well as in [the Crome store](https://chrome.google.com/webstore/detail/highbrighter/gccbpihjfohfiipkoclimdkkeinadega). It is also possible to [deploy it locally](#headDeploying).
+The application is available on [the official site for Firefox extensions](https://addons.mozilla.org/en-US/firefox/addon/highbrighter/) as well as in [the Chrome store](https://chrome.google.com/webstore/detail/highbrighter/gccbpihjfohfiipkoclimdkkeinadega). It is also possible to [deploy it locally](#headDeploying).
 
 ## Developing
 
