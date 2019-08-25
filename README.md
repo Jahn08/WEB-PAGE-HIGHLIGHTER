@@ -8,11 +8,11 @@ A Mozilla Firefox and Google Chrome extension that marks text on a web page. The
 * Saving the marked text and loading it later when accessing the same page
 * Preferences for changing the default colour for marking and autoloading a page, provided it is available in the storage ([more about configuring](#headConfiguration))
 * Adding notes on a page and navigating them through quick scrolling by means of clicking the respective links in the context menu
-* Importing and exporting stored pages between different devices and browsers (Chrome and Mozilla currently) through the preferences page
+* Importing and exporting stored pages between different devices and browsers (it is available for [installing](#headDeploying) in Mozilla and Chrome) through the preferences page
 
 ## Installing / Getting started
 
-The application will soon be available on the official site for Firefox extensions. It is also possible to [deploy it locally](#headDeploying).
+The application is available on [the official site for Firefox extensions](https://addons.mozilla.org/en-US/firefox/addon/highbrighter/) as well as in [the Crome store](https://chrome.google.com/webstore/detail/highbrighter/gccbpihjfohfiipkoclimdkkeinadega). It is also possible to [deploy it locally](#headDeploying).
 
 ## Developing
 
