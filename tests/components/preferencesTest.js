@@ -57,8 +57,10 @@ describe('components/preferences', function () {
         assert.strictEqual(shouldLoadCheck.checked, expectedLoadCheck);
     };
 
+    const PAGE_SECTION_ID = 'form--section-page';
+
     const getPageTableBody = () => {
-        const table = document.getElementById('form--table-pages');
+        const table = document.getElementById(PAGE_SECTION_ID + '--table');
         assert(table);
 
         assert(table.tHead);
@@ -137,9 +139,9 @@ describe('components/preferences', function () {
             return isUpsertable ? upsertable === 'true': !upsertable; 
         });
 
-    const getAllPagesCheck = () => document.getElementById('form--table-pages--check-all');
+    const getAllPagesCheck = () => document.getElementById(PAGE_SECTION_ID + '--table--check-all');
 
-    describe('#load', function () {
+    describe('#load', function () { 
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
             Expectation.expectResolution(new Preferences().load(), 
@@ -261,7 +263,7 @@ describe('components/preferences', function () {
             Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
                 pagesInfo => new Preferences().load()
                     .then(() => {
-                        const searchField = document.getElementById('form--section-page--txt-search');
+                        const searchField = document.getElementById(PAGE_SECTION_ID + '--txt-search');
                         assert(searchField);
                         
                         const pageInfoToFind = Randomiser.getRandomArrayItem(pagesInfo);
@@ -270,6 +272,7 @@ describe('components/preferences', function () {
                         const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
                         
                         searchField.value = textToSearch;
+
                         activateSearchFn(searchField);
                         
                         const tableBody = getPageTableBody();
@@ -277,7 +280,7 @@ describe('components/preferences', function () {
                         const targetText = textToSearch.toUpperCase();
 
                         assert([...tableBody.rows].filter(r => !r.textContent.toUpperCase().includes(targetText))
-                            .every(r => r.classList.contains('form--table-pages--row-hidden')));
+                            .every(r => r.classList.contains('form--table--row-hidden')));
                     })
             );
 
@@ -294,9 +297,10 @@ describe('components/preferences', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
                 pagesInfo => new Preferences().load()
                     .then(() => {
-                        const headerClassName = 'form--table-pages--cell-header';
-                        
-                        const dateHeader = [...document.getElementsByClassName(headerClassName)]
+                        const headerClassName = 'form--table--cell-header';
+
+                        const dateHeader = [...document.getElementById(PAGE_SECTION_ID)
+                            .getElementsByClassName(headerClassName)]
                             .filter(h => h.dataset.sortField === 'date')[0];
                         assert(dateHeader);
 

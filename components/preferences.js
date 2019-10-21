@@ -45,22 +45,20 @@ class PagePackageError extends Error {
     static get EMPTY_IMPORT_PACKAGE_TYPE() { return 2; }
 }
 
-class PageTable {
-    constructor(pagesInfo = []) {
-        this._pagesInfo = pagesInfo;
+class BaseTable {
+    constructor(tableSectionId, tableData) {
+        const tableId = tableSectionId + '--table';
 
-        this._sortPagesInfo();
-
-        this._removedPageUris = [];
-
-        const formTableId = 'form--table-pages';
-        this._tableBody = document.getElementById(formTableId).tBodies[0];
+        this._tableBody = document.getElementById(tableId).tBodies[0];
+        this._tableData = tableData;  
 
         if (this._isRendered())
             throw new RepeatInitError();
 
-        this._CHECK_CLASS_NAME = formTableId + '--check';
-        this._CHECKED_MODIFIER = ':checked';                
+        this._sortPagesInfo();
+        
+        this._CHECK_CLASS_NAME = tableId + '--check';
+        this._CHECKED_MODIFIER = ':checked';
 
         this._CHECK_TICKED_SELECTOR = `.${this._CHECK_CLASS_NAME}${this._CHECKED_MODIFIER}`;
         
@@ -70,6 +68,128 @@ class PageTable {
         this._TABLE_CELL_NAME = 'td';
 
         this._locale = new BrowserAPI().locale;
+
+        this._sortHeader = null;
+        ArrayExtension.runForEach([...document.getElementsByClassName('form--table--cell-header')], 
+            ch => {
+                if (!this._sortHeader)
+                    this._sortHeader = ch;
+
+                ch.onclick = this._bindToThis(this._onHeaderCellClick);
+            });
+            
+        const hiddenClassName = 'form--table--row-hidden';
+        this.searchField = document.getElementById(tableSectionId + '--txt-search');
+        this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
+
+        document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
+    }
+
+    _isRendered() {
+        return this._tableBody.rows.length > 0;
+    }
+    
+    _sortPagesInfo(sortField = 'title', isAscending = true) {
+        this._tableData = isAscending ? 
+            this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
+            this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
+    }
+
+    _bindToThis(fn, args = []) {
+        return fn.bind(this, ...args);
+    }
+
+    _onCheckAllClick(_event) {
+        const shouldCheck = _event.target.checked;
+        const modifier = shouldCheck ? `:not(${this._CHECKED_MODIFIER})` : 
+            this._CHECKED_MODIFIER;
+        
+        document.querySelectorAll('.' + this._CHECK_CLASS_NAME + modifier)
+            .forEach(el => { 
+                if (el.checked === shouldCheck)
+                    return;
+
+                el.checked = shouldCheck;
+            });
+
+        this._updatePageButtonsAvailability();
+    }
+
+    _updatePageButtonsAvailability() { }
+
+    _onHeaderCellClick(_event) {
+        const cell = _event.target;
+
+        const headerCellClass = cell.classList[0];
+        const descSortClass = headerCellClass + '-desc';
+        const ascSortClass = headerCellClass + '-asc';
+
+        let shouldBeAscending;
+
+        if (this._sortHeader !== cell) {
+            const classList = this._sortHeader.classList;
+            
+            if (classList.contains(descSortClass))
+                classList.remove(descSortClass);
+            else
+                classList.remove(ascSortClass);
+            
+            this._sortHeader = cell;
+
+            cell.classList.add(ascSortClass);
+            shouldBeAscending = true;
+        }
+        else {
+            shouldBeAscending = cell.classList.contains(descSortClass);
+
+            if (shouldBeAscending)
+                cell.classList.replace(descSortClass, ascSortClass);
+            else
+                cell.classList.replace(ascSortClass, descSortClass);
+        }
+        
+        this._sortPagesInfo(cell.dataset.sortField, shouldBeAscending);
+
+        this._clearTableRows();
+        this._render();
+    }
+
+    _clearTableRows() {
+        this._tableBody.innerHTML = '';
+    }
+
+    _render() { }
+
+    _onSearching(hiddenClassName, _event) {
+        const searchText = (_event.target.value || '').toUpperCase();
+
+        ArrayExtension.runForEach([...this._tableBody.rows], 
+            r => {
+                if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
+                    r.classList.add(hiddenClassName);
+                else
+                    r.classList.remove(hiddenClassName);
+            });
+    }
+
+    _stopEnterClickButForSearch(hiddenClassName, event) {
+        if (event.key !== 'Enter')
+            return true;
+
+        if (event.target === this.searchField)
+            this._onSearching(hiddenClassName, event);
+
+        event.preventDefault();
+        return false;
+    }
+}
+
+class PageTable extends BaseTable {
+    constructor(pagesInfo = []) {
+        const tableSectionId = 'form--section-page';
+        super(tableSectionId, pagesInfo);
+
+        this._removedPageUris = [];
 
         this._render();
 
@@ -101,50 +221,11 @@ class PageTable {
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
 
-        this._sortHeader = null;
-
-        ArrayExtension.runForEach([...document.getElementsByClassName(formTableId + '--cell-header')], 
-            ch => {
-                if (!this._sortHeader)
-                    this._sortHeader = ch;
-
-                ch.onclick = this._bindToThis(this._onHeaderCellClick);
-            });
-
-        const hiddenClassName = formTableId + '--row-hidden';
-        this.searchField = document.getElementById(this._PAGE_SECTION_PREFIX + 'txt-search');
-        this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
-
-        document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
-    }
-
-    _isRendered() {
-        return this._tableBody.rows.length > 0;
-    }
-
-    _bindToThis(fn, args = []) {
-        return fn.bind(this, ...args);
     }
 
     _render() {
         const renderingRowFn = this._bindToThis(this._renderPageInfoRow);
-        this._tableBody.append(...this._pagesInfo.map(renderingRowFn));
-    }
-
-    _onCheckAllClick(_event) {
-        const shouldCheck = _event.target.checked;
-        const modifier = shouldCheck ? `:not(${this._CHECKED_MODIFIER})` : 
-            this._CHECKED_MODIFIER;
-        
-        document.querySelectorAll('.' + this._CHECK_CLASS_NAME + modifier)
-            .forEach(el => { 
-                if (el.checked === shouldCheck)
-                    return;
-
-                el.checked = shouldCheck;
-            });
-
-        this._updatePageButtonsAvailability();
+        this._tableBody.append(...this._tableData.map(renderingRowFn));
     }
 
     _renderPageInfoRow(pageInfo) {
@@ -172,14 +253,14 @@ class PageTable {
         this._removePageBtn.disabled = checkedNumber === 0;
 
         if (isFromRowCheckedEvent)
-            this._checkAllBtn.checked = checkedNumber === this._pagesInfo.length;
+            this._checkAllBtn.checked = checkedNumber === this._tableData.length;
     }
 
     _createLabelCell(text, title = null) {
         const label = document.createElement('label');
 
         if (title)
-            text += ` <br><i class='form--table-pages--cell-title'>(${title})</i>`;
+            text += ` <br><i class='form--table--cell-title'>(${title})</i>`;
 
         label.innerHTML = text;
 
@@ -206,7 +287,7 @@ class PageTable {
     }
 
     _onRemovePageBtnClick() {
-        if (!this._pagesInfo.length)
+        if (!this._tableData.length)
             return;
 
         document.querySelectorAll(this._CHECK_TICKED_SELECTOR)
@@ -216,13 +297,13 @@ class PageTable {
                 el.parentElement.parentElement.remove();
             });
 
-        this._pagesInfo = this._pagesInfo.filter(pi => 
+        this._tableData = this._tableData.filter(pi => 
             !ArrayExtension.contains(this._removedPageUris, pi.uri));
             
         this._showPageBtn.disabled = true;
         this._removePageBtn.disabled = true;
 
-        if (!this._pagesInfo.length) {
+        if (!this._tableData.length) {
             this._updateImportBtnsAvailability(true);
             this._exportPageBtn.disabled = true;
         }
@@ -251,20 +332,20 @@ class PageTable {
                 if (!result || !(pagesToImport = JSON.parse(result)) || !pagesToImport.length)
                     throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
-                if (this._pagesInfo.length)
+                if (this._tableData.length)
                 {
                     if (this._importIsUpsertable)
-                        this._pagesInfo = this._pagesInfo.filter(imp => 
+                        this._tableData = this._tableData.filter(imp => 
                             !pagesToImport.find(pi => pi.uri === imp.uri));
                     else
                         pagesToImport = pagesToImport.filter(imp => 
-                            !this._pagesInfo.find(pi => pi.uri === imp.uri));
+                            !this._tableData.find(pi => pi.uri === imp.uri));
                 }
                 
                 const importedPages = PageInfo.savePages(pagesToImport);
-                this._pagesInfo = this._pagesInfo.concat(importedPages);
+                this._tableData = this._tableData.concat(importedPages);
 
-                const presentPageUris = this._pagesInfo.map(p => p.uri);
+                const presentPageUris = this._tableData.map(p => p.uri);
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
 
@@ -315,7 +396,7 @@ class PageTable {
         ArrayExtension.runForEach(this._importPageBtns, 
             btn => { 
                 if (isAvailable)
-                    isAvailable = !this._isUpsertableBtn(btn) || this._pagesInfo.length > 0;
+                    isAvailable = !this._isUpsertableBtn(btn) || this._tableData.length > 0;
 
                 btn.disabled = !isAvailable;
             });
@@ -339,7 +420,7 @@ class PageTable {
     }
 
     _onExportPageBtnClick() {
-        if (!this._pagesInfo.length)
+        if (!this._tableData.length)
             return;
 
         if (!this._exportPageLink) {
@@ -363,76 +444,6 @@ class PageTable {
             if (archiveUrl)
                 URL.revokeObjectURL(archiveUrl);
         }
-    }
-
-    _onHeaderCellClick(_event) {
-        const cell = _event.target;
-
-        const headerCellClass = cell.classList[0];
-        const descSortClass = headerCellClass + '-desc';
-        const ascSortClass = headerCellClass + '-asc';
-
-        let shouldBeAscending;
-
-        if (this._sortHeader !== cell) {
-            const classList = this._sortHeader.classList;
-            
-            if (classList.contains(descSortClass))
-                classList.remove(descSortClass);
-            else
-                classList.remove(ascSortClass);
-            
-            this._sortHeader = cell;
-
-            cell.classList.add(ascSortClass);
-            shouldBeAscending = true;
-        }
-        else {
-            shouldBeAscending = cell.classList.contains(descSortClass);
-
-            if (shouldBeAscending)
-                cell.classList.replace(descSortClass, ascSortClass);
-            else
-                cell.classList.replace(ascSortClass, descSortClass);
-        }
-        
-        this._sortPagesInfo(cell.dataset.sortField, shouldBeAscending);
-
-        this._clearTableRows();
-        this._render();
-    }
-
-    _sortPagesInfo(sortField = 'title', isAscending = true) {
-        this._pagesInfo = isAscending ? 
-            this._pagesInfo.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
-            this._pagesInfo.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
-    }
-
-    _clearTableRows() {
-        this._tableBody.innerHTML = '';
-    }
-
-    _onSearching(hiddenClassName, _event) {
-        const searchText = (_event.target.value || '').toUpperCase();
-
-        ArrayExtension.runForEach([...this._tableBody.rows], 
-            r => {
-                if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
-                    r.classList.add(hiddenClassName);
-                else
-                    r.classList.remove(hiddenClassName);
-            });
-    }
-
-    _stopEnterClickButForSearch(hiddenClassName, event) {
-        if (event.key !== 'Enter')
-            return true;
-
-        if (event.target === this.searchField)
-            this._onSearching(hiddenClassName, event);
-
-        event.preventDefault();
-        return false;
     }
 
     get removedPageUris() {

@@ -6,60 +6,60 @@
     height: 16px;
 }
 
-#form--table-pages {
+.form--table {
     width: 100%;
 }
 
-#form--table-pages tr {
+.form--table tr {
     width: 100%;
 }
 
-#form--table-pages th:nth-child(2), 
-#form--table-pages td:nth-child(2) {
+#form--section-page--table th:nth-child(2), 
+#form--section-page--table td:nth-child(2) {
     width: 75vw;
 }
 
-#form--table-pages th:last-child, 
-#form--table-pages td:last-child {
+#form--section-page--table th:last-child, 
+#form--section-page--table td:last-child {
     width: 15vw;
 }
 
-#form--table-pages tbody {
+.form--table tbody {
     display: block;
     height: 35vh;
     overflow-y: auto;
 }
 
-#form--table-pages tbody tr:nth-child(2n+1) {
+.form--table tbody tr:nth-child(2n+1) {
     background-color: gainsboro;
 }
 
-#form--table-pages thead tr {
+.form--table thead tr {
     display: block;
 }
 
-.form--table-pages--cell-title {
+.form--table--cell-title {
     font-size: smaller;
 }
 
-.form--table-pages--cell-header {
+.form--table--cell-header {
     text-align: left;
 }
 
-.form--table-pages--cell-header:hover {
+.form--table--cell-header:hover {
     cursor: pointer;
     box-shadow: 2px 2px gainsboro;
 }
 
-.form--table-pages--cell-header-asc::after {
+.form--table--cell-header-asc::after {
     content: ' ▾';
 }
 
-.form--table-pages--cell-header-desc::after {
+.form--table--cell-header-desc::after {
     content: ' ▴';
 }
 
-.form--table-pages--row-hidden {
+.form--table--row-hidden {
     display: none;
 }
 
