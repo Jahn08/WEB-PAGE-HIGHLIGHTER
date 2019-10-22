@@ -74,8 +74,9 @@ class BaseTable {
 
         this._locale = new BrowserAPI().locale;
 
+        this._HEADER_CELL_CLASS = 'form--table--cell-header';
         this._sortHeader = null;
-        ArrayExtension.runForEach([...table.tHead.getElementsByClassName('form--table--cell-header')], 
+        ArrayExtension.runForEach([...table.tHead.getElementsByClassName(this._HEADER_CELL_CLASS)], 
             ch => {
                 if (!this._sortHeader)
                     this._sortHeader = ch;
@@ -87,7 +88,7 @@ class BaseTable {
         this.searchField = document.getElementById(this._tableSectionId + '--txt-search');
         this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
 
-        document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
+        document.addEventListener('keydown', this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]));
         
         this._render();
     }
@@ -96,10 +97,13 @@ class BaseTable {
         return this._tableBody.rows.length > 0;
     }
     
-    _sortTableData(sortField = 'title', isAscending = true) {
-        this._tableData = isAscending ? 
-            this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
-            this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
+    _sortTableData() {
+        const defaultSortField = 'title';
+        const sortField = this._sortHeader ? (this._sortHeader.dataset.sortField || defaultSortField): defaultSortField;
+
+        this._tableData = this._isSortDescending() ? 
+            this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0)):
+            this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0));
     }
 
     _bindToThis(fn, args = []) {
@@ -127,9 +131,8 @@ class BaseTable {
     _onHeaderCellClick(_event) {
         const cell = _event.target;
 
-        const headerCellClass = cell.classList[0];
-        const descSortClass = headerCellClass + '-desc';
-        const ascSortClass = headerCellClass + '-asc';
+        const descSortClass = this._getDescSortClassName();
+        const ascSortClass = this._HEADER_CELL_CLASS + '-asc';
 
         let shouldBeAscending;
 
@@ -147,7 +150,7 @@ class BaseTable {
             shouldBeAscending = true;
         }
         else {
-            shouldBeAscending = cell.classList.contains(descSortClass);
+            shouldBeAscending = this._isSortDescending();
 
             if (shouldBeAscending)
                 cell.classList.replace(descSortClass, ascSortClass);
@@ -155,10 +158,18 @@ class BaseTable {
                 cell.classList.replace(ascSortClass, descSortClass);
         }
         
-        this._sortTableData(cell.dataset.sortField, shouldBeAscending);
+        this._sortTableData();
 
         this._clearTableRows();
         this._render();
+    }
+
+    _getDescSortClassName() {
+        return this._HEADER_CELL_CLASS + '-desc';
+    }
+
+    _isSortDescending() {
+        return this._sortHeader ? this._sortHeader.classList.contains(this._getDescSortClassName()): false;
     }
 
     _clearTableRows() {
@@ -222,16 +233,21 @@ class CategoryTable extends BaseTable {
         super('category', categories);
 
         this._removedCategories = [];
+        this._addedCategories = [];
 
         this._removeBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
         this._removeBtn.onclick = this._bindToThis(this._removeCategory);
 
-        // this._addBtn = this._getControlByName(this._BTN_PREFIX + 'add');
-        // this._addBtn.onclick = this._bindToThis(this._addCategory);
+        this._addBtn = this._getControlByName(this._BTN_PREFIX + 'add');
+        this._addBtn.onclick = this._bindToThis(this._addCategory);
 
-        // this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
-        // this._makeDefaultBtn.onclick = this._bindToThis(this._makeCategoryDefault);
+        this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
+        this._makeDefaultBtn.onclick = this._bindToThis(this._makeCategoryDefault);
+
+        this._defaultCategoryTitle = null;        
     }
+
+    get _DEFAULT_CATEGORY_CLASS_NAME() { return 'form--table-category--row-default'; }
 
     _removeCategory() {
         if (!this._tableData.length)
@@ -247,8 +263,59 @@ class CategoryTable extends BaseTable {
         this._tableData = this._tableData.filter(pi => 
             !ArrayExtension.contains(this._removedCategories, pi.title));
             
-        //this._makeDefaultBtn.disabled = true;
+        this._makeDefaultBtn.disabled = true;
         this._removeBtn.disabled = true;
+    }
+
+    _addCategory() {
+        const name = prompt(this._locale.getString('preferences-new-category-prompt'));
+
+        if (!name)
+            return;
+
+        if (this._tableData.find(i => i.title === name)) {
+            alert(this._locale.getStringWithArgs('preferences-duplicated-category-warning', name));
+            return;
+        }
+
+        const newCategory = { title: name };
+        this._addedCategories.push(newCategory);
+        this._tableData.push(newCategory);
+
+        this._sortTableData();
+
+        this._clearTableRows();
+        this._render();
+    }
+
+    _makeCategoryDefault() {
+        if (!this._tableData.length)
+            return;
+
+        const markedCheckBox = document.querySelector(this._checkTickedSelector);
+        
+        if (!markedCheckBox)
+            return;
+
+        const rowClassList = markedCheckBox.parentElement.parentElement.classList;
+
+        const defaultCategoryClassName = this._DEFAULT_CATEGORY_CLASS_NAME;
+        const shouldGetDefault = !rowClassList.contains(defaultCategoryClassName);
+
+        ArrayExtension.runForEach(document.getElementsByClassName(defaultCategoryClassName), 
+            r => r.classList.remove(defaultCategoryClassName));
+
+        ArrayExtension.runForEach(this._tableData.filter(c => c.default), 
+            c => c.default = false);
+
+        if (shouldGetDefault) {
+            rowClassList.add(defaultCategoryClassName);
+
+            this._defaultCategoryTitle = markedCheckBox.dataset.title;
+            this._tableData.find(c => c.title === this._defaultCategoryTitle).default = true;
+        }
+        else
+            this._defaultCategoryTitle = null;
     }
 
     _render() {
@@ -268,7 +335,13 @@ class CategoryTable extends BaseTable {
         const checkCell = document.createElement(this._TABLE_CELL_NAME);
         checkCell.append(check);
 
-        row.append(checkCell, this._createLabelCell(categoryInfo.title));
+        if (categoryInfo.default && !this._defaultCategoryTitle) {
+            this._defaultCategoryTitle = categoryInfo.title;
+            row.classList.add(this._DEFAULT_CATEGORY_CLASS_NAME);
+        }
+
+        row.append(checkCell, this._createLabelCell(categoryInfo.title), 
+            this._createLabelCell(''));
         return row;
     }
 
@@ -276,7 +349,7 @@ class CategoryTable extends BaseTable {
         const checkedNumber = 
             document.querySelectorAll(this._checkTickedSelector).length;
         
-        //this._makeDefaultBtn.disabled = checkedNumber !== 1;
+        this._makeDefaultBtn.disabled = checkedNumber !== 1;
         this._removeBtn.disabled = checkedNumber === 0;
 
         if (isFromRowCheckedEvent)
@@ -285,6 +358,20 @@ class CategoryTable extends BaseTable {
     
     get removedCategoryTitles() {
         return this._removedCategories;
+    }
+
+    get addedCategories() {
+        return this._addedCategories;
+    }
+
+    get defaultCategoryTitle() {
+        return this._defaultCategoryTitle;
+    }
+
+    _clearTableRows() {
+        this._defaultCategoryTitle = null;
+        
+        super._clearTableRows();
     }
 }
 
@@ -639,7 +726,7 @@ class Preferences {
 
     _initCategoryTable() {
         return new Promise((resolve) => {
-            this._categoryTable = new CategoryTable([{ title: 'Financies' }, { title: 'Science' }]);
+            this._categoryTable = new CategoryTable([{ title: 'Financies' }, { title: 'Science', default: true }]);
 
             resolve();
         });

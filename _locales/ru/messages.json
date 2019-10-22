@@ -124,9 +124,33 @@
     },
 
     "page_unload_warn": {
-        "message": "You will discard all unsaved changes on this page when leaving",
+        "message": "Все несохранённые изменения на странице будут потеряны",
         "description": "Warning when there is a try to leave a page with unsaved changes"
-    }, 
+    },
+
+    "preferences_new_category_prompt": {
+        "message": "Имя новой категории:",
+        "description": "Message for prompting a user to enter title for a new page category in the preferences"
+    },
+
+    "preferences_duplicated_category_warning": {
+        "message": "Категория с именем '$title$' уже существует",
+        "placeholders": {
+            "title" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "preferences_category_default_btn": {
+        "message": "Сделать умолчательной",
+        "description": "Label for a button making a page category default"
+    },
+
+    "preferences_category_add_btn": {
+        "message": "Добавить",
+        "description": "Label for a button adding a new page category"
+    },
 
     "preferences_category_table": {
         "message": "Категории страниц:",
@@ -134,8 +158,13 @@
     },
 
     "preferences_category_table_title_header": {
-        "message": "Название",
+        "message": "Имя",
         "description": "Label for a category table column header featuring a category title"
+    },
+
+    "preferences_category_table_default_header": {
+        "message": "По умолчанию",
+        "description": "Label for a category table column header featuring a category default mark"
     },
 
     "preferences_page_table": {
@@ -167,9 +196,9 @@
         "message": "Открыть в новой вкладке"
     },
 
-    "preferences_page_remove_btn": {
+    "preferences_remove_btn": {
         "message": "Удалить",
-        "description": "Label for a button removing a saved page"
+        "description": "Label for a removing button"
     },
 
     "preferences_page_insert_btn": {

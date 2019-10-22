@@ -128,6 +128,30 @@
         "description": "Warning when there is a try to leave a page with unsaved changes"
     }, 
 
+    "preferences_new_category_prompt": {
+        "message": "New category title:",
+        "description": "Message for prompting a user to enter title for a new page category in the preferences"
+    },
+
+    "preferences_duplicated_category_warning": {
+        "message": "There is already a category with a name '$title$'",
+        "placeholders": {
+            "title" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "preferences_category_default_btn": {
+        "message": "Make Default",
+        "description": "Label for a button making a page category default"
+    },
+
+    "preferences_category_add_btn": {
+        "message": "Add",
+        "description": "Label for a button adding a new page category"
+    },
+
     "preferences_category_table": {
         "message": "Page categories:",
         "description": "Label for a table listing all categories for saved pages in the preferences"
@@ -136,6 +160,11 @@
     "preferences_category_table_title_header": {
         "message": "Title",
         "description": "Label for a category table column header featuring a category title"
+    },
+
+    "preferences_category_table_default_header": {
+        "message": "Default",
+        "description": "Label for a category table column header featuring a category default mark"
     },
     
     "preferences_page_table": {
@@ -167,9 +196,9 @@
         "message": "Open in a New Tab"
     },
 
-    "preferences_page_remove_btn": {
+    "preferences_remove_btn": {
         "message": "Remove",
-        "description": "Label for a button removing a saved page"
+        "description": "Label for a removing button"
     },
 
     "preferences_page_insert_btn": {
