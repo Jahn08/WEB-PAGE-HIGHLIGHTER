@@ -128,12 +128,22 @@
         "description": "Warning when there is a try to leave a page with unsaved changes"
     }, 
 
+    "preferences_category_table": {
+        "message": "Page categories:",
+        "description": "Label for a table listing all categories for saved pages in the preferences"
+    },
+
+    "preferences_category_table_title_header": {
+        "message": "Title",
+        "description": "Label for a category table column header featuring a category title"
+    },
+    
     "preferences_page_table": {
         "message": "Saved pages:",
         "description": "Label for a table listing all saved pages in the preferences"
     },
-    
-    "preferences_page_table_page_header": {
+
+    "preferences_page_table_title_header": {
         "message": "Page",
         "description": "Label for a page table column header featuring a page name"
     },

@@ -10,6 +10,10 @@
     width: 100%;
 }
 
+.form--table thead, .form--table tbody {
+    width: inherit;
+}
+
 .form--table tr {
     width: 100%;
 }

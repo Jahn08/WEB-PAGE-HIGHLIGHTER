@@ -46,31 +46,36 @@ class PagePackageError extends Error {
 }
 
 class BaseTable {
-    constructor(tableSectionId, tableData) {
-        const tableId = tableSectionId + '--table';
+    constructor(tableSectionName, tableData) {
+        this._tableSectionId = 'form--section-' + tableSectionName;
+        const tableId = this._tableSectionId + '--table';
 
-        this._tableBody = document.getElementById(tableId).tBodies[0];
+        const table = document.getElementById(tableId);
+        this._tableBody = table.tBodies[0];
+        
         this._tableData = tableData;  
 
         if (this._isRendered())
             throw new RepeatInitError();
 
-        this._sortPagesInfo();
+        this._sortTableData();
         
-        this._CHECK_CLASS_NAME = tableId + '--check';
+        this._checkClassName = tableId + '--check';
         this._CHECKED_MODIFIER = ':checked';
 
-        this._CHECK_TICKED_SELECTOR = `.${this._CHECK_CLASS_NAME}${this._CHECKED_MODIFIER}`;
+        this._checkTickedSelector = `.${this._checkClassName}${this._CHECKED_MODIFIER}`;
         
-        this._checkAllBtn = document.getElementById(this._CHECK_CLASS_NAME + '-all');
+        this._checkAllBtn = document.getElementById(this._checkClassName + '-all');
         this._checkAllBtn.onchange = this._bindToThis(this._onCheckAllClick);
 
         this._TABLE_CELL_NAME = 'td';
 
+        this._BTN_PREFIX = 'btn-';
+
         this._locale = new BrowserAPI().locale;
 
         this._sortHeader = null;
-        ArrayExtension.runForEach([...document.getElementsByClassName('form--table--cell-header')], 
+        ArrayExtension.runForEach([...table.tHead.getElementsByClassName('form--table--cell-header')], 
             ch => {
                 if (!this._sortHeader)
                     this._sortHeader = ch;
@@ -79,17 +84,19 @@ class BaseTable {
             });
             
         const hiddenClassName = 'form--table--row-hidden';
-        this.searchField = document.getElementById(tableSectionId + '--txt-search');
+        this.searchField = document.getElementById(this._tableSectionId + '--txt-search');
         this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
 
         document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
+        
+        this._render();
     }
 
     _isRendered() {
         return this._tableBody.rows.length > 0;
     }
     
-    _sortPagesInfo(sortField = 'title', isAscending = true) {
+    _sortTableData(sortField = 'title', isAscending = true) {
         this._tableData = isAscending ? 
             this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
             this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
@@ -104,7 +111,7 @@ class BaseTable {
         const modifier = shouldCheck ? `:not(${this._CHECKED_MODIFIER})` : 
             this._CHECKED_MODIFIER;
         
-        document.querySelectorAll('.' + this._CHECK_CLASS_NAME + modifier)
+        document.querySelectorAll('.' + this._checkClassName + modifier)
             .forEach(el => { 
                 if (el.checked === shouldCheck)
                     return;
@@ -148,7 +155,7 @@ class BaseTable {
                 cell.classList.replace(ascSortClass, descSortClass);
         }
         
-        this._sortPagesInfo(cell.dataset.sortField, shouldBeAscending);
+        this._sortTableData(cell.dataset.sortField, shouldBeAscending);
 
         this._clearTableRows();
         this._render();
@@ -159,6 +166,20 @@ class BaseTable {
     }
 
     _render() { }
+
+    _createLabelCell(text, title = null) {
+        const label = document.createElement('label');
+
+        if (title)
+            text += ` <br><i class='form--table--cell-title'>(${title})</i>`;
+
+        label.innerHTML = text;
+
+        const labelCell = document.createElement(this._TABLE_CELL_NAME);
+        labelCell.append(label);
+
+        return labelCell;
+    }
 
     _onSearching(hiddenClassName, _event) {
         const searchText = (_event.target.value || '').toUpperCase();
@@ -182,34 +203,111 @@ class BaseTable {
         event.preventDefault();
         return false;
     }
+
+    _getControlByName(ctrlName) {
+        return document.getElementById(this._getControlFullName(ctrlName));       
+    }
+    
+    _getControlFullName(ctrlName) {
+        return `${this._tableSectionId}--${ctrlName}`;
+    }
+
+    _getControlsByName(ctrlName) {
+        return document.getElementsByClassName(this._getControlFullName(ctrlName));       
+    }
+}
+
+class CategoryTable extends BaseTable {
+    constructor(categories = []) {
+        super('category', categories);
+
+        this._removedCategories = [];
+
+        this._removeBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
+        this._removeBtn.onclick = this._bindToThis(this._removeCategory);
+
+        // this._addBtn = this._getControlByName(this._BTN_PREFIX + 'add');
+        // this._addBtn.onclick = this._bindToThis(this._addCategory);
+
+        // this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
+        // this._makeDefaultBtn.onclick = this._bindToThis(this._makeCategoryDefault);
+    }
+
+    _removeCategory() {
+        if (!this._tableData.length)
+            return;
+
+        document.querySelectorAll(this._checkTickedSelector)
+            .forEach(el => {
+                this._removedCategories.push(el.dataset.title);
+
+                el.parentElement.parentElement.remove();
+            });
+
+        this._tableData = this._tableData.filter(pi => 
+            !ArrayExtension.contains(this._removedCategories, pi.title));
+            
+        //this._makeDefaultBtn.disabled = true;
+        this._removeBtn.disabled = true;
+    }
+
+    _render() {
+        const renderingRowFn = this._bindToThis(this._renderCategoryInfoRow);
+        this._tableBody.append(...this._tableData.map(renderingRowFn));
+    }
+
+    _renderCategoryInfoRow(categoryInfo) {
+        const row = document.createElement('tr');
+
+        const check = document.createElement('input');
+        check.dataset.title = categoryInfo.title;
+        check.className = this._checkClassName;
+        check.type = 'checkbox';
+        check.onchange = this._bindToThis(this._updateCategoryButtonsAvailability);
+
+        const checkCell = document.createElement(this._TABLE_CELL_NAME);
+        checkCell.append(check);
+
+        row.append(checkCell, this._createLabelCell(categoryInfo.title));
+        return row;
+    }
+
+    _updateCategoryButtonsAvailability(isFromRowCheckedEvent = false) {
+        const checkedNumber = 
+            document.querySelectorAll(this._checkTickedSelector).length;
+        
+        //this._makeDefaultBtn.disabled = checkedNumber !== 1;
+        this._removeBtn.disabled = checkedNumber === 0;
+
+        if (isFromRowCheckedEvent)
+            this._checkAllBtn.checked = checkedNumber === this._tableData.length;
+    }
+    
+    get removedCategoryTitles() {
+        return this._removedCategories;
+    }
 }
 
 class PageTable extends BaseTable {
     constructor(pagesInfo = []) {
-        const tableSectionId = 'form--section-page';
-        super(tableSectionId, pagesInfo);
+        super('page', pagesInfo);
 
         this._removedPageUris = [];
 
-        this._render();
-
-        this._PAGE_SECTION_PREFIX = 'form--section-page--';
-
-        const pageSectionBtnPrefix = this._PAGE_SECTION_PREFIX + 'btn-';
-        this._showPageBtn = document.getElementById(pageSectionBtnPrefix + 'show');
+        this._showPageBtn = this._getControlByName(this._BTN_PREFIX + 'show');
         this._showPageBtn.onclick = this._bindToThis(this._onShowPageBtnClick);
 
-        this._removePageBtn = document.getElementById(pageSectionBtnPrefix + 'remove');
+        this._removePageBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
         this._removePageBtn.onclick = this._bindToThis(this._onRemovePageBtnClick);
 
         this._exportPageLink = null;
-        this._exportPageBtn = document.getElementById(pageSectionBtnPrefix + 'export');
+        this._exportPageBtn =  this._getControlByName(this._BTN_PREFIX + 'export');
         this._exportPageBtn.onclick = this._bindToThis(this._onExportPageBtnClick);
 
-        this._filePageBtn = document.getElementById(pageSectionBtnPrefix + 'file');
+        this._filePageBtn =  this._getControlByName(this._BTN_PREFIX + 'file');
         this._filePageBtn.onchange = this._bindToThis(this._onChoosePackageFileBtnClick);
 
-        this._importPageBtns = [...document.getElementsByClassName(pageSectionBtnPrefix + 'import')];
+        this._importPageBtns = [...this._getControlsByName(this._BTN_PREFIX + 'import')];
         ArrayExtension.runForEach(this._importPageBtns, 
             btn => btn.onclick = this._bindToThis(this._onImportPageBtnClick));
         this._importIsUpsertable = false;
@@ -220,7 +318,6 @@ class PageTable extends BaseTable {
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
-
     }
 
     _render() {
@@ -233,7 +330,7 @@ class PageTable extends BaseTable {
 
         const check = document.createElement('input');
         check.dataset.uri = pageInfo.uri;
-        check.className = this._CHECK_CLASS_NAME;
+        check.className = this._checkClassName;
         check.type = 'checkbox';
         check.onchange = this._bindToThis(this._updatePageButtonsAvailability);
 
@@ -247,7 +344,7 @@ class PageTable extends BaseTable {
 
     _updatePageButtonsAvailability(isFromRowCheckedEvent = false) {
         const checkedNumber = 
-            document.querySelectorAll(this._CHECK_TICKED_SELECTOR).length;
+            document.querySelectorAll(this._checkTickedSelector).length;
         
         this._showPageBtn.disabled = checkedNumber !== 1;
         this._removePageBtn.disabled = checkedNumber === 0;
@@ -256,27 +353,13 @@ class PageTable extends BaseTable {
             this._checkAllBtn.checked = checkedNumber === this._tableData.length;
     }
 
-    _createLabelCell(text, title = null) {
-        const label = document.createElement('label');
-
-        if (title)
-            text += ` <br><i class='form--table--cell-title'>(${title})</i>`;
-
-        label.innerHTML = text;
-
-        const labelCell = document.createElement(this._TABLE_CELL_NAME);
-        labelCell.append(label);
-
-        return labelCell;
-    }
-
     _formatDate(ticks) {
         const date = new Date(ticks);
         return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
     }
 
     _onShowPageBtnClick() {
-        const uri = this._getCheckboxUri(document.querySelector(this._CHECK_TICKED_SELECTOR));
+        const uri = this._getCheckboxUri(document.querySelector(this._checkTickedSelector));
         
         if (uri)
             window.open(PageInfo.generateLoadingUrl(uri), '_blank');
@@ -290,7 +373,7 @@ class PageTable extends BaseTable {
         if (!this._tableData.length)
             return;
 
-        document.querySelectorAll(this._CHECK_TICKED_SELECTOR)
+        document.querySelectorAll(this._checkTickedSelector)
             .forEach(el => {
                 this._removedPageUris.push(this._getCheckboxUri(el));
 
@@ -349,7 +432,7 @@ class PageTable extends BaseTable {
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
 
-                this._sortPagesInfo();
+                this._sortTableData();
 
                 this._clearTableRows();
                 this._render();
@@ -424,7 +507,7 @@ class PageTable extends BaseTable {
             return;
 
         if (!this._exportPageLink) {
-            this._exportPageLink = document.getElementById(this._PAGE_SECTION_PREFIX + 'link-export');
+            this._exportPageLink =  this._getControlByName('link-export');
             this._exportPageLink.download = 'highlighterStorage' + this._PAGES_ARCHIVE_EXTENSION;
         }
 
@@ -483,6 +566,8 @@ class Preferences {
         this._initColourList();
         
         this._pageTable = null;
+        this._categoryTable = null;
+
         this._loadedPreferences = null;
 
         this._warningCheck = this._getCheckbox('warning');
@@ -539,7 +624,7 @@ class Preferences {
                 this._shouldLoad = loadedForm.shouldLoad;
                 this._defaultColourToken = loadedForm.defaultColourToken;
             }
-        }), this._initPageTable()]);
+        }), this._initPageTable(), this._initCategoryTable()]);
     }
 	
     static loadFromStorage() {
@@ -550,6 +635,14 @@ class Preferences {
         return PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
             this._pageTable = new PageTable(pagesInfo)
         );
+    }
+
+    _initCategoryTable() {
+        return new Promise((resolve) => {
+            this._categoryTable = new CategoryTable([{ title: 'Financies' }, { title: 'Science' }]);
+
+            resolve();
+        });
     }
 
     initialiseExport() {

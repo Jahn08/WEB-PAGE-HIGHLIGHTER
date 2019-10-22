@@ -22,6 +22,38 @@
                 <div id="form--section-colours"></div>
             </div>
             <hr />
+            
+            <div class="form--section-category">
+                <label class="locale" id="preferences-category-table">Page categories:</label>
+
+                <div>
+                    <span>🔍</span>
+                    <input type="text" class="locale form--txt-search" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-category--txt-search" />
+                </div>
+
+                <table class="form--table" id="form--section-category--table">
+                    <thead>
+                        <tr>
+                            <th><input id="form--section-category--table--check-all" type="checkbox" /></th>
+                            <th class="form--table--cell-header form--table--cell-header-asc locale" data-sort-field="title" id="preferences-category-table-title-header">
+                                Category
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <div class="form-section-separated ">
+                    <button class="locale" name="preferences-category-show-btn" disabled id="form--section-category--btn-show" type="button" data-locale-add-attr="title" title="Add">
+                        Add
+                    </button>
+                    <button class="locale" name="preferences-category-remove-btn" disabled id="form--section-category--btn-remove" type="button" data-locale-add-attr="title" title="Remove">
+                        Remove
+                    </button>
+                </div>
+            </div>
+            <hr />
+
             <div id="form--section-page">
                 <label class="locale" id="preferences-page-table">Saved pages:</label>
                 
@@ -30,11 +62,11 @@
                     <input type="text" class="locale form--txt-search" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-page--txt-search" />
                 </div>
                 
-                <table class="form--table" id="form--section-page--table" style="width:100%">
-                    <thead style="width:inherit">
+                <table class="form--table" id="form--section-page--table">
+                    <thead>
                         <tr>
                             <th><input id="form--section-page--table--check-all" type="checkbox" /></th>
-                            <th class="form--table--cell-header form--table--cell-header-asc locale" data-sort-field="title" id="preferences-page-table-page-header">
+                            <th class="form--table--cell-header form--table--cell-header-asc locale" data-sort-field="title" id="preferences-page-table-title-header">
                                 Page
                             </th>
                             <th class="form--table--cell-header locale" data-sort-field="date" id="preferences-page-table-date-header">
@@ -42,7 +74,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody style="width:inherit"></tbody>
+                    <tbody></tbody>
                 </table>
 
                 <div id="form-section-status" class="form-section-separated"></div>
@@ -70,6 +102,7 @@
                 </div>
             </div>
             <hr />
+
             <button class="locale" name="preferences-save-btn" type="submit" id="form--btn-submit" disabled>Save</button>
         </form>
 
