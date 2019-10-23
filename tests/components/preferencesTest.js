@@ -1,13 +1,12 @@
 import assert from 'assert';
 import { EnvLoader } from '../tools/envLoader.js';
-import { Randomiser } from '../tools/randomiser';
+import { Randomiser } from '../tools/randomiser.js';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
-import { FileTransfer } from '../tools/fileTransfer.js';
-import { Preferences, RepeatInitError, PagePackageError } from '../../components/preferences.js';
+import { Preferences, RepeatInitError } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
-import fs from 'fs';
+import { PreferencesDOM } from '../tools/preferencesDOM.js';
 
 describe('components/preferences', function () {
     this.timeout(0);
@@ -17,7 +16,7 @@ describe('components/preferences', function () {
     beforeEach('loadResources', done => {
         browserMocked.resetBrowserStorage();
         
-        EnvLoader.loadDomModel('./views/preferences.html').then(() => done()).catch(done);
+        PreferencesDOM.loadDomModel().then(() => done()).catch(done);
     });
     
     before(done => {
@@ -57,43 +56,7 @@ describe('components/preferences', function () {
         assert.strictEqual(shouldLoadCheck.checked, expectedLoadCheck);
     };
 
-    const PAGE_SECTION_ID = 'form--section-page';
-
-    const getPageTableBody = () => {
-        const table = document.getElementById(PAGE_SECTION_ID + '--table');
-        assert(table);
-
-        assert(table.tHead);
-        assert.strictEqual(table.tBodies.length, 1);
-
-        return table.tBodies[0];
-    };
-
-    const formatDate = (ticks) => {
-        const date = new Date(ticks);
-        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    };
-
-    const assertPageTableValues = (expectedRowValues = []) => {
-        const tableBody = getPageTableBody();
-
-        assert.strictEqual(tableBody.rows.length, expectedRowValues.length);
-        const rowContents = [...tableBody.rows].map(r => r.textContent);
-
-        assert(expectedRowValues.every(rv => rowContents.find(rc => 
-            rc.indexOf(rv.title) !== -1 && rc.indexOf(formatDate(rv.date)) !== -1) !== null
-        ));
-        
-        const rowUris = [...tableBody.querySelectorAll('input[type=checkbox]')]
-            .map(ch => ch.dataset.uri);
-
-        assert.strictEqual(rowUris.length, expectedRowValues.length);
-        assert(expectedRowValues.every(rv => rowUris.includes(rv.uri)));
-    };
-
-    const createClickEvent = () => new Event('click');
-
-    const createChangeEvent = () => new Event('change');
+    const pageTableDOM = PreferencesDOM.createPageTable();
 
     describe('#constructor', function () { 
      
@@ -101,7 +64,7 @@ describe('components/preferences', function () {
             new Preferences();
 
             assertFormValues();
-            assertPageTableValues();
+            pageTableDOM.assertPageTableValues();
         });
 
         it('should throw an error when trying to render the page twice', () => {
@@ -110,44 +73,13 @@ describe('components/preferences', function () {
         });
     });
 
-    const tickPageInfoCheck = (tickNumber = 1) => {
-        const rows = getPageTableBody().rows;
-
-        const selectedRows = [];
-
-        if (rows === 1)
-            selectedRows.push(rows.item(Randomiser.getRandomNumber(rows.length)));
-        else
-            for (let i = 0; i < tickNumber && i < rows.length; ++i)
-                selectedRows.push(rows.item(i));
-        
-        return selectedRows.map(r => {
-            const rowCheck = r.querySelector('input[type=checkbox]');
-            rowCheck.checked = true;
-
-            rowCheck.dispatchEvent(createChangeEvent());
-            return rowCheck.dataset.uri;
-        });
-    };
-
-    const getRemovingPageInfoBtn = () => 
-        document.getElementById('form--section-page--btn-remove');
-
-    const getImportBtn = (isUpsertable = false) =>
-        [...document.getElementsByClassName('form--section-page--btn-import')].find(btn => {
-            const upsertable = btn.dataset.upsertable;
-            return isUpsertable ? upsertable === 'true': !upsertable; 
-        });
-
-    const getAllPagesCheck = () => document.getElementById(PAGE_SECTION_ID + '--table--check-all');
-
     describe('#load', function () { 
 
         it('should create the preferences form with default values when there is nothing in the storage', () =>
             Expectation.expectResolution(new Preferences().load(), 
                 () => {
                     assertFormValues();
-                    assertPageTableValues();
+                    pageTableDOM.assertPageTableValues();
                 })
         );
 
@@ -175,154 +107,7 @@ describe('components/preferences', function () {
         it('should load saved page data from the storage and update the form', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 (expectedPageData) => new Preferences().load()
-                    .then(() => assertPageTableValues(expectedPageData)));
-        });
-
-        const getShowingUriBtn = () => document.getElementById('form--section-page--btn-show');
-
-        it('should load saved page data and open its uri as loadable', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        const uriForShowing = tickPageInfoCheck()[0];
-                        
-                        return new Promise(resolve => {
-                            window.open = (uri, target) => {
-                                assert.strictEqual(target, '_blank');
-                                assert(uri.startsWith(uriForShowing));
-                                
-                                assert.strictEqual(PageInfo.generateLoadingUrl(uriForShowing), 
-                                    uri);
-                                resolve();
-                            };
-
-                            const btn = getShowingUriBtn();
-                            assert(!btn.disabled);
-                            
-                            btn.dispatchEvent(createClickEvent());
-                        });
-                    })
-            );
-        });
-
-        it('should disable the upsertable import button after loading empty page data', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(0),
-                () => new Preferences().load()
-                    .then(() => {
-                        assert(!getImportBtn().disabled);
-                        assert(getImportBtn(true).disabled);
-                    })
-            );
-        });
-
-        it('should load saved page data and enable buttons for import', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        assert(!getImportBtn().disabled);
-                        assert(!getImportBtn(true).disabled);
-                    })
-            );
-        });
-
-        it('should load saved page data and disable button for showing several uris', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        tickPageInfoCheck(2);
-                        assert(getShowingUriBtn().disabled);
-                    })
-            );
-        });
-
-        it('should load saved page data and enable button for removing several pages', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        tickPageInfoCheck(2);
-                        assert(!getRemovingPageInfoBtn().disabled);
-                    })
-            );
-        });
-
-        it('should load saved page data and enable button for removing when all pages are checked', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        const allPagesCheck = getAllPagesCheck();
-                        
-                        allPagesCheck.checked = true;
-                        allPagesCheck.dispatchEvent(createChangeEvent());
-
-                        assert(!getRemovingPageInfoBtn().disabled);
-                    })
-            );
-        });
-        
-        const testSearching = activateSearchFn =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
-                pagesInfo => new Preferences().load()
-                    .then(() => {
-                        const searchField = document.getElementById(PAGE_SECTION_ID + '--txt-search');
-                        assert(searchField);
-                        
-                        const pageInfoToFind = Randomiser.getRandomArrayItem(pagesInfo);
-
-                        const titleToSearch = '' + pageInfoToFind.title;
-                        const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
-                        
-                        searchField.value = textToSearch;
-
-                        activateSearchFn(searchField);
-                        
-                        const tableBody = getPageTableBody();
-
-                        const targetText = textToSearch.toUpperCase();
-
-                        assert([...tableBody.rows].filter(r => !r.textContent.toUpperCase().includes(targetText))
-                            .every(r => r.classList.contains('form--table--row-hidden')));
-                    })
-            );
-
-        it('should load saved page data and filter the results by clicking enter in the respective field', 
-            () => testSearching(searchField =>
-                searchField.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
-        );
-
-        it('should load saved page data and filter the results by changing text in the respective field', 
-            () => testSearching(searchField => searchField.dispatchEvent(createChangeEvent()))
-        );
-
-        it('should load saved page data and sort the results by date afterwards', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
-                pagesInfo => new Preferences().load()
-                    .then(() => {
-                        const headerClassName = 'form--table--cell-header';
-
-                        const dateHeader = [...document.getElementById(PAGE_SECTION_ID)
-                            .getElementsByClassName(headerClassName)]
-                            .filter(h => h.dataset.sortField === 'date')[0];
-                        assert(dateHeader);
-
-                        const tableBody = getPageTableBody();
-
-                        const sortDates = () => {
-                            dateHeader.dispatchEvent(createClickEvent());
-                            
-                            return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
-                        };
-
-                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
-                            .sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0))
-                            .map(pi => formatDate(pi.date)));
-                        assert(dateHeader.classList.contains(headerClassName + '-asc'));
-
-                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
-                            .sort((a, b) => b.date > a.date ? 1 : (b.date < a.date ? -1 : 0))
-                            .map(pi => formatDate(pi.date)));
-                        assert(dateHeader.classList.contains(headerClassName + '-desc'));
-                    })
-            );
+                    .then(() => pageTableDOM.assertPageTableValues(expectedPageData)));
         });
     });
 
@@ -367,310 +152,5 @@ describe('components/preferences', function () {
                     ));
                 });
         });
-        
-        it('should save the preferences page removing several pages', () =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo()
-                .then(async expectedPageData => {
-                    const preferences = new Preferences();
-
-                    await preferences.load();
-
-                    const urisForRemoval = tickPageInfoCheck(2);
-
-                    const btn = getRemovingPageInfoBtn();
-                    assert(!btn.disabled);
-                    btn.dispatchEvent(createClickEvent());
-
-                    await preferences.save();
-
-                    const pageInfos = await PageInfo.getAllSavedPagesFullInfo();
-                    assert.deepStrictEqual(pageInfos, 
-                        expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));
-                }))
-        );
-    });
-
-    describe('#initialiseExport', function () {
-
-        before(() => {
-            FileTransfer.configureGlobals();
-        });
-
-        const getExportBtn = () => document.getElementById('form--section-page--btn-export');
-
-        const initPreferencesWithExport = async (predeterminedUri = null, storedPagesNumber = 5) =>
-            Expectation.expectResolution(
-                StorageHelper.saveTestPageInfo(storedPagesNumber, predeterminedUri), 
-                async pages => {
-                    const preferences = new Preferences();
-
-                    await preferences.load();
-
-                    await preferences.initialiseExport();
-
-                    return { pages, preferences };
-                });
-
-        it('should initialise export enabling the respective button', () =>
-            initPreferencesWithExport().then(() => {
-                const exportBtn = getExportBtn();
-                assert.strictEqual(exportBtn.disabled, false);
-            })
-        );
-        
-        it('should leave the export button disabled if there are no pages being stored', () =>
-            initPreferencesWithExport(null, 0).then(() => {
-                const exportBtn = getExportBtn();
-                assert.strictEqual(exportBtn.disabled, true);
-            })
-        );
-
-        it('should reject if the page table is not initialised', () =>
-            Expectation.expectRejection(new Preferences().initialiseExport(), 
-                new PagePackageError(PagePackageError.WRONG_INITIALISATION_TYPE))
-        );
-
-        it('should set up an export link when clicking on the export button', () =>
-            initPreferencesWithExport().then(() => { 
-                const exportLink = document.getElementById(
-                    'form--section-page--link-export');
-                assert(exportLink);
-
-                let linkWasClicked = false;
-                exportLink.onclick = () => linkWasClicked = !linkWasClicked;
-
-                let expectedUrl;
-                URL.createObjectURL = exportPackage => {
-                    assert(exportPackage);
-                    assert(exportPackage.size);
-
-                    return expectedUrl = Randomiser.getRandomNumberUpToMax();
-                };
-
-                let urlWasRevoked = false;
-                URL.revokeObjectURL = url => {
-                    assert(url);
-                    assert.strictEqual(url, expectedUrl);
-                    
-                    urlWasRevoked = !urlWasRevoked;
-                };
-
-                const btn = getExportBtn();
-                btn.dispatchEvent(createClickEvent());
-
-                assert.strictEqual(linkWasClicked, true);
-                assert.strictEqual(urlWasRevoked, true);
-
-                assert.strictEqual(exportLink.href, '' + expectedUrl);
-                assert(exportLink.download.endsWith('.hltr'));
-            })
-        );
-        
-        const getFileImportBtn = () => document.getElementById('form--section-page--btn-file');
-
-        const getAssertedStatusLabel = (expectedMsgNumber = 1) => { 
-            const statusSection = document.getElementById('form-section-status');
-            assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
-
-            return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
-        };
-
-        const assertStatusIsEmpty = () => assert(!getAssertedStatusLabel(0));
-
-        it('should initiate importing by opening a dialog to opt for a package file', () =>
-            Expectation.expectResolution(new Preferences().load()
-                .then(() => {
-                    let fileDialogIsOpen = false;
-
-                    const fileBtn = getFileImportBtn();
-                    fileBtn.onclick = () => fileDialogIsOpen = !fileDialogIsOpen;
-
-                    const importBtn = getImportBtn();
-                    assert.strictEqual(importBtn.disabled, false);
-
-                    importBtn.dispatchEvent(createClickEvent());
-
-                    assert.strictEqual(fileDialogIsOpen, true);
-
-                    assertStatusIsEmpty();
-                }))
-        );
-
-        it('should import nothing if no import file is chosen', () =>
-            initPreferencesWithExport().then(() => {
-                const fileBtn = getFileImportBtn();
-    
-                let errorWasThrown = false;
-                global.alert = () => errorWasThrown = true;
-    
-                fileBtn.dispatchEvent(createChangeEvent());
-
-                assert.strictEqual(getImportBtn().disabled, false);
-                assert.strictEqual(errorWasThrown, false);
-
-                assertStatusIsEmpty();
-            })
-        );
-
-        const STATUS_WARNING_CLASS = 'form-section-status--label-warning';
-
-        const assertStatusIsWarning = (expectedSubstring = null) => {
-            const statusLabel = getAssertedStatusLabel();
-
-            const warning = statusLabel.innerText;
-            assert(warning);
-            assert(statusLabel.classList.contains(STATUS_WARNING_CLASS));
-
-            if (expectedSubstring)
-                assert(warning.includes(expectedSubstring));
-        };
-
-        it('should alert if an imported package file has a wrong file extension', () =>
-            initPreferencesWithExport().then(result => {
-                const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), result.pages,
-                    Randomiser.getRandomNumberUpToMax() + '.json');
-    
-                fileBtn.dispatchEvent(createChangeEvent());
-
-                assert.strictEqual(getImportBtn().disabled, false);
-                assertStatusIsWarning();
-            })
-        );
-
-        const testImportingWithEmptyPackage = (inputFileContents, resultPackage = null) => {
-            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContents);
-            FileTransfer.fileReaderClass.setResultPackage(resultPackage);
-
-            fileBtn.dispatchEvent(createChangeEvent());
-            assert.strictEqual(getImportBtn().disabled, false);
-
-            assert.strictEqual(FileTransfer.fileReaderClass.passedBlob.size, 
-                fileBtn.files[0].size);
-
-            const expectedError = new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
-            assertStatusIsWarning(expectedError.toString());
-        };
-
-        it('should throw an exception if an imported package file is empty', () =>
-            initPreferencesWithExport().then(result => testImportingWithEmptyPackage(result.pages))
-        );
-
-        it('should throw an exception if an imported package file contains no pages', () =>
-            initPreferencesWithExport().then(result => 
-                testImportingWithEmptyPackage(result.pages, []))
-        );
-
-        const TEST_URI = 'https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER';
-        const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
-            .toString('utf8');    
-
-        const startImporting = () => {
-            FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
-
-            const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
-            fileBtn.dispatchEvent(createChangeEvent());
-        };
-
-        const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
-            const pageToUpdate = pagesInfo.find(pi => pi.uri === TEST_URI);
-            assert(pageToUpdate);
-
-            const importBtn = getImportBtn(shouldUpdateExistentPages);
-            importBtn.click();
-
-            startImporting();
-
-            assert.strictEqual(importBtn.disabled, false);
-
-            const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
-            assertPageTableValues(fullInfo);
-            
-            const importedPages = JSON.parse(IMPORTED_DATA_JSON);
-                
-            importedPages.forEach(imp => {
-                const savedPage = fullInfo.find(pi => pi.uri === imp.uri);
-
-                if (imp.uri !== pageToUpdate.uri) {
-                    assert.deepStrictEqual(savedPage, imp);
-                    return;
-                }
-
-                if (shouldUpdateExistentPages) {
-                    assert.deepStrictEqual(savedPage, imp);
-                    assert.notDeepStrictEqual(imp, pageToUpdate);
-                }
-                else {
-                    assert.notDeepStrictEqual(savedPage, imp);
-                    assert.deepStrictEqual(savedPage, pageToUpdate);
-                }
-            });
-
-            const statusLabel = getAssertedStatusLabel();
-    
-            const statusMsg = statusLabel.innerText;
-            assert(statusMsg);
-            assert(statusMsg.endsWith(shouldUpdateExistentPages ? '1' : '0'));
-
-            assert(!statusLabel.classList.contains(STATUS_WARNING_CLASS));
-        };
-
-        it('should import all pages from a package file and update current ones', () =>
-            initPreferencesWithExport(TEST_URI).then(result => testImportingData(result.pages))
-        );
-
-        it('should import all pages from a package file without updating current ones', () =>
-            initPreferencesWithExport(TEST_URI)
-                .then(result => testImportingData(result.pages, false))
-        );
-        
-        it('should reinitialise an export button after importing', () =>
-            initPreferencesWithExport(null, 0).then(() =>  {
-                startImporting();
-                const exportBtn = getExportBtn();
-
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        try {
-                            assert.strictEqual(exportBtn.disabled, false);
-                            resolve();
-                        }
-                        catch(ex) {
-                            reject(ex);
-                        }
-                    }, 100);
-                });
-            })
-        );
-
-        it('should disable export and upsertable import buttons after removing all pages', () =>
-            initPreferencesWithExport().then(() => {
-                const allPagesCheck = getAllPagesCheck();
-                allPagesCheck.checked = true;
-                allPagesCheck.dispatchEvent(createChangeEvent());
-
-                getRemovingPageInfoBtn().dispatchEvent(createClickEvent());
-
-                assert.strictEqual(getExportBtn().disabled, true);
-                assert.strictEqual(getImportBtn(true).disabled, true);
-                assert.strictEqual(getImportBtn().disabled, false);
-            })
-        );
-
-        it('should import a removed page and let it be saved again', () =>
-            initPreferencesWithExport(TEST_URI).then(async result => {
-                const allPagesCheck = getAllPagesCheck();
-                allPagesCheck.checked = true;
-                allPagesCheck.dispatchEvent(createChangeEvent());
-
-                getRemovingPageInfoBtn().dispatchEvent(createClickEvent());
-                await result.preferences.save();
-
-                startImporting();
-                
-                const storedPages = await PageInfo.getAllSavedPagesInfo();
-                assert.strictEqual(storedPages.length, 1);
-                assert.strictEqual(storedPages[0].uri, TEST_URI);
-            })
-        );
     });
 });
