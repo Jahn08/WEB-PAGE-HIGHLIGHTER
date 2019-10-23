@@ -177,4 +177,8 @@ class PageInfo {
         delete pageInfo[this.HTML_PROP_NAME];
         return pageInfo;
     }
+    
+    static getAllSavedCategories() {
+        return new BrowserStorage('categories').get();
+    }
 }

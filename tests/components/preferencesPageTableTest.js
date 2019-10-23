@@ -4,7 +4,7 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser.js';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences, PagePackageError } from '../../components/preferences.js';
-import { PreferencesDOM } from '../tools/preferencesDOM.js';
+import { PagePreferencesDOM } from '../tools/preferencesDOM.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { FileTransfer } from '../tools/fileTransfer.js';
 import fs from 'fs';
@@ -16,8 +16,8 @@ describe('components/preferences/pageTable', function () {
 
     beforeEach('loadResources', done => {
         browserMocked.resetBrowserStorage();
-        
-        PreferencesDOM.loadDomModel().then(() => done()).catch(done);
+
+        PagePreferencesDOM.loadDomModel().then(() => done()).catch(done);
     });
     
     before(done => {
@@ -31,7 +31,7 @@ describe('components/preferences/pageTable', function () {
         EnvLoader.unloadDomModel();
     });
 
-    const pageTableDOM = PreferencesDOM.createPageTable();
+    const pageTableDOM = new PagePreferencesDOM();
 
     describe('#open', function () {
 
@@ -139,7 +139,7 @@ describe('components/preferences/pageTable', function () {
 
                         activateSearchFn(searchField);
                         
-                        const tableBody = pageTableDOM.getPageTableBody();
+                        const tableBody = pageTableDOM.getTableBody();
 
                         const targetText = textToSearch.toUpperCase();
 
@@ -167,7 +167,7 @@ describe('components/preferences/pageTable', function () {
                         const dateHeader = pageTableDOM.getTableHeaders().filter(h => h.dataset.sortField === 'date')[0];
                         assert(dateHeader);
 
-                        const tableBody = pageTableDOM.getPageTableBody();
+                        const tableBody = pageTableDOM.getTableBody();
 
                         const sortDates = () => {
                             dateHeader.dispatchEvent(pageTableDOM.createClickEvent());
@@ -177,12 +177,12 @@ describe('components/preferences/pageTable', function () {
 
                         assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
                             .sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0))
-                            .map(pi => pageTableDOM.formatDate(pi.date)));
+                            .map(pi => PagePreferencesDOM.formatDate(pi.date)));
                         assert(pageTableDOM.isHeaderSortedAsc(dateHeader));
 
                         assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
                             .sort((a, b) => b.date > a.date ? 1 : (b.date < a.date ? -1 : 0))
-                            .map(pi => pageTableDOM.formatDate(pi.date)));
+                            .map(pi => PagePreferencesDOM.formatDate(pi.date)));
                         assert(pageTableDOM.isHeaderSortedDesc(dateHeader));
                     })
             );
@@ -338,7 +338,7 @@ describe('components/preferences/pageTable', function () {
             assert.strictEqual(importBtn.disabled, false);
 
             const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
-            pageTableDOM.assertPageTableValues(fullInfo);
+            pageTableDOM.assertTableValues(fullInfo);
             
             const importedPages = JSON.parse(IMPORTED_DATA_JSON);
                 

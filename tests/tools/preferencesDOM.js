@@ -3,8 +3,8 @@ import { Randomiser } from './randomiser.js';
 import { EnvLoader } from './envLoader.js';
 
 class PreferencesDOM {
-    constructor(sectionId) {
-        this._sectionPage = sectionId;
+    constructor(sectionName) {
+        this._sectionPage = 'form--section-' +  sectionName;
 
         this._headerClassName = 'form--table--cell-header';
     }
@@ -13,11 +13,7 @@ class PreferencesDOM {
         return this._sectionPage;
     }
 
-    static createPageTable() {
-        return new PreferencesDOM('form--section-page');
-    }
-
-    getPageTableBody() {
+    getTableBody() {
         const table = document.getElementById(this._sectionPage + '--table');
         assert(table);
 
@@ -56,30 +52,23 @@ class PreferencesDOM {
         return document.getElementById(this._sectionPage + '--table--check-all');
     }
 
-    assertPageTableValues(expectedRowValues = []) {
-        const tableBody = this.getPageTableBody();
+    assertTableValues(expectedRowValues = []) {
+        const tableBody = this.getTableBody();
 
         assert.strictEqual(tableBody.rows.length, expectedRowValues.length);
-        const rowContents = [...tableBody.rows].map(r => r.textContent);
 
-        assert(expectedRowValues.every(rv => rowContents.find(rc => 
-            rc.indexOf(rv.title) !== -1 && rc.indexOf(this.formatDate(rv.date)) !== -1) !== null
-        ));
+        this._assertRowValues([...tableBody.rows], expectedRowValues);
         
-        const rowUris = [...tableBody.querySelectorAll('input[type=checkbox]')]
-            .map(ch => ch.dataset.uri);
-
-        assert.strictEqual(rowUris.length, expectedRowValues.length);
-        assert(expectedRowValues.every(rv => rowUris.includes(rv.uri)));
+        const rowKeys = [...tableBody.querySelectorAll('input[type=checkbox]')]
+            .map(this._getRowKey);
+        assert(expectedRowValues.every(rv => rowKeys.includes(this._getRowKey(rv))));
+        assert.strictEqual(rowKeys.length, expectedRowValues.length);
     }
-    
-    formatDate(ticks) {
-        const date = new Date(ticks);
-        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-    }
+   
+    _assertRowValues() { }
 
     tickPageInfoCheck(tickNumber = 1) {
-        const rows = this.getPageTableBody().rows;
+        const rows = this.getTableBody().rows;
 
         const selectedRows = [];
 
@@ -94,10 +83,12 @@ class PreferencesDOM {
             rowCheck.checked = true;
 
             rowCheck.dispatchEvent(this.createChangeEvent());
-            return rowCheck.dataset.uri;
+            return this._getRowKey(rowCheck);
         });
     }
-    
+
+    _getRowKey() { }
+
     getRemovingBtn() {
         return document.getElementById(this._sectionPage + '--btn-remove');
     }
@@ -107,4 +98,47 @@ class PreferencesDOM {
     }
 }
 
-export { PreferencesDOM };
+class PagePreferencesDOM extends PreferencesDOM {
+    constructor() {
+        super('page');
+    }
+
+    _assertRowValues(rows, expectedRowValues) {
+        const rowContents = rows.map(r => r.textContent);
+        assert(expectedRowValues.every(rv => rowContents.find(rc => 
+            rc.indexOf(rv.title) !== -1 && rc.indexOf(PagePreferencesDOM.formatDate(rv.date)) !== -1) !== null
+        ));
+    }
+
+    static formatDate(ticks) {
+        const date = new Date(ticks);
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    }
+
+    _getRowKey(row) {
+        return (row.dataset || row).uri;
+    }
+}
+
+class CategoryPreferencesDOM extends PreferencesDOM {
+    constructor() {
+        super('category');
+    }
+
+    _assertRowValues(rows, expectedRowValues) {
+        const rowContents = rows.map(r => ({ content: r.textContent, isDefault: this._hasDefaultCategory(r) }));
+        assert(expectedRowValues.every(rv => rowContents.find(rc => 
+            rc.content.indexOf(rv.title) !== -1 && rc.isDefault == rv.isDefault) !== null
+        ));
+    }
+
+    _hasDefaultCategory(rowEl) {
+        return rowEl.classList.contains('form--table-category--row-default');
+    } 
+
+    _getRowKey(row) {
+        return (row.dataset || row).title;
+    }
+}
+
+export { PagePreferencesDOM, CategoryPreferencesDOM };

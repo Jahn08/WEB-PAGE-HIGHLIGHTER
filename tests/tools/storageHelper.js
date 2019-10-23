@@ -20,7 +20,7 @@ export class StorageHelper {
         };
     }
 
-    static saveTestPageInfo (numberOfItems = 3, predeterminedUri = null) {
+    static saveTestPageInfo(numberOfItems = 3, predeterminedUri = null) {
         if (!numberOfItems)
             return Promise.resolve();
 
@@ -31,5 +31,18 @@ export class StorageHelper {
 
         return Promise.all(expectedPageData.map(pi => new BrowserStorage(pi.uri).set(pi)))
             .then(() => { return expectedPageData; });
+    }
+
+    static saveTestCategories(numberOfItems = 3, predeterminedTitle = null) {
+        if (!numberOfItems)
+            return Promise.resolve();
+
+        const expectedData = PageInfoHelper.createCategoryArray(numberOfItems);
+
+        if (predeterminedTitle)
+            expectedData[0].title = predeterminedTitle;
+        
+        return new BrowserStorage('categories').set(expectedData)
+            .then(() => { return expectedData; });
     }
 }

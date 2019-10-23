@@ -6,7 +6,7 @@ import { Expectation } from '../tools/expectation.js';
 import { Preferences, RepeatInitError } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
-import { PreferencesDOM } from '../tools/preferencesDOM.js';
+import { PagePreferencesDOM, CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
 
 describe('components/preferences', function () {
     this.timeout(0);
@@ -16,7 +16,7 @@ describe('components/preferences', function () {
     beforeEach('loadResources', done => {
         browserMocked.resetBrowserStorage();
         
-        PreferencesDOM.loadDomModel().then(() => done()).catch(done);
+        PagePreferencesDOM.loadDomModel().then(() => done()).catch(done);
     });
     
     before(done => {
@@ -56,7 +56,8 @@ describe('components/preferences', function () {
         assert.strictEqual(shouldLoadCheck.checked, expectedLoadCheck);
     };
 
-    const pageTableDOM = PreferencesDOM.createPageTable();
+    const pageTableDOM = new PagePreferencesDOM();
+    const categoryTableDOM = new CategoryPreferencesDOM();
 
     describe('#constructor', function () { 
      
@@ -64,7 +65,9 @@ describe('components/preferences', function () {
             new Preferences();
 
             assertFormValues();
-            pageTableDOM.assertPageTableValues();
+
+            pageTableDOM.assertTableValues();
+            categoryTableDOM.assertTableValues();
         });
 
         it('should throw an error when trying to render the page twice', () => {
@@ -79,7 +82,9 @@ describe('components/preferences', function () {
             Expectation.expectResolution(new Preferences().load(), 
                 () => {
                     assertFormValues();
-                    pageTableDOM.assertPageTableValues();
+
+                    pageTableDOM.assertTableValues();
+                    categoryTableDOM.assertTableValues();
                 })
         );
 
@@ -104,10 +109,16 @@ describe('components/preferences', function () {
                     expectedValues.shouldLoad));
         });
 
-        it('should load saved page data from the storage and update the form', () => {
+        it('should load saved page data from the storage and update the table', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                (expectedPageData) => new Preferences().load()
-                    .then(() => pageTableDOM.assertPageTableValues(expectedPageData)));
+                expectedPageData => new Preferences().load()
+                    .then(() => pageTableDOM.assertTableValues(expectedPageData)));
+        });
+        
+        it('should load saved page categories from the storage and update the table', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestCategories(),
+                expectedCategoryData => new Preferences().load()
+                    .then(() => categoryTableDOM.assertTableValues(expectedCategoryData)));
         });
     });
 

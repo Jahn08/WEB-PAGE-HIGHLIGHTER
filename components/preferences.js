@@ -725,10 +725,8 @@ class Preferences {
     }
 
     _initCategoryTable() {
-        return new Promise((resolve) => {
-            this._categoryTable = new CategoryTable([{ title: 'Financies' }, { title: 'Science', default: true }]);
-
-            resolve();
+        return PageInfo.getAllSavedCategories().then(categories => {
+            this._categoryTable = new CategoryTable(categories || []);
         });
     }
 
