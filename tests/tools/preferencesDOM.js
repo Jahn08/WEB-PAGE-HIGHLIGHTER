@@ -22,10 +22,25 @@ class PreferencesDOM {
 
         return table.tBodies[0];
     }
-    
-    createClickEvent() { return  new Event('click'); }
 
-    createChangeEvent() { return new Event('change'); }
+    dispatchClickEvent(clickableCtrl) {
+        if (clickableCtrl.disabled)
+            return;
+
+        this._dispatchEvent(clickableCtrl, this._createClickEvent());
+    }
+
+    _createClickEvent() { return new Event('click'); }
+
+    _dispatchEvent(ctrl, event) {
+        ctrl.dispatchEvent(event);
+    }
+
+    dispatchChangeEvent(changeableCtrl) {
+        this._dispatchEvent(changeableCtrl, this._createChangeEvent());
+    }
+
+    _createChangeEvent() { return new Event('change'); }
 
     getTableHeaders() {
         return [...document.getElementById(this._sectionPage)
@@ -48,7 +63,14 @@ class PreferencesDOM {
         return document.getElementById(this._sectionPage + '--txt-search');
     }
 
-    getAllRowsCheck() {
+    tickAllRowsCheck() {
+        const allPagesCheck = this._getAllRowsCheck();
+                        
+        allPagesCheck.checked = !allPagesCheck.checked;
+        this.dispatchChangeEvent(allPagesCheck);
+    }
+
+    _getAllRowsCheck() {
         return document.getElementById(this._sectionPage + '--table--check-all');
     }
 
@@ -67,7 +89,7 @@ class PreferencesDOM {
    
     _assertRowValues() { }
 
-    tickPageInfoCheck(tickNumber = 1) {
+    tickRowCheck(tickNumber = 1) {
         const rows = this.getTableBody().rows;
 
         const selectedRows = [];
@@ -82,7 +104,7 @@ class PreferencesDOM {
             const rowCheck = r.querySelector('input[type=checkbox]');
             rowCheck.checked = true;
 
-            rowCheck.dispatchEvent(this.createChangeEvent());
+            this.dispatchChangeEvent(rowCheck);
             return this._getRowKey(rowCheck);
         });
     }
@@ -90,7 +112,11 @@ class PreferencesDOM {
     _getRowKey() { }
 
     getRemovingBtn() {
-        return document.getElementById(this._sectionPage + '--btn-remove');
+        return this._getButton('remove');
+    }
+
+    _getButton(name) {
+        return document.getElementById(`${this._sectionPage}--btn-${name}`);
     }
 
     static loadDomModel() {
@@ -126,9 +152,9 @@ class CategoryPreferencesDOM extends PreferencesDOM {
     }
 
     _assertRowValues(rows, expectedRowValues) {
-        const rowContents = rows.map(r => ({ content: r.textContent, isDefault: this._hasDefaultCategory(r) }));
+        const rowContents = rows.map(r => ({ content: r.textContent, default: this._hasDefaultCategory(r) }));
         assert(expectedRowValues.every(rv => rowContents.find(rc => 
-            rc.content.indexOf(rv.title) !== -1 && rc.isDefault == rv.isDefault) !== null
+            rc.content.indexOf(rv.title) !== -1 && rc.default == rv.default) !== null
         ));
     }
 
@@ -138,6 +164,14 @@ class CategoryPreferencesDOM extends PreferencesDOM {
 
     _getRowKey(row) {
         return (row.dataset || row).title;
+    }
+
+    getAddingBtn() {
+        return this._getButton('add');
+    }
+
+    getMakingDefaultBtn() {
+        return this._getButton('default');
     }
 }
 

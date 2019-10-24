@@ -41,7 +41,7 @@ describe('components/preferences/pageTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
-                        const uriForShowing = pageTableDOM.tickPageInfoCheck()[0];
+                        const uriForShowing = pageTableDOM.tickRowCheck()[0];
                         
                         return new Promise(resolve => {
                             window.open = (uri, target) => {
@@ -56,7 +56,7 @@ describe('components/preferences/pageTable', function () {
                             const btn = getShowingUriBtn();
                             assert(!btn.disabled);
                             
-                            btn.dispatchEvent(pageTableDOM.createClickEvent());
+                            pageTableDOM.dispatchClickEvent(btn);
                         });
                     })
             );
@@ -66,7 +66,7 @@ describe('components/preferences/pageTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
-                        pageTableDOM.tickPageInfoCheck(2);
+                        pageTableDOM.tickRowCheck(2);
                         assert(getShowingUriBtn().disabled);
                     })
             );
@@ -79,7 +79,7 @@ describe('components/preferences/pageTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
-                        pageTableDOM.tickPageInfoCheck(2);
+                        pageTableDOM.tickRowCheck(2);
                         assert(!pageTableDOM.getRemovingBtn().disabled);
                     })
             );
@@ -89,11 +89,8 @@ describe('components/preferences/pageTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
-                        const allPagesCheck = pageTableDOM.getAllRowsCheck();
-                        
-                        allPagesCheck.checked = true;
-                        allPagesCheck.dispatchEvent(pageTableDOM.createChangeEvent());
-    
+                        pageTableDOM.tickAllRowsCheck();
+
                         assert(!pageTableDOM.getRemovingBtn().disabled);
                     })
             );
@@ -106,11 +103,12 @@ describe('components/preferences/pageTable', function () {
 
                     await preferences.load();
 
-                    const urisForRemoval = pageTableDOM.tickPageInfoCheck(2);
+                    const urisForRemoval = pageTableDOM.tickRowCheck(2);
 
                     const btn = pageTableDOM.getRemovingBtn();
                     assert(!btn.disabled);
-                    btn.dispatchEvent(pageTableDOM.createClickEvent());
+                    
+                    pageTableDOM.dispatchClickEvent(btn);
 
                     await preferences.save();
 
@@ -154,7 +152,7 @@ describe('components/preferences/pageTable', function () {
         );
 
         it('should filter the results by changing text in the respective field', 
-            () => testSearching(searchField => searchField.dispatchEvent(pageTableDOM.createChangeEvent()))
+            () => testSearching(searchField => pageTableDOM.dispatchChangeEvent(searchField))
         );
     });
 
@@ -170,7 +168,7 @@ describe('components/preferences/pageTable', function () {
                         const tableBody = pageTableDOM.getTableBody();
 
                         const sortDates = () => {
-                            dateHeader.dispatchEvent(pageTableDOM.createClickEvent());
+                            pageTableDOM.dispatchClickEvent(dateHeader);
                             
                             return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
                         };
@@ -243,7 +241,7 @@ describe('components/preferences/pageTable', function () {
                     const importBtn = getImportBtn();
                     assert.strictEqual(importBtn.disabled, false);
 
-                    importBtn.dispatchEvent(pageTableDOM.createClickEvent());
+                    pageTableDOM.dispatchClickEvent(importBtn);
 
                     assert.strictEqual(fileDialogIsOpen, true);
 
@@ -258,7 +256,7 @@ describe('components/preferences/pageTable', function () {
                 let errorWasThrown = false;
                 global.alert = () => errorWasThrown = true;
     
-                fileBtn.dispatchEvent(pageTableDOM.createChangeEvent());
+                pageTableDOM.dispatchChangeEvent(fileBtn);
 
                 assert.strictEqual(getImportBtn().disabled, false);
                 assert.strictEqual(errorWasThrown, false);
@@ -285,7 +283,7 @@ describe('components/preferences/pageTable', function () {
                 const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), result.pages,
                     Randomiser.getRandomNumberUpToMax() + '.json');
     
-                fileBtn.dispatchEvent(pageTableDOM.createChangeEvent());
+                pageTableDOM.dispatchChangeEvent(fileBtn);
 
                 assert.strictEqual(getImportBtn().disabled, false);
                 assertStatusIsWarning();
@@ -296,7 +294,7 @@ describe('components/preferences/pageTable', function () {
             const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), inputFileContents);
             FileTransfer.fileReaderClass.setResultPackage(resultPackage);
 
-            fileBtn.dispatchEvent(pageTableDOM.createChangeEvent());
+            pageTableDOM.dispatchChangeEvent(fileBtn);
             assert.strictEqual(getImportBtn().disabled, false);
 
             assert.strictEqual(FileTransfer.fileReaderClass.passedBlob.size, 
@@ -323,7 +321,7 @@ describe('components/preferences/pageTable', function () {
             FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
 
             const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
-            fileBtn.dispatchEvent(pageTableDOM.createChangeEvent());
+            pageTableDOM.dispatchChangeEvent(fileBtn);
         };
 
         const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
@@ -399,11 +397,9 @@ describe('components/preferences/pageTable', function () {
 
         it('should disable export and upsertable import buttons after removing all pages', () =>
             initPreferencesWithExport().then(() => {
-                const allPagesCheck = pageTableDOM.getAllRowsCheck();
-                allPagesCheck.checked = true;
-                allPagesCheck.dispatchEvent(pageTableDOM.createChangeEvent());
+                pageTableDOM.tickAllRowsCheck();
 
-                pageTableDOM.getRemovingBtn().dispatchEvent(pageTableDOM.createClickEvent());
+                pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
 
                 assert.strictEqual(getExportBtn().disabled, true);
                 assert.strictEqual(getImportBtn(true).disabled, true);
@@ -413,11 +409,9 @@ describe('components/preferences/pageTable', function () {
 
         it('should import a removed page and let it be saved again', () =>
             initPreferencesWithExport(TEST_URI).then(async result => {
-                const allPagesCheck = pageTableDOM.getAllRowsCheck();
-                allPagesCheck.checked = true;
-                allPagesCheck.dispatchEvent(pageTableDOM.createChangeEvent());
+                pageTableDOM.tickAllRowsCheck();
 
-                pageTableDOM.getRemovingBtn().dispatchEvent(pageTableDOM.createClickEvent());
+                pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
                 await result.preferences.save();
 
                 startImporting();
@@ -486,8 +480,7 @@ describe('components/preferences/pageTable', function () {
                     urlWasRevoked = !urlWasRevoked;
                 };
 
-                const btn = getExportBtn();
-                btn.dispatchEvent(pageTableDOM.createClickEvent());
+                pageTableDOM.dispatchClickEvent(getExportBtn());
 
                 assert.strictEqual(linkWasClicked, true);
                 assert.strictEqual(urlWasRevoked, true);
