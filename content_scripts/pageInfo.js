@@ -179,6 +179,12 @@ class PageInfo {
     }
     
     static getAllSavedCategories() {
-        return new BrowserStorage('categories').get();
+        return new BrowserStorage(this._CATEGORY_KEY).get();
+    }
+
+    static get _CATEGORY_KEY() { return 'categories'; }
+
+    static saveCategories(categories) {
+        return new BrowserStorage(this._CATEGORY_KEY).set(categories);
     }
 }

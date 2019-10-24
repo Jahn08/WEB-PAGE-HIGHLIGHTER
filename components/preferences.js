@@ -232,9 +232,6 @@ class CategoryTable extends BaseTable {
     constructor(categories = []) {
         super('category', categories);
 
-        this._removedCategories = [];
-        this._addedCategories = [];
-
         this._removeBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
         this._removeBtn.onclick = this._bindToThis(this._removeCategory);
 
@@ -254,11 +251,7 @@ class CategoryTable extends BaseTable {
             return;
 
         document.querySelectorAll(this._checkTickedSelector)
-            .forEach(el => {
-                this._removedCategories.push(el.dataset.title);
-
-                el.parentElement.parentElement.remove();
-            });
+            .forEach(el => el.parentElement.parentElement.remove());
 
         this._tableData = this._tableData.filter(pi => 
             !ArrayExtension.contains(this._removedCategories, pi.title));
@@ -279,7 +272,6 @@ class CategoryTable extends BaseTable {
         }
 
         const newCategory = { title: name };
-        this._addedCategories.push(newCategory);
         this._tableData.push(newCategory);
 
         this._sortTableData();
@@ -356,16 +348,8 @@ class CategoryTable extends BaseTable {
             this._checkAllBtn.checked = checkedNumber === this._tableData.length;
     }
     
-    get removedCategoryTitles() {
-        return this._removedCategories;
-    }
-
-    get addedCategories() {
-        return this._addedCategories;
-    }
-
-    get defaultCategoryTitle() {
-        return this._defaultCategoryTitle;
+    get categories() {
+        return this._tableData;
     }
 
     _clearTableRows() {
@@ -739,7 +723,7 @@ class Preferences {
 
     save() {
         return Promise.all([this._savePreferencesIntoStorage(),
-            this._removePageInfoFromStorage()]);
+            this._removePageInfoFromStorage(), this._updateCategoriesInStorage()]);
     }
     
     _savePreferencesIntoStorage() {
@@ -761,6 +745,12 @@ class Preferences {
     _removePageInfoFromStorage() {
         return this._pageTable && this._pageTable.removedPageUris.length ? 
             PageInfo.remove(this._pageTable.removedPageUris) : 
+            Promise.resolve();
+    }
+
+    _updateCategoriesInStorage() {
+        return this._categoryTable ? 
+            PageInfo.saveCategories(this._categoryTable.categories) : 
             Promise.resolve();
     }
 

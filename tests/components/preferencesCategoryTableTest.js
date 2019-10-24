@@ -78,14 +78,35 @@ describe('components/preferences/categoryTable', function () {
             return inputData;
         };
 
-        it('should add a few new categories', () =>
+        it('should add a few new categories in UI', () =>
             Expectation.expectResolution(new Preferences().load(),
                 () => {
                     const onAlert = msg => 
                         assert.fail('An unexpected error while adding a new category: ' + msg);
 
                     categoryTableDOM.assertTableValues(
-                        addCategories(5, onAlert).map(PageInfoHelper.createCategory));
+                        addCategories(5, onAlert).map(c => PageInfoHelper.createCategory(c)));
+                })
+        );
+
+        it('should save new categories', () =>
+            Expectation.expectResolution(StorageHelper.saveTestCategories(),
+                async categories => {
+                    const preferences = new Preferences();
+
+                    await preferences.load();
+                    
+                    const onAlert = msg => 
+                        assert.fail('An unexpected error while adding a new category: ' + msg);
+
+                    categories.push(...addCategories(3, onAlert).map(c => PageInfoHelper.createCategory(c)));
+
+                    await preferences.save();
+                    
+                    const savedCategories = await PageInfo.getAllSavedCategories();
+                    assert.strictEqual(savedCategories.length, categories.length);
+                    assert(savedCategories.every(sc => 
+                        categories.find(c => sc.title === c.title && sc.default === c.default) !== null));
                 })
         );
 
@@ -106,7 +127,8 @@ describe('components/preferences/categoryTable', function () {
                         [duplicatedCategoryName, duplicatedCategoryName]);
 
                     assert.strictEqual(hasWarning, true);
-                    categoryTableDOM.assertTableValues(newItems.map(PageInfoHelper.createCategory));
+                    categoryTableDOM.assertTableValues(newItems.map(
+                        c => PageInfoHelper.createCategory(c)));
                 })
         );
     });
