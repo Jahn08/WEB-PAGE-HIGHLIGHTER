@@ -203,4 +203,50 @@ describe('components/preferences/categoryTable', function () {
         });
     });
 
+
+    describe('#remove', function () {
+
+        it('should enable button for removing several categories', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestCategories(),
+                () => new Preferences().load()
+                    .then(() => {
+                        categoryTableDOM.tickRowCheck(2);
+                        assert(!categoryTableDOM.getRemovingBtn().disabled);
+                    })
+            );
+        });
+    
+        it('should enable button for removing when all categories are checked', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestCategories(),
+                () => new Preferences().load()
+                    .then(() => {
+                        categoryTableDOM.tickAllRowsCheck();
+                        assert(!categoryTableDOM.getRemovingBtn().disabled);
+                    })
+            );
+        });
+
+        it('should remove several categories', () =>
+            Expectation.expectResolution(StorageHelper.saveTestCategories()
+                .then(async expectedPageData => {
+                    const preferences = new Preferences();
+
+                    await preferences.load();
+
+                    const titlesForRemoval = categoryTableDOM.tickRowCheck(2);
+
+                    const btn = categoryTableDOM.getRemovingBtn();
+                    assert(!btn.disabled);
+                    
+                    categoryTableDOM.dispatchClickEvent(btn);
+
+                    await preferences.save();
+
+                    const categories = await PageInfo.getAllSavedCategories();
+                    assert.deepStrictEqual(categories, 
+                        expectedPageData.filter(c => !titlesForRemoval.includes(c.title)));
+                }))
+        );
+    });
+
 });

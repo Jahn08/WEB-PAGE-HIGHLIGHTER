@@ -123,10 +123,10 @@ class BaseTable {
                 el.checked = shouldCheck;
             });
 
-        this._updatePageButtonsAvailability();
+        this._updateButtonsAvailability();
     }
 
-    _updatePageButtonsAvailability() { }
+    _updateButtonsAvailability() { }
 
     _onHeaderCellClick(_event) {
         const cell = _event.target;
@@ -250,11 +250,16 @@ class CategoryTable extends BaseTable {
         if (!this._tableData.length)
             return;
 
+        const _removedCatTitles = [];
+
         document.querySelectorAll(this._checkTickedSelector)
-            .forEach(el => el.parentElement.parentElement.remove());
+            .forEach(el => {
+                _removedCatTitles.push(el.dataset.title);
+                el.parentElement.parentElement.remove();
+            });
 
         this._tableData = this._tableData.filter(pi => 
-            !ArrayExtension.contains(this._removedCategories, pi.title));
+            !ArrayExtension.contains(_removedCatTitles, pi.title));
             
         this._makeDefaultBtn.disabled = true;
         this._removeBtn.disabled = true;
@@ -322,7 +327,7 @@ class CategoryTable extends BaseTable {
         check.dataset.title = categoryInfo.title;
         check.className = this._checkClassName;
         check.type = 'checkbox';
-        check.onchange = this._bindToThis(this._updateCategoryButtonsAvailability);
+        check.onchange = this._bindToThis(this._updateButtonsAvailability);
 
         const checkCell = document.createElement(this._TABLE_CELL_NAME);
         checkCell.append(check);
@@ -337,7 +342,7 @@ class CategoryTable extends BaseTable {
         return row;
     }
 
-    _updateCategoryButtonsAvailability(isFromRowCheckedEvent = false) {
+    _updateButtonsAvailability(isFromRowCheckedEvent = false) {
         const checkedNumber = 
             document.querySelectorAll(this._checkTickedSelector).length;
         
@@ -403,7 +408,7 @@ class PageTable extends BaseTable {
         check.dataset.uri = pageInfo.uri;
         check.className = this._checkClassName;
         check.type = 'checkbox';
-        check.onchange = this._bindToThis(this._updatePageButtonsAvailability);
+        check.onchange = this._bindToThis(this._updateButtonsAvailability);
 
         const checkCell = document.createElement(this._TABLE_CELL_NAME);
         checkCell.append(check);
@@ -413,7 +418,7 @@ class PageTable extends BaseTable {
         return row;
     }
 
-    _updatePageButtonsAvailability(isFromRowCheckedEvent = false) {
+    _updateButtonsAvailability(isFromRowCheckedEvent = false) {
         const checkedNumber = 
             document.querySelectorAll(this._checkTickedSelector).length;
         
