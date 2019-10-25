@@ -89,17 +89,16 @@ class PreferencesDOM {
    
     _assertRowValues() { }
 
-    tickRowCheck(tickNumber = 1) {
+    tickRowCheckByIndex(checkIndex) {
         const rows = this.getTableBody().rows;
-
-        const selectedRows = [];
-
-        if (rows === 1)
-            selectedRows.push(rows.item(Randomiser.getRandomNumber(rows.length)));
-        else
-            for (let i = 0; i < tickNumber && i < rows.length; ++i)
-                selectedRows.push(rows.item(i));
         
+        const selectedRows = [];
+        selectedRows.push(rows.item(checkIndex));
+        
+        return this._checkSelectedRows(selectedRows)[0];
+    }
+
+    _checkSelectedRows(selectedRows) {
         return selectedRows.map(r => {
             const rowCheck = r.querySelector('input[type=checkbox]');
             rowCheck.checked = true;
@@ -107,6 +106,20 @@ class PreferencesDOM {
             this.dispatchChangeEvent(rowCheck);
             return this._getRowKey(rowCheck);
         });
+    }
+
+    tickRowCheck(tickNumber = 1) {
+        const rows = this.getTableBody().rows;
+
+        const selectedRows = [];
+
+        if (tickNumber === 1)
+            selectedRows.push(rows.item(Randomiser.getRandomNumber(rows.length)));
+        else
+            for (let i = 0; i < tickNumber && i < rows.length; ++i)
+                selectedRows.push(rows.item(i));
+        
+        return this._checkSelectedRows(selectedRows);
     }
 
     _getRowKey() { }

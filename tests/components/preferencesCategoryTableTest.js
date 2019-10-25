@@ -146,26 +146,52 @@ describe('components/preferences/categoryTable', function () {
             );
         });
 
+        const markAnotherCategoryDefault = categories => {
+            let newDefCategoryIndex;
+            const curDefCategory = ArrayExtension.sortAsc(categories, 'title').find((c, index) => {
+                if (c.default)
+                    return true;
+                
+                newDefCategoryIndex = index;
+                return false;
+            });
+
+            assert(curDefCategory);
+
+            newDefCategoryIndex = newDefCategoryIndex >= 0 ? newDefCategoryIndex: categories.length - 1;
+            const defaultCatTitle = categoryTableDOM.tickRowCheckByIndex(newDefCategoryIndex);
+
+            categoryTableDOM.dispatchClickEvent(categoryTableDOM.getMakingDefaultBtn());
+
+            return defaultCatTitle;
+        };
+
+        it('should save another default category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestCategories(),
+                async categories => {
+                    const preferences = new Preferences();
+
+                    await preferences.load();
+
+                    const defaultCatTitle = markAnotherCategoryDefault(categories);
+
+                    await preferences.save();
+                    
+                    const savedCategories = await PageInfo.getAllSavedCategories();
+                    assert.strictEqual(savedCategories.length, categories.length);
+
+                    const defaultCategories = savedCategories.filter(sc => sc.default === true);
+                    assert.strictEqual(defaultCategories.length, 1);
+                    assert.strictEqual(defaultCategories[0].title, defaultCatTitle);
+                })
+        );
+
         it('should make another category default', () => {
             return Expectation.expectResolution(StorageHelper.saveTestCategories(5),
                 categories => new Preferences().load()
                     .then(() => {
-                        let newDefCategoryIndex;
-                        const curDefCategory = categories.find((c, index) => {
-                            if (c.default)
-                                return true;
-                            
-                            newDefCategoryIndex = index;
-                            return false;
-                        });
+                        const categoryTitle = markAnotherCategoryDefault(categories);
 
-                        assert(curDefCategory);
-
-                        newDefCategoryIndex = newDefCategoryIndex >= 0 || categories.length - 1;
-                        const categoryTitle = categoryTableDOM.tickRowCheck(newDefCategoryIndex)[0];
-
-                        categoryTableDOM.dispatchClickEvent(
-                            categoryTableDOM.getMakingDefaultBtn());
                         assert(categories.find(c => c.title === categoryTitle && c.default));
                         categoryTableDOM.assertTableValues(categories);
 

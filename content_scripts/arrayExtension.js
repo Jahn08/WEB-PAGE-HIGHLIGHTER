@@ -18,4 +18,20 @@ class ArrayExtension {
 
         return false;
     }
+
+    static sortAsc(array, fieldName) {
+        return this._sortByField(array, fieldName, true);
+    }
+
+    static _sortByField(array, fieldName, asc) {
+        if (!array || !fieldName)
+            return array;
+
+        return asc ? array.sort((a, b) => a[fieldName] > b[fieldName] ? 1 : (a[fieldName] < b[fieldName] ? -1: 0)):
+            array.sort((a, b) => b[fieldName] > a[fieldName] ? 1 : (b[fieldName] < a[fieldName] ? -1: 0));
+    }
+
+    static sortDesc(array, fieldName) {
+        return this._sortByField(array, fieldName, false);
+    }
 }
