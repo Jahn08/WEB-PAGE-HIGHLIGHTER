@@ -5,6 +5,7 @@ import { Randomiser } from '../tools/randomiser.js';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences, PagePackageError } from '../../components/preferences.js';
 import { PagePreferencesDOM } from '../tools/preferencesDOM.js';
+import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { FileTransfer } from '../tools/fileTransfer.js';
 import fs from 'fs';
@@ -73,6 +74,8 @@ describe('components/preferences/pageTable', function () {
         });
     });
 
+    const preferencesTester = new PreferencesTestHelper(pageTableDOM);
+
     describe('#remove', function () {
 
         it('should enable button for removing several pages', () => {
@@ -99,66 +102,31 @@ describe('components/preferences/pageTable', function () {
         it('should remove several pages', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageInfo()
                 .then(async expectedPageData => {
-                    const preferences = new Preferences();
-
-                    await preferences.load();
-
-                    const urisForRemoval = pageTableDOM.tickRowCheck(2);
-
-                    const btn = pageTableDOM.getRemovingBtn();
-                    assert(!btn.disabled);
-                    
-                    pageTableDOM.dispatchClickEvent(btn);
-
-                    await preferences.save();
+                    const removedUris = await preferencesTester.removeSomeRows();
 
                     const pageInfos = await PageInfo.getAllSavedPagesFullInfo();
                     assert.deepStrictEqual(pageInfos, 
-                        expectedPageData.filter(pi => !urisForRemoval.includes(pi.uri)));
+                        expectedPageData.filter(pi => !removedUris.includes(pi.uri)));
                 }))
         );
     });
     
     describe('#search', function () {
 
-        const testSearching = activateSearchFn =>
+        it('should filter the results by clicking enter in the respective field', () => 
             Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
-                pagesInfo => new Preferences().load()
-                    .then(() => {
-                        const searchField = pageTableDOM.getSearchField();
-                        assert(searchField);
-                        
-                        const pageInfoToFind = Randomiser.getRandomArrayItem(pagesInfo);
-
-                        const titleToSearch = '' + pageInfoToFind.title;
-                        const textToSearch = titleToSearch.substring(titleToSearch.length - titleToSearch.length / 2);
-                        
-                        searchField.value = textToSearch;
-
-                        activateSearchFn(searchField);
-                        
-                        const tableBody = pageTableDOM.getTableBody();
-
-                        const targetText = textToSearch.toUpperCase();
-
-                        assert([...tableBody.rows].filter(r => !r.textContent.toUpperCase().includes(targetText))
-                            .every(r => r.classList.contains('form--table--row-hidden')));
-                    })
-            );
-
-        it('should filter the results by clicking enter in the respective field', 
-            () => testSearching(searchField =>
-                searchField.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+                pagesInfo => preferencesTester.searchByEnterClick(pagesInfo))
         );
 
-        it('should filter the results by changing text in the respective field', 
-            () => testSearching(searchField => pageTableDOM.dispatchChangeEvent(searchField))
+        it('should filter the results by changing text in the respective field', () => 
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
+                pagesInfo => preferencesTester.searchByInputting(pagesInfo))
         );
     });
 
     describe('#sort', function () {
 
-        it('should load saved page data and sort the results by date afterwards', () => {
+        it('should sort pages by their dates', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
                 pagesInfo => new Preferences().load()
                     .then(() => {
@@ -173,14 +141,15 @@ describe('components/preferences/pageTable', function () {
                             return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
                         };
 
-                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
-                            .sort((a, b) => a.date > b.date ? 1 : (a.date < b.date ? -1 : 0))
-                            .map(pi => PagePreferencesDOM.formatDate(pi.date)));
+                        const sortField = 'date';
+                        assert.deepStrictEqual(sortDates(),
+                            ArrayExtension.sortAsc(pagesInfo, sortField)
+                                .map(pi => PagePreferencesDOM.formatDate(pi[sortField])));
                         assert(pageTableDOM.isHeaderSortedAsc(dateHeader));
 
-                        assert.deepStrictEqual(sortDates(), pagesInfo.sort(pi => pi.date)
-                            .sort((a, b) => b.date > a.date ? 1 : (b.date < a.date ? -1 : 0))
-                            .map(pi => PagePreferencesDOM.formatDate(pi.date)));
+                        assert.deepStrictEqual(sortDates(), 
+                            ArrayExtension.sortDesc(pagesInfo, sortField)
+                                .map(pi => PagePreferencesDOM.formatDate(pi[sortField])));
                         assert(pageTableDOM.isHeaderSortedDesc(dateHeader));
                     })
             );

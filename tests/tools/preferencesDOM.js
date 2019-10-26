@@ -27,20 +27,21 @@ class PreferencesDOM {
         if (clickableCtrl.disabled)
             return;
 
-        this._dispatchEvent(clickableCtrl, this._createClickEvent());
+        this._dispatchEvent(clickableCtrl, new Event('click'));
     }
-
-    _createClickEvent() { return new Event('click'); }
 
     _dispatchEvent(ctrl, event) {
         ctrl.dispatchEvent(event);
     }
 
     dispatchChangeEvent(changeableCtrl) {
-        this._dispatchEvent(changeableCtrl, this._createChangeEvent());
+        this._dispatchEvent(changeableCtrl, new Event('change'));
     }
 
-    _createChangeEvent() { return new Event('change'); }
+    dispatchEnterClickEvent(clickableCtrl) {
+        this._dispatchEvent(clickableCtrl, 
+            new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    }
 
     getTableHeaders() {
         return [...document.getElementById(this._sectionPage)

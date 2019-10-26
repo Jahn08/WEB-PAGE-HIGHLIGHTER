@@ -7,6 +7,7 @@ import { Preferences } from '../../components/preferences.js';
 import { CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
 
 describe('components/preferences/categoryTable', function () {
     this.timeout(0);
@@ -203,7 +204,6 @@ describe('components/preferences/categoryTable', function () {
         });
     });
 
-
     describe('#remove', function () {
 
         it('should enable button for removing several categories', () => {
@@ -229,24 +229,60 @@ describe('components/preferences/categoryTable', function () {
         it('should remove several categories', () =>
             Expectation.expectResolution(StorageHelper.saveTestCategories()
                 .then(async expectedPageData => {
-                    const preferences = new Preferences();
-
-                    await preferences.load();
-
-                    const titlesForRemoval = categoryTableDOM.tickRowCheck(2);
-
-                    const btn = categoryTableDOM.getRemovingBtn();
-                    assert(!btn.disabled);
-                    
-                    categoryTableDOM.dispatchClickEvent(btn);
-
-                    await preferences.save();
+                    const removedTitles = await preferencesTester.removeSomeRows();
 
                     const categories = await PageInfo.getAllSavedCategories();
                     assert.deepStrictEqual(categories, 
-                        expectedPageData.filter(c => !titlesForRemoval.includes(c.title)));
+                        expectedPageData.filter(c => !removedTitles.includes(c.title)));
                 }))
         );
     });
 
+    const preferencesTester = new PreferencesTestHelper(categoryTableDOM);
+
+    describe('#search', function () {
+
+        it('should filter the results by clicking enter in the respective field', () => 
+            Expectation.expectResolution(StorageHelper.saveTestCategories(5),
+                categories => preferencesTester.searchByEnterClick(categories))
+        );
+
+        it('should filter the results by changing text in the respective field', () => 
+            Expectation.expectResolution(StorageHelper.saveTestCategories(5),
+                categories => preferencesTester.searchByInputting(categories))
+        );
+    });
+
+    describe('#sort', function () {
+
+        it('should sort categories by their titles', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestCategories(10),
+                categories => new Preferences().load()
+                    .then(() => {
+                        const sortField = 'title';
+
+                        const titleHeader = categoryTableDOM.getTableHeaders()
+                            .filter(h => h.dataset.sortField === sortField)[0];
+                        assert(titleHeader);
+
+                        const tableBody = categoryTableDOM.getTableBody();
+
+                        const sortTitles = () => {
+                            categoryTableDOM.dispatchClickEvent(titleHeader);
+                            
+                            return [...tableBody.rows].map(r => 
+                                r.querySelector('td:nth-child(2)').textContent);
+                        };
+
+                        assert.deepStrictEqual(sortTitles(), 
+                            ArrayExtension.sortDesc(categories, sortField).map(c => c[sortField]));
+                        assert(categoryTableDOM.isHeaderSortedDesc(titleHeader));
+
+                        assert.deepStrictEqual(sortTitles(), 
+                            ArrayExtension.sortAsc(categories, sortField).map(c => c[sortField]));
+                        assert(categoryTableDOM.isHeaderSortedAsc(titleHeader));
+                    })
+            );
+        });
+    });
 });
