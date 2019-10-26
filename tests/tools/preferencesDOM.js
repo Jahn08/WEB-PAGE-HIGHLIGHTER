@@ -146,7 +146,7 @@ class PagePreferencesDOM extends PreferencesDOM {
     _assertRowValues(rows, expectedRowValues) {
         const rowContents = rows.map(r => r.textContent);
         assert(expectedRowValues.every(rv => rowContents.find(rc => 
-            rc.indexOf(rv.title) !== -1 && rc.indexOf(PagePreferencesDOM.formatDate(rv.date)) !== -1) !== null
+            rc.indexOf(rv.title) !== -1 && rc.indexOf(PagePreferencesDOM.formatDate(rv.date)) !== -1)
         ));
     }
 
@@ -168,7 +168,7 @@ class CategoryPreferencesDOM extends PreferencesDOM {
     _assertRowValues(rows, expectedRowValues) {
         const rowContents = rows.map(r => ({ content: r.textContent, default: this._hasDefaultCategory(r) }));
         assert(expectedRowValues.every(rv => rowContents.find(rc => 
-            rc.content.indexOf(rv.title) !== -1 && rc.default == rv.default) !== null
+            rc.content.indexOf(rv.title) !== -1 && !rc.default == !rv.default)
         ));
     }
 

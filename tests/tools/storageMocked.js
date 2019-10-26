@@ -14,7 +14,7 @@ export class StorageMocked {
         if (!content)
             return content;
         
-        return Array.isArray(content) ? Array.from(content): Object.assign({}, content); 
+        return JSON.parse(JSON.stringify(content));
     }
 
     set(keys) {

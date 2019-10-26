@@ -193,12 +193,20 @@ describe('components/preferences/categoryTable', function () {
                     .then(() => {
                         const categoryTitle = markAnotherCategoryDefault(categories);
 
-                        assert(categories.find(c => c.title === categoryTitle && c.default));
+                        let defaultCategory;
+                        categories.forEach(c => {
+                            c.default = c.title === categoryTitle;
+
+                            if (c.default)
+                                defaultCategory = c;
+                        });
                         categoryTableDOM.assertTableValues(categories);
 
                         categoryTableDOM.dispatchClickEvent(
                             categoryTableDOM.getMakingDefaultBtn());
-                        assert(categories.every(c => !c.default));
+
+                        defaultCategory.default = false;
+                        categoryTableDOM.assertTableValues(categories);
                     })
             );
         });
