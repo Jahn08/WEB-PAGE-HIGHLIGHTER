@@ -248,8 +248,12 @@ class CategoryTable extends BaseTable {
         this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
         this._makeDefaultBtn.onclick = this._bindToThis(this._makeCategoryDefault);
 
-        this._defaultCategoryTitle = null;        
+        this._defaultCategoryTitle = null;
+
+        this._isDirty = false;
     }
+
+    _makeDirty() { this._isDirty = true; }
 
     get _DEFAULT_CATEGORY_CLASS_NAME() { return 'form--table-category--row-default'; }
 
@@ -270,6 +274,8 @@ class CategoryTable extends BaseTable {
             
         this._makeDefaultBtn.disabled = true;
         this._removeBtn.disabled = true;
+
+        this._makeDirty();
     }
 
     _addCategory() {
@@ -290,6 +296,8 @@ class CategoryTable extends BaseTable {
 
         this._clearTableRows();
         this._render();
+
+        this._makeDirty();
     }
 
     _makeCategoryDefault() {
@@ -320,6 +328,8 @@ class CategoryTable extends BaseTable {
         }
         else
             this._defaultCategoryTitle = null;
+        
+        this._makeDirty();
     }
 
     _render() {
@@ -361,7 +371,7 @@ class CategoryTable extends BaseTable {
     }
     
     get categories() {
-        return this._tableData;
+        return this._isDirty ? this._tableData: null;
     }
 
     _clearTableRows() {
@@ -761,9 +771,10 @@ class Preferences {
     }
 
     _updateCategoriesInStorage() {
-        return this._categoryTable ? 
-            PageInfo.saveCategories(this._categoryTable.categories) : 
-            Promise.resolve();
+        let changedData;
+
+        return this._categoryTable && (changedData = this._categoryTable.categories) ? 
+            PageInfo.saveCategories(changedData) : Promise.resolve();
     }
 
     get _shouldWarn() {
