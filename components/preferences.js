@@ -101,9 +101,16 @@ class BaseTable {
         const defaultSortField = 'title';
         const sortField = this._sortHeader ? (this._sortHeader.dataset.sortField || defaultSortField): defaultSortField;
 
+        const items = this._tableData.map(i => {
+            if (i[sortField] === undefined)
+                i[sortField] = null;
+
+            return i;
+        });
+
         this._tableData = this._isSortDescending() ? 
-            this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0)):
-            this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0));
+            items.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0)):
+            items.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0));
     }
 
     _bindToThis(fn, args = []) {
