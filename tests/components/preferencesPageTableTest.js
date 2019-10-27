@@ -185,13 +185,6 @@ describe('components/preferences/pageTable', function () {
             FileTransfer.configureGlobals();
         });
 
-        const getAssertedStatusLabel = (expectedMsgNumber = 1) => { 
-            const statusSection = document.getElementById('form-section-status');
-            assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
-
-            return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
-        };
-
         const getFileImportBtn = () => document.getElementById(pageTableDOM.sectionId + '--btn-file');
 
         const getImportBtn = (isUpsertable = false) =>
@@ -220,8 +213,6 @@ describe('components/preferences/pageTable', function () {
             );
         });
 
-        const assertStatusIsEmpty = () => assert(!getAssertedStatusLabel(0));
-
         it('should initiate importing by opening a dialog to opt for a package file', () =>
             Expectation.expectResolution(new Preferences().load()
                 .then(() => {
@@ -237,7 +228,7 @@ describe('components/preferences/pageTable', function () {
 
                     assert.strictEqual(fileDialogIsOpen, true);
 
-                    assertStatusIsEmpty();
+                    pageTableDOM.assertStatusIsEmpty();
                 }))
         );
 
@@ -253,22 +244,9 @@ describe('components/preferences/pageTable', function () {
                 assert.strictEqual(getImportBtn().disabled, false);
                 assert.strictEqual(errorWasThrown, false);
 
-                assertStatusIsEmpty();
+                pageTableDOM.assertStatusIsEmpty();
             })
         );
-
-        const STATUS_WARNING_CLASS = 'form-section-status--label-warning';
-
-        const assertStatusIsWarning = (expectedSubstring = null) => {
-            const statusLabel = getAssertedStatusLabel();
-
-            const warning = statusLabel.innerText;
-            assert(warning);
-            assert(statusLabel.classList.contains(STATUS_WARNING_CLASS));
-
-            if (expectedSubstring)
-                assert(warning.includes(expectedSubstring));
-        };
 
         it('should alert if an imported package file has a wrong file extension', () =>
             initPreferencesWithExport().then(result => {
@@ -278,7 +256,7 @@ describe('components/preferences/pageTable', function () {
                 pageTableDOM.dispatchChangeEvent(fileBtn);
 
                 assert.strictEqual(getImportBtn().disabled, false);
-                assertStatusIsWarning();
+                pageTableDOM.assertStatusIsWarning();
             })
         );
 
@@ -293,7 +271,7 @@ describe('components/preferences/pageTable', function () {
                 fileBtn.files[0].size);
 
             const expectedError = new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
-            assertStatusIsWarning(expectedError.toString());
+            pageTableDOM.assertStatusIsWarning(expectedError.toString());
         };
 
         it('should throw an exception if an imported package file is empty', () =>
@@ -350,13 +328,9 @@ describe('components/preferences/pageTable', function () {
                 }
             });
 
-            const statusLabel = getAssertedStatusLabel();
-    
-            const statusMsg = statusLabel.innerText;
+            const statusMsg = pageTableDOM.assertStatusIsMessage();
             assert(statusMsg);
             assert(statusMsg.endsWith(shouldUpdateExistentPages ? '1' : '0'));
-
-            assert(!statusLabel.classList.contains(STATUS_WARNING_CLASS));
         };
 
         it('should import all pages from a package file and update current ones', () =>

@@ -73,6 +73,9 @@ class BaseTable {
         this._BTN_PREFIX = 'btn-';
 
         this._locale = new BrowserAPI().locale;
+        this._NONE_CATEGORY_NAME = this._locale.getString('preferences-none-category');
+
+        this._statusLabel = null;
 
         this._HEADER_CELL_CLASS = 'form--table--cell-header';
         this._sortHeader = null;
@@ -90,7 +93,7 @@ class BaseTable {
 
         document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]));
         
-        this._render();
+        this._render();    
     }
 
     _isRendered() {
@@ -252,6 +255,29 @@ class BaseTable {
     }
 
     _getRowKey() { }
+
+    _showStatus(text, isWarning = true) {
+        const statusSectionId = this._tableSectionId + '--status';
+
+        if (!this._statusLabel)
+            this._statusLabel = document.getElementById(statusSectionId);        
+
+        const labelEl = document.createElement('label');
+        labelEl.innerText = text;
+
+        const statusLabelClass = 'form-section-status--label';
+        labelEl.className = statusLabelClass;
+
+        if (isWarning)
+            labelEl.classList.add(statusLabelClass + '-warning');
+            
+        this._statusLabel.append(labelEl);
+    }
+
+    _hideStatus() {
+        if (this._statusLabel && this._statusLabel.innerHTML)
+            this._statusLabel.innerHTML = null;
+    }
 }
 
 class CategoryTable extends BaseTable {
@@ -275,11 +301,15 @@ class CategoryTable extends BaseTable {
         this.onAdded = null;
     }
 
-    _makeDirty() { this._isDirty = true; }
+    _makeDirty() { 
+        this._isDirty = true; 
+    }
 
     get _DEFAULT_CATEGORY_CLASS_NAME() { return 'form--table-category--row-default'; }
 
     _removeCategory() {
+        this._hideStatus();
+
         if (!this._tableData.length)
             return;
 
@@ -306,13 +336,20 @@ class CategoryTable extends BaseTable {
     }
 
     _addCategory() {
+        this._hideStatus();
+
         const name = prompt(this._locale.getString('preferences-new-category-prompt'));
 
         if (!name)
             return;
 
-        if (this._tableData.find(i => i.title === name)) {
-            alert(this._locale.getStringWithArgs('preferences-duplicated-category-warning', name));
+        if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
+            this._showStatus(this._locale.getString('preferences-none-category-warning'));
+            return;
+        }
+        else if (this._tableData.find(i => i.title === name)) {
+            this._showStatus(
+                this._locale.getStringWithArgs('preferences-duplicated-category-warning', name));
             return;
         }
 
@@ -330,6 +367,8 @@ class CategoryTable extends BaseTable {
     }
 
     _makeCategoryDefault() {
+        this._hideStatus();
+
         if (!this._tableData.length)
             return;
 
@@ -435,8 +474,6 @@ class PageTable extends BaseTable {
         this._importIsUpsertable = false;
 
         this._updateImportBtnsAvailability(true);
-        
-        this._statusLabel = null;
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
@@ -510,7 +547,7 @@ class PageTable extends BaseTable {
 
             return this._createSelectOption(catName, selected);
         });
-        options.unshift(this._createSelectOption('None', !hasSelectedValue));
+        options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
 
         return options;
     }
@@ -661,24 +698,6 @@ class PageTable extends BaseTable {
         reader.readAsText(new Blob([importPackage]));
     }
 
-    _showStatus(text, isWarning = true) {
-        const statusSectionId = 'form-section-status';
-
-        if (!this._statusLabel)
-            this._statusLabel = document.getElementById(statusSectionId);        
-
-        const labelEl = document.createElement('label');
-        labelEl.innerText = text;
-
-        const statusLabelClass = statusSectionId + '--label';
-        labelEl.className = statusLabelClass;
-
-        if (isWarning)
-            labelEl.classList.add(statusLabelClass + '-warning');
-            
-        this._statusLabel.append(labelEl);
-    }
-
     _updateImportBtnsAvailability(isAvailable) {
         ArrayExtension.runForEach(this._importPageBtns, 
             btn => { 
@@ -699,11 +718,6 @@ class PageTable extends BaseTable {
         this._hideStatus();
 
         this._filePageBtn.click();
-    }
-
-    _hideStatus() {
-        if (this._statusLabel && this._statusLabel.innerHTML)
-            this._statusLabel.innerHTML = null;
     }
 
     _onExportPageBtnClick() {

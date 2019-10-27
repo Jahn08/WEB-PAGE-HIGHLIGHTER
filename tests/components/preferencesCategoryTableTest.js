@@ -50,21 +50,12 @@ describe('components/preferences/categoryTable', function () {
                 }))
         );
 
-        const addCategories = (count, onAlertFn, expectedItems = []) => {
+        const addCategories = (count, expectedItems = [], onWarning = null) => {
             const addBtn = categoryTableDOM.getAddingBtn();
 
             const inputData = [];
 
-            let shouldIncludeInput;
-            global.alert = msg => {
-                shouldIncludeInput = false;
-
-                onAlertFn(msg);
-            };
-
             for (let i = 0; i < count; ++i) {
-                shouldIncludeInput = true;
-
                 let expectedInput;
                 global.prompt = () => 
                     expectedInput = '' + (expectedItems[i] || Randomiser.getRandomNumberUpToMax());
@@ -72,7 +63,11 @@ describe('components/preferences/categoryTable', function () {
                 categoryTableDOM.dispatchClickEvent(addBtn);
                 assert(expectedInput);
 
-                if (shouldIncludeInput)
+                if (categoryTableDOM.hasStatusMessages()) {
+                    if (onWarning)
+                        onWarning();
+                }
+                else
                     inputData.push(expectedInput);
             }
 
@@ -82,11 +77,9 @@ describe('components/preferences/categoryTable', function () {
         it('should add a few new categories in UI', () =>
             Expectation.expectResolution(new Preferences().load(),
                 () => {
-                    const onAlert = msg => 
-                        assert.fail('An unexpected error while adding a new category: ' + msg);
-
                     categoryTableDOM.assertTableValues(
-                        addCategories(5, onAlert).map(c => PageInfoHelper.createCategory(c)));
+                        addCategories(5).map(c => PageInfoHelper.createCategory(c)));
+                    categoryTableDOM.assertStatusIsEmpty();
                 })
         );
 
@@ -96,11 +89,9 @@ describe('components/preferences/categoryTable', function () {
                     const preferences = new Preferences();
 
                     await preferences.load();
-                    
-                    const onAlert = msg => 
-                        assert.fail('An unexpected error while adding a new category: ' + msg);
 
-                    categories.push(...addCategories(3, onAlert).map(c => PageInfoHelper.createCategory(c)));
+                    categories.push(...addCategories(3).map(c => PageInfoHelper.createCategory(c)));
+                    categoryTableDOM.assertStatusIsEmpty();
 
                     await preferences.save();
                     
@@ -114,26 +105,34 @@ describe('components/preferences/categoryTable', function () {
         it('should warn while adding a category with an existent name', () => 
             Expectation.expectResolution(new Preferences().load(), 
                 () => {
-                    const duplicatedCategoryName = Randomiser.getRandomNumberUpToMax();
+                    const duplicatedCategoryName = '' + Randomiser.getRandomNumberUpToMax();
 
-                    let hasWarning = false;
-                    const onAlert = msg => {
-                        hasWarning = true;
+                    const newItems = addCategories(5, [duplicatedCategoryName, duplicatedCategoryName],
+                        () => categoryTableDOM.assertStatusIsWarning(duplicatedCategoryName));
 
-                        assert(msg.indexOf(duplicatedCategoryName) !== -1);
-                    };
-
-                    const altogether = 5;
-                    const newItems = addCategories(altogether, onAlert, 
-                        [duplicatedCategoryName, duplicatedCategoryName]);
-
-                    assert.strictEqual(hasWarning, true);
                     categoryTableDOM.assertTableValues(newItems.map(
                         c => PageInfoHelper.createCategory(c)));
                 })
         );
 
-        it('should warn while adding a category with the None category name');
+        it('should warn while adding a category with the None category name', () =>
+            Expectation.expectResolution(new Preferences().load(), 
+                () => {
+                    const noneCategory = 'none';
+
+                    let warningCount = 0;
+                    let newItems = addCategories(5, [noneCategory, noneCategory.toUpperCase()],
+                        () => {
+                            categoryTableDOM.assertStatusIsWarning(noneCategory);
+
+                            ++warningCount;
+                        });
+
+                    assert.strictEqual(warningCount, 2);
+                    categoryTableDOM.assertTableValues(newItems
+                        .map(c => PageInfoHelper.createCategory(c)));
+                })
+        );
 
         it('should add a new category to the page category filter');
     });

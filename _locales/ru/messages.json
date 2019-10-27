@@ -133,6 +133,15 @@
         "description": "Message for prompting a user to enter title for a new page category in the preferences"
     },
 
+    "preferences_none_category": {
+        "message": "Нет",
+        "description": "Name for categorising pages without a category"
+    },
+
+    "preferences_none_category_warning": {
+        "message": "Категория 'Нет' уже используется для страниц без категории"
+    },
+
     "preferences_duplicated_category_warning": {
         "message": "Категория с именем '$title$' уже существует",
         "placeholders": {

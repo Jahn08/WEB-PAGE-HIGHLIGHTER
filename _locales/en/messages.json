@@ -132,6 +132,15 @@
         "message": "New category title:",
         "description": "Message for prompting a user to enter title for a new page category in the preferences"
     },
+    
+    "preferences_none_category": {
+        "message": "None",
+        "description": "Name for categorising pages without a category"
+    },
+
+    "preferences_none_category_warning": {
+        "message": "The 'None' category is already used for pages without a category"
+    },
 
     "preferences_duplicated_category_warning": {
         "message": "There is already a category with a name '$title$'",

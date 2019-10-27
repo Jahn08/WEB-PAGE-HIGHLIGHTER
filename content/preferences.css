@@ -81,7 +81,6 @@
     color: brown !important;    
 }
 
-
 .form--table-category--row-default td:last-child > label::after {
     content: '✓';
 }

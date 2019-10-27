@@ -6,7 +6,9 @@ class PreferencesDOM {
     constructor(sectionName) {
         this._sectionPage = 'form--section-' +  sectionName;
 
-        this._headerClassName = 'form--table--cell-header';
+        this._HEADER_CLASS_NAME = 'form--table--cell-header';
+
+        this._STATUS_WARNING_CLASS = 'form-section-status--label-warning';
     }
 
     get sectionId() {
@@ -45,7 +47,7 @@ class PreferencesDOM {
 
     getTableHeaders() {
         return [...document.getElementById(this._sectionPage)
-            .getElementsByClassName(this._headerClassName)];
+            .getElementsByClassName(this._HEADER_CLASS_NAME)];
     }
 
     isHeaderSortedAsc(header) {
@@ -53,7 +55,7 @@ class PreferencesDOM {
     }
         
     _checkSortDirection(elem, isAscending) {
-        return elem.classList.contains(`${this._headerClassName}-${(isAscending ? 'asc': 'desc')}`);
+        return elem.classList.contains(`${this._HEADER_CLASS_NAME}-${(isAscending ? 'asc': 'desc')}`);
     }
 
     isHeaderSortedDesc(header) {
@@ -131,6 +133,45 @@ class PreferencesDOM {
 
     _getButton(name) {
         return document.getElementById(`${this._sectionPage}--btn-${name}`);
+    }
+
+    assertStatusIsEmpty() { this._getAssertedStatusLabel(0); }
+
+    assertStatusIsMessage(expectedSubstring) {
+        return this._assertStatus(false, expectedSubstring);
+    }
+
+    _assertStatus(isWarning, expectedSubstring) {
+        const statusLabel = this._getAssertedStatusLabel(1);
+
+        const msg = statusLabel.innerText;
+        assert(msg);
+        assert.strictEqual(statusLabel.classList.contains(this._STATUS_WARNING_CLASS), 
+            isWarning);
+
+        if (expectedSubstring)
+            assert(msg.toUpperCase().includes(expectedSubstring.toUpperCase()));
+
+        return msg;
+    }
+
+    assertStatusIsWarning(expectedSubstring) {
+        return this._assertStatus(true, expectedSubstring);
+    }
+
+    _getAssertedStatusLabel(expectedMsgNumber = 1) { 
+        const statusSection = this._getStatusSection();
+        assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
+
+        return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
+    }
+
+    _getStatusSection() {
+        return document.getElementById(this.sectionId + '--status');
+    }
+
+    hasStatusMessages() {
+        return this._getStatusSection().childNodes.length > 0;
     }
 
     static loadDomModel() {
