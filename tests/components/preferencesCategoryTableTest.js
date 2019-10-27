@@ -132,6 +132,10 @@ describe('components/preferences/categoryTable', function () {
                         c => PageInfoHelper.createCategory(c)));
                 })
         );
+
+        it('should warn while adding a category with the None category name');
+
+        it('should add a new category to the page category filter');
     });
 
 
@@ -244,6 +248,10 @@ describe('components/preferences/categoryTable', function () {
                         expectedPageData.filter(c => !removedTitles.includes(c.title)));
                 }))
         );
+
+        it('should remove categories from the page category filter');
+
+        it('should choose a default category in the page category filter rather than a removed one');
     });
 
     const preferencesTester = new PreferencesTestHelper(categoryTableDOM);

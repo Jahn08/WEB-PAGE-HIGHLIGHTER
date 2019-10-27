@@ -109,6 +109,7 @@ describe('components/preferences', function () {
                     expectedValues.shouldLoad));
         });
 
+        // TODO: CHECK BOTH CATEGORY LISTS AS WELL
         it('should load saved page data from the storage and update the table', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 expectedPageData => new Preferences().load()
@@ -156,9 +157,10 @@ describe('components/preferences', function () {
                 expectedPageData => {
                     const preferences = new Preferences();
                     
+                    // TODO: CHECK CATEGORIES AND PAGE CATEGORIES AS WELL
                     return preferences.load(() => preferences.save().then(() =>
-                        PageInfo.getAllSavedPagesInfo().then(pageInfos =>
-                            assert.deepStrictEqual(pageInfos, expectedPageData)
+                        PageInfo.getAllSavedPagesInfo().then(storedInfo =>
+                            assert.deepStrictEqual(storedInfo.pagesInfo, expectedPageData)
                         )
                     ));
                 });

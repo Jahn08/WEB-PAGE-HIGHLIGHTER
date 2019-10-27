@@ -187,6 +187,11 @@
         "description": "Placeholder for a field filtering saved pages"
     },
 
+    "preferences_category_filter": {
+        "message": "Категории:",
+        "description": "Label for a filtering list with page categories"
+    },
+
     "preferences_page_show_btn": {
         "message": "Открыть",
         "description": "Label for a button showing a saved page in a new tab"
@@ -194,6 +199,15 @@
 
     "preferences_page_show_btn_title": {
         "message": "Открыть в новой вкладке"
+    },
+
+    "preferences_move_btn": {
+        "message": "Переместить в",
+        "description": "Label for a button moving a page to another category"
+    },
+
+    "preferences_move_btn_title": {
+        "message": "Переместить в другую категорию"
     },
 
     "preferences_remove_btn": {

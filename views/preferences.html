@@ -66,6 +66,9 @@
                 <div>
                     <span>🔍</span>
                     <input type="text" class="locale form--txt-search" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-page--txt-search" />
+                
+                    <label class="locale" id="preferences-category-filter">Category:</label>
+                    <select id="form--section-page--filter-category"></select>
                 </div>
                 
                 <table class="form--table" id="form--section-page--table">
@@ -92,14 +95,19 @@
                     <button class="locale" name="preferences-remove-btn" disabled id="form--section-page--btn-remove" type="button" data-locale-add-attr="title" title="Remove">
                         Remove
                     </button>
+
+                    <button class="locale" name="preferences-move-btn" disabled id="form--section-page--btn-move" type="button" data-locale-add-attr="title" title="Move to Another Category">
+                        Move To
+                    </button>
+                    <select id="form--section-page--select-category"></select>
                 </div>
 
                 <div class="form-section-separated">
                     <input id="form--section-page--btn-file" style="display: none" type="file" accept=".hltr" />
-                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-insert-btn" type="button" data-locale-add-attr="title" title="Import adding only new pages">
+                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-insert-btn" type="button" data-locale-add-attr="title" title="Import and add only new pages">
                         Import / Insert
                     </button>
-                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-unpsert-btn" data-upsertable="true" type="button" data-locale-add-attr="title" title="Import updating existent pages">
+                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-unpsert-btn" data-upsertable="true" type="button" data-locale-add-attr="title" title="Import and update existent pages">
                         Import / Update
                     </button>
                     

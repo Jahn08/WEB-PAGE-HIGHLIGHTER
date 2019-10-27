@@ -105,13 +105,19 @@ describe('content_script/pageInfo', function () {
         });
     });
 
+    describe('#getAllSavedCategories', function () {
+        it('should get previously saved categories');
+    });
+
     describe('#getAllSavedPagesInfo', function () {
-        it('should get previously saved page info items without html from the storage', () =>
+        it('should get previously saved page info items without html alongsdide their categories', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
-                const actualPageInfos = await PageInfo.getAllSavedPagesInfo();
+                const storedInfo = await PageInfo.getAllSavedPagesInfo();
 
                 expectedPageInfos.forEach(pi => delete pi[PageInfo.HTML_PROP_NAME]);
-                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
+                assert.deepStrictEqual(storedInfo.pagesInfo, expectedPageInfos);
+
+                // TODO: ASSERT GETTING PAGE CATEGORIES
             })
         );
     });
@@ -238,5 +244,13 @@ describe('content_script/pageInfo', function () {
             return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
                 storedPages => assureExpectedTitles(storedPages));
         });
+    });
+
+    describe('#saveCategories', function () {
+        it('should save categories into storage');
+    });
+
+    describe('#savePageCategories', function () {
+        it('should save page categories into storage');
     });
 });

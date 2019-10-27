@@ -38,30 +38,33 @@ describe('components/preferences/pageTable', function () {
 
         const getShowingUriBtn = () => document.getElementById('form--section-page--btn-show');
 
-        it('should load saved page data and open its uri as loadable', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                () => new Preferences().load()
-                    .then(() => {
-                        const uriForShowing = pageTableDOM.tickRowCheck()[0];
+        it('should load saved page data and open its uri as loadable', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
+                async () => {
+                    await new Preferences().load();
+                
+                    const uriForShowing = pageTableDOM.tickRowCheck()[0];
+
+                    let pageIsOpened = false;
+                    window.open = (uri, target) => {
+                        assert.strictEqual(target, '_blank');
+                        assert(uri.startsWith(uriForShowing));
                         
-                        return new Promise(resolve => {
-                            window.open = (uri, target) => {
-                                assert.strictEqual(target, '_blank');
-                                assert(uri.startsWith(uriForShowing));
-                                
-                                assert.strictEqual(PageInfo.generateLoadingUrl(uriForShowing), 
-                                    uri);
-                                resolve();
-                            };
-        
-                            const btn = getShowingUriBtn();
-                            assert(!btn.disabled);
-                            
-                            pageTableDOM.dispatchClickEvent(btn);
-                        });
-                    })
-            );
-        });
+                        assert.strictEqual(PageInfo.generateLoadingUrl(uriForShowing), 
+                            uri);
+
+                        pageIsOpened = true;
+                    };
+
+                    const btn = getShowingUriBtn();
+                    assert(!btn.disabled);
+                    
+                    pageTableDOM.dispatchClickEvent(btn);
+
+                    assert(pageIsOpened, `A page with url '${uriForShowing}' wasn't open`);
+                }
+            )
+        );
 
         it('should disable button for showing several uris', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
@@ -72,6 +75,26 @@ describe('components/preferences/pageTable', function () {
                     })
             );
         });
+    });
+
+    describe('#move', function () {
+        it('should enable button for moving several pages to another category');
+
+        it('should enable button for moving to another category when all pages are checked');
+
+        it('should disable button when there are no categories to move to');
+
+        it('should move several pages to another category');
+    });
+
+    describe('#categoryFilter', function () {
+        it('should show pages related to a default category initially');
+
+        it('should show pages related to the None category if there is no default category');
+
+        it('should show pages related to a chosen category');
+
+        it('should exclude the current filtering category from those available for relocating');
     });
 
     const preferencesTester = new PreferencesTestHelper(pageTableDOM);
@@ -385,7 +408,8 @@ describe('components/preferences/pageTable', function () {
 
                 startImporting();
                 
-                const storedPages = await PageInfo.getAllSavedPagesInfo();
+                const storedInfo = await PageInfo.getAllSavedPagesInfo();
+                const storedPages = storedInfo.pagesInfo;
                 assert.strictEqual(storedPages.length, 1);
                 assert.strictEqual(storedPages[0].uri, TEST_URI);
             })

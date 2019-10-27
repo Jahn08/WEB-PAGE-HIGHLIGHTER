@@ -91,6 +91,8 @@ class PageInfo {
         return this._getAllSavedPagesInfo();
     }
 
+    static get _PAGE_CATEGORY_KEY() { return 'pageCategories'; }
+
     static _getAllSavedPagesInfo(includeHtml = false) {
         return BrowserStorage.getAll().then(objs => {
             const props = Object.getOwnPropertyNames(objs);
@@ -99,7 +101,15 @@ class PageInfo {
 
             const htmlPropName = this.HTML_PROP_NAME;
 
+            const pageCategoryProp = this._PAGE_CATEGORY_KEY;
+            let pageCategories;
+
             ArrayExtension.runForEach(props, prop => {
+                if (prop === pageCategoryProp) {
+                    pageCategories = objs[prop];
+                    return;
+                }
+
                 if (!this._isUriValid(prop))
                     return;
 
@@ -117,12 +127,15 @@ class PageInfo {
                 pagesInfo.push(pageInfo);
             });
 
-            return pagesInfo;
+            return {
+                pageCategories: pageCategories || [],
+                pagesInfo
+            };
         });
     }
 
     static getAllSavedPagesFullInfo() {
-        return this._getAllSavedPagesInfo(true);
+        return this._getAllSavedPagesInfo(true).then(info => info.pagesInfo);
     }
 
     static generateLoadingUrl(url) {
@@ -184,7 +197,11 @@ class PageInfo {
 
     static get _CATEGORY_KEY() { return 'categories'; }
 
-    static saveCategories(categories) {
-        return new BrowserStorage(this._CATEGORY_KEY).set(categories);
+    static saveCategories(data) {
+        return new BrowserStorage(this._CATEGORY_KEY).set(data);
+    }
+
+    static savePageCategories(data) {
+        return new BrowserStorage(this._PAGE_CATEGORY_KEY).set(data);
     }
 }
