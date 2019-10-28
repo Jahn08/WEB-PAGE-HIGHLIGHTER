@@ -287,6 +287,7 @@ class CategoryTable extends BaseTable {
         this._removeBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
         this._removeBtn.onclick = this.bindToThis(this._removeCategory);
 
+        this._categoryTitleTxt = this._getControlByName('txt-title');
         this._addBtn = this._getControlByName(this._BTN_PREFIX + 'add');
         this._addBtn.onclick = this.bindToThis(this._addCategory);
 
@@ -338,12 +339,13 @@ class CategoryTable extends BaseTable {
     _addCategory() {
         this._hideStatus();
 
-        const name = prompt(this._locale.getString('preferences-new-category-prompt'));
+        const name = this._categoryTitleTxt.value;
 
-        if (!name)
+        if (!name) {
+            this._showStatus(this._locale.getString('preferences-unnamed-category-warning'));
             return;
-
-        if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
+        }
+        else if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
             this._showStatus(this._locale.getString('preferences-none-category-warning'));
             return;
         }
@@ -362,6 +364,8 @@ class CategoryTable extends BaseTable {
         this._render();
 
         this._makeDirty();
+
+        this._categoryTitleTxt.value = null;
 
         this._emitEvent(this.onAdded, name);
     }

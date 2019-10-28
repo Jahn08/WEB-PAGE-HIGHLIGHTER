@@ -53,25 +53,29 @@ describe('components/preferences/categoryTable', function () {
         const addCategories = (count, expectedItems = [], onWarning = null) => {
             const addBtn = categoryTableDOM.getAddingBtn();
 
-            const inputData = [];
+            const inputs = [];
 
             for (let i = 0; i < count; ++i) {
-                let expectedInput;
-                global.prompt = () => 
-                    expectedInput = '' + (expectedItems[i] || Randomiser.getRandomNumberUpToMax());
+                const input = '' + (expectedItems[i] == null ? 
+                    Randomiser.getRandomNumberUpToMax(): expectedItems[i]);
+
+                const titleTxt = categoryTableDOM.getNewCategoryTitleTxt();
+                titleTxt.value = input;
 
                 categoryTableDOM.dispatchClickEvent(addBtn);
-                assert(expectedInput);
 
                 if (categoryTableDOM.hasStatusMessages()) {
                     if (onWarning)
-                        onWarning();
+                        onWarning(input);
                 }
-                else
-                    inputData.push(expectedInput);
+                else {
+                    assert(!titleTxt.value,
+                        'A field with a new category name should be emptied after successfull input');
+                    inputs.push(input);
+                }
             }
 
-            return inputData;
+            return inputs;
         };
 
         it('should add a few new categories in UI', () =>
@@ -109,6 +113,22 @@ describe('components/preferences/categoryTable', function () {
 
                     const newItems = addCategories(5, [duplicatedCategoryName, duplicatedCategoryName],
                         () => categoryTableDOM.assertStatusIsWarning(duplicatedCategoryName));
+
+                    categoryTableDOM.assertTableValues(newItems.map(
+                        c => PageInfoHelper.createCategory(c)));
+                })
+        );
+
+        it('should warn when adding a category with an empty name', () => 
+            Expectation.expectResolution(new Preferences().load(), 
+                () => {
+                    const emptyName = '';
+
+                    const newItems = addCategories(5, [emptyName],
+                        input => {
+                            categoryTableDOM.assertStatusIsWarning();
+                            assert.strictEqual(input, emptyName);
+                        });
 
                     categoryTableDOM.assertTableValues(newItems.map(
                         c => PageInfoHelper.createCategory(c)));

@@ -128,14 +128,18 @@
         "description": "Warning when there is a try to leave a page with unsaved changes"
     },
 
-    "preferences_new_category_prompt": {
-        "message": "Имя новой категории:",
-        "description": "Message for prompting a user to enter title for a new page category in the preferences"
+    "preferences_new_category": {
+        "message": "Имя новой категории",
+        "description": "Placeholder for a field with a title for a new page category in the preferences"
     },
 
     "preferences_none_category": {
         "message": "Нет",
         "description": "Name for categorising pages without a category"
+    },
+
+    "preferences_unnamed_category_warning": {
+        "message": "Пожалуйста, введите имя новой категории"
     },
 
     "preferences_none_category_warning": {

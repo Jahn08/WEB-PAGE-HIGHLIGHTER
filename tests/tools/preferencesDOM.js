@@ -155,7 +155,7 @@ class PreferencesDOM {
         return msg;
     }
 
-    assertStatusIsWarning(expectedSubstring) {
+    assertStatusIsWarning(expectedSubstring = null) {
         return this._assertStatus(true, expectedSubstring);
     }
 
@@ -227,6 +227,10 @@ class CategoryPreferencesDOM extends PreferencesDOM {
 
     getMakingDefaultBtn() {
         return this._getButton('default');
+    }
+
+    getNewCategoryTitleTxt() {
+        return document.getElementById(this._sectionPage + '--txt-title');
     }
 }
 
