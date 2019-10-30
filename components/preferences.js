@@ -304,7 +304,8 @@ class CategoryTable extends BaseTable {
         this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
         this._makeDefaultBtn.onclick = this.bindToThis(this._makeCategoryDefault);
 
-        this._defaultCategoryTitle = null;
+        const defaultCategory = categories.find(c => c.default);
+        this._defaultCategoryTitle = defaultCategory ? defaultCategory.title: null;
 
         this.onRemoved = null;
         this.onAdded = null;
@@ -449,6 +450,10 @@ class CategoryTable extends BaseTable {
         return this._isDirty ? this._tableData: null;
     }
 
+    get defaultCategoryTitle() {
+        return this._defaultCategoryTitle;
+    }
+
     _clearTableRows() {
         this._defaultCategoryTitle = null;
         
@@ -457,7 +462,7 @@ class CategoryTable extends BaseTable {
 }
 
 class PageTable extends BaseTable {
-    constructor(pagesInfo = [], pageCategories = [], defaultCategory = null) {
+    constructor(pagesInfo = [], pageCategories = [], defaultCategoryTitle = null) {
         super('page', pagesInfo);
 
         this._removedPageUris = [];
@@ -487,7 +492,7 @@ class PageTable extends BaseTable {
 
         this._pageCategories = pageCategories;
 
-        this._defaultCategory = defaultCategory;
+        this._defaultCategoryTitle = defaultCategoryTitle;
         this._categoryFilter = this._getControlByName('filter-category');
         this._categoryFilter.onchange = this.bindToThis(this._showCategoryPages);
 
@@ -498,7 +503,6 @@ class PageTable extends BaseTable {
         
         this._originalData = Array.from(this._tableData);
 
-        // TODO: SHOW RIGHT PAGES FOR AN INITIAL CATEGORY
         this._renderCategoryControls();
     }
 
@@ -524,7 +528,7 @@ class PageTable extends BaseTable {
     _showCategoryPages() {
         this._clearElement(this._categorySelector);
         this._appendOptionsToCategorySelector(
-            this._createCategoryOptions(this._categoryFilter.value));
+            this._createCategoryOptions(this._getCurrentCategory()));
 
         this._tableData = this._getCategoryPages();
         this._rerender();
@@ -534,12 +538,16 @@ class PageTable extends BaseTable {
         this._categorySelector.append(...options.filter(c => !c.selected));
     }
 
+    _getCurrentCategory() {
+        return this._categoryFilter.value || this._NONE_CATEGORY_NAME;
+    }
+
     _movePagesToCategory() {
         this._hideStatus();
 
         const movedPageUris = this._removeRows();
 
-        const curCategoryName = this._categoryFilter.value;
+        const curCategoryName = this._getCurrentCategory();
         const curCategory = this._pageCategories.find(c => c.category === curCategoryName);
 
         if (curCategory)
@@ -562,7 +570,7 @@ class PageTable extends BaseTable {
     }
 
     _getCategoryPages() {
-        const curCategoryName = this._categoryFilter.value || this._NONE_CATEGORY_NAME;
+        const curCategoryName = this._getCurrentCategory();
 
         if (curCategoryName === this._NONE_CATEGORY_NAME) {
             const categorisedPages = this._pageCategories.reduce((p, c) => {
@@ -581,13 +589,12 @@ class PageTable extends BaseTable {
     }
 
     _renderCategoryControls() {
-        const selectedValue = this._categoryFilter.value || this._defaultCategory;
+        const selectedValue = this._categoryFilter.value || this._defaultCategoryTitle;
 
         this._clearElement(this._categoryFilter);
-        this._clearElement(this._categorySelector);
-    
         this._categoryFilter.append(...this._createCategoryOptions(selectedValue));
-        this._appendOptionsToCategorySelector(this._createCategoryOptions(selectedValue));
+
+        this._showCategoryPages();
     }
 
     _createCategoryOptions(selectedCategory) {
@@ -848,7 +855,7 @@ class Preferences {
         this._initColourList();
 
         this._pageTable = null;
-        this._defaultCategory = null;
+        this._defaultCategoryTitle = null;
 
         this._categoryTable = null;
 
@@ -917,7 +924,8 @@ class Preferences {
 
     _initPageTable() {
         return PageInfo.getAllSavedPagesInfo().then(info => {
-            this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, this._defaultCategory);
+            this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, 
+                this._defaultCategoryTitle);
 
             if (this._categoryTable) {
                 this._categoryTable.onAdded = 
@@ -931,9 +939,7 @@ class Preferences {
     _initCategoryTable() {
         return PageInfo.getAllSavedCategories().then(categories => {
             this._categoryTable = new CategoryTable(categories);
-
-            if (categories)
-                this._defaultCategory = categories.find(c => c.default);
+            this._defaultCategoryTitle = this._categoryTable.defaultCategoryTitle;
         });
     }
 
