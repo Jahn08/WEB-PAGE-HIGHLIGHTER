@@ -75,6 +75,8 @@ class BaseTable {
         this._locale = new BrowserAPI().locale;
         this._NONE_CATEGORY_NAME = this._locale.getString('preferences-none-category');
 
+        this._isDirty = false; 
+
         this._statusLabel = null;
 
         this._HEADER_CELL_CLASS = 'form--table--cell-header';
@@ -93,7 +95,7 @@ class BaseTable {
 
         document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]));
         
-        this._render();    
+        this._render();  
     }
 
     _isRendered() {
@@ -170,8 +172,7 @@ class BaseTable {
         
         this._sortTableData();
 
-        this._clearTableRows();
-        this._render();
+        this._rerender();
     }
 
     _getDescSortClassName() {
@@ -180,6 +181,11 @@ class BaseTable {
 
     _isSortDescending() {
         return this._sortHeader ? this._sortHeader.classList.contains(this._getDescSortClassName()): false;
+    }
+   
+    _rerender() {
+        this._clearTableRows();
+        this._render();
     }
 
     _clearTableRows() {
@@ -278,6 +284,10 @@ class BaseTable {
         if (this._statusLabel && this._statusLabel.innerHTML)
             this._statusLabel.innerHTML = null;
     }
+    
+    _makeDirty() { 
+        this._isDirty = true; 
+    }
 }
 
 class CategoryTable extends BaseTable {
@@ -296,14 +306,8 @@ class CategoryTable extends BaseTable {
 
         this._defaultCategoryTitle = null;
 
-        this._isDirty = false;
-
         this.onRemoved = null;
         this.onAdded = null;
-    }
-
-    _makeDirty() { 
-        this._isDirty = true; 
     }
 
     get _DEFAULT_CATEGORY_CLASS_NAME() { return 'form--table-category--row-default'; }
@@ -360,8 +364,7 @@ class CategoryTable extends BaseTable {
 
         this._sortTableData();
 
-        this._clearTableRows();
-        this._render();
+        this._rerender();
 
         this._makeDirty();
 
@@ -482,7 +485,6 @@ class PageTable extends BaseTable {
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
 
-        this._pageCategoryChanged = false;
         this._pageCategories = pageCategories;
 
         this._defaultCategory = defaultCategory;
@@ -493,7 +495,10 @@ class PageTable extends BaseTable {
 
         this._moveToCategoryBtn =  this._getControlByName(this._BTN_PREFIX + 'move');
         this._moveToCategoryBtn.onclick = this.bindToThis(this._movePagesToCategory);
+        
+        this._originalData = Array.from(this._tableData);
 
+        // TODO: SHOW RIGHT PAGES FOR AN INITIAL CATEGORY
         this._renderCategoryControls();
     }
 
@@ -501,6 +506,7 @@ class PageTable extends BaseTable {
         this._pageCategories.push({ category: categoryTitle, pages: [] });
 
         this._renderCategoryControls();
+        this._makeDirty();
     }
 
     removePageCategories(categoryTitles = []) {
@@ -508,14 +514,20 @@ class PageTable extends BaseTable {
             .filter(c => !categoryTitles.includes(c.category));
 
         this._renderCategoryControls();
+
+        this._tableData = this._getCategoryPages();
+        this._rerender();
+        
+        this._makeDirty();
     }
 
     _showCategoryPages() {
-        // TODO: RENDER CATEGORY PAGES HERE
-
         this._clearElement(this._categorySelector);
         this._appendOptionsToCategorySelector(
             this._createCategoryOptions(this._categoryFilter.value));
+
+        this._tableData = this._getCategoryPages();
+        this._rerender();
     }
 
     _appendOptionsToCategorySelector(options = []) {
@@ -523,9 +535,49 @@ class PageTable extends BaseTable {
     }
 
     _movePagesToCategory() {
-        //const movedPageUris = this._removeRows();
+        this._hideStatus();
 
-        // TODO: RERENDER THE CURRENT PAGE LIST
+        const movedPageUris = this._removeRows();
+
+        const curCategoryName = this._categoryFilter.value;
+        const curCategory = this._pageCategories.find(c => c.category === curCategoryName);
+
+        if (curCategory)
+            curCategory.pages = curCategory.pages.filter(cp => !movedPageUris.includes(cp));
+
+        const newCategoryName = this._categorySelector.value;
+
+        if (newCategoryName === this._NONE_CATEGORY_NAME)
+            return;
+
+        const newCategory = this._pageCategories.find(c => c.category === newCategoryName);
+
+        if (!newCategory) {
+            this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', newCategoryName));
+            return;
+        }
+
+        newCategory.pages.push(...movedPageUris);
+        this._makeDirty();
+    }
+
+    _getCategoryPages() {
+        const curCategoryName = this._categoryFilter.value || this._NONE_CATEGORY_NAME;
+
+        if (curCategoryName === this._NONE_CATEGORY_NAME) {
+            const categorisedPages = this._pageCategories.reduce((p, c) => {
+                p.push(...c.pages);
+                return p;
+            }, []);
+            return this._originalData.filter(d => !categorisedPages.includes(d.uri));
+        }
+
+        const curCategory = this._pageCategories.find(c => c.category === curCategoryName);
+
+        if (!curCategory)
+            return [];
+            
+        return this._originalData.filter(d => curCategory.pages.includes(d.uri)) ;
     }
 
     _renderCategoryControls() {
@@ -565,7 +617,7 @@ class PageTable extends BaseTable {
     }
 
     get pageCategories() {
-        return this._pageCategoryChanged ? this._pageCategories: null;
+        return this._isDirty ? this._pageCategories: null;
     }
 
     _render() {
@@ -624,8 +676,7 @@ class PageTable extends BaseTable {
 
         const removedPageUris = this._removeRows();
         this._removedPageUris.push(...removedPageUris);
-
-        this._tableData = this._tableData.filter(pi => 
+        this._originalData = this._originalData.filter(pi => 
             !ArrayExtension.contains(this._removedPageUris, pi.uri));
             
         this._showPageBtn.disabled = true;
@@ -635,6 +686,15 @@ class PageTable extends BaseTable {
             this._updateImportBtnsAvailability(true);
             this._exportPageBtn.disabled = true;
         }
+    }
+
+    _removeRows() {
+        const removedPageUris = super._removeRows();
+
+        this._tableData = this._tableData.filter(pi => 
+            !ArrayExtension.contains(removedPageUris, pi.uri));
+
+        return removedPageUris;
     }
 
     _onChoosePackageFileBtnClick() {
@@ -660,27 +720,27 @@ class PageTable extends BaseTable {
                 if (!result || !(pagesToImport = JSON.parse(result)) || !pagesToImport.length)
                     throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
-                if (this._tableData.length)
+                if (this._originalData.length)
                 {
                     if (this._importIsUpsertable)
-                        this._tableData = this._tableData.filter(imp => 
+                        this._originalData = this._originalData.filter(imp => 
                             !pagesToImport.find(pi => pi.uri === imp.uri));
                     else
                         pagesToImport = pagesToImport.filter(imp => 
-                            !this._tableData.find(pi => pi.uri === imp.uri));
+                            !this._originalData.find(pi => pi.uri === imp.uri));
                 }
                 
                 const importedPages = PageInfo.savePages(pagesToImport);
-                this._tableData = this._tableData.concat(importedPages);
+                this._originalData = this._originalData.concat(importedPages);
 
-                const presentPageUris = this._tableData.map(p => p.uri);
+                const presentPageUris = this._originalData.map(p => p.uri);
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
 
+                this._tableData = this._getCategoryPages();
                 this._sortTableData();
 
-                this._clearTableRows();
-                this._render();
+                this._rerender();
 
                 if (importedPages.length)
                     this.initialiseExport();
@@ -725,7 +785,7 @@ class PageTable extends BaseTable {
     }
 
     _onExportPageBtnClick() {
-        if (!this._tableData.length)
+        if (!this._originalData.length)
             return;
 
         if (!this._exportPageLink) {
@@ -857,10 +917,7 @@ class Preferences {
 
     _initPageTable() {
         return PageInfo.getAllSavedPagesInfo().then(info => {
-            this._pageTable = new PageTable(info.pagesInfo,
-                [{ category: 'Science', pages: [] }, { category: 'Financies', pages: [] }],
-                // info.pageCategories, 
-                this._defaultCategory);
+            this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, this._defaultCategory);
 
             if (this._categoryTable) {
                 this._categoryTable.onAdded = 

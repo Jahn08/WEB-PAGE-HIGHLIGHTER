@@ -138,6 +138,15 @@
         "description": "Name for categorising pages without a category"
     },
 
+    "preferences_no_category_warning": {
+        "message": "Категории с именем '$title' не существует",
+        "placeholders": {
+            "title" : {
+                "content" : "$1"
+            }
+        }
+    },
+
     "preferences_unnamed_category_warning": {
         "message": "Пожалуйста, введите имя новой категории"
     },
