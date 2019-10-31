@@ -106,7 +106,12 @@ describe('content_script/pageInfo', function () {
     });
 
     describe('#getAllSavedCategories', function () {
-        it('should get previously saved categories');
+        it('should get previously saved categories',  () =>
+            Expectation.expectResolution(StorageHelper.saveTestCategories(), async categories => {
+                const storedInfo = await PageInfo.getAllSavedCategories();
+                assert.deepStrictEqual(storedInfo, categories);
+            })
+        );
     });
 
     describe('#getAllSavedPagesInfo', function () {
@@ -247,10 +252,33 @@ describe('content_script/pageInfo', function () {
     });
 
     describe('#saveCategories', function () {
-        it('should save categories into storage');
+        it('should save categories into storage', async () => {
+            const testCategories = PageInfoHelper.createCategoryArray();
+            
+            await PageInfo.saveCategories(testCategories);
+           
+            return Expectation.expectResolution(PageInfo.getAllSavedCategories(), 
+                savedCategories => {
+                    assert(savedCategories);
+                    assert.strictEqual(savedCategories.length, testCategories.length);
+                    assert.deepStrictEqual(savedCategories, testCategories);
+                });
+        });
     });
 
     describe('#savePageCategories', function () {
-        it('should save page categories into storage');
+        it('should save page categories into storage', async () => {
+            const testPageCategories = PageInfoHelper.createPageCategoryArray();
+            
+            await PageInfo.savePageCategories(testPageCategories);
+           
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesInfo(), 
+                pageInfo => {
+                    const savedPageCategories = pageInfo.pageCategories;
+                    assert(savedPageCategories);
+                    assert.strictEqual(savedPageCategories.length, testPageCategories.length);
+                    assert.deepStrictEqual(savedPageCategories, testPageCategories);
+                });
+        });
     });
 });

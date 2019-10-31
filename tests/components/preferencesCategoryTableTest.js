@@ -4,7 +4,7 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser.js';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
-import { CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
+import { CategoryPreferencesDOM, PagePreferencesDOM } from '../tools/preferencesDOM.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
@@ -67,6 +67,8 @@ describe('components/preferences/categoryTable', function () {
                 if (categoryTableDOM.hasStatusMessages()) {
                     if (onWarning)
                         onWarning(input);
+                    else
+                        assert.fail('A status message wasn\'t expected');
                 }
                 else {
                     assert(!titleTxt.value,
@@ -141,7 +143,7 @@ describe('components/preferences/categoryTable', function () {
                     const noneCategory = 'none';
 
                     let warningCount = 0;
-                    let newItems = addCategories(5, [noneCategory, noneCategory.toUpperCase()],
+                    const newItems = addCategories(5, [noneCategory, noneCategory.toUpperCase()],
                         () => {
                             categoryTableDOM.assertStatusIsWarning(noneCategory);
 
@@ -154,7 +156,22 @@ describe('components/preferences/categoryTable', function () {
                 })
         );
 
-        it('should add a new category to the page category filter');
+        it('should add a new category to the page category filter and selector', () =>
+            Expectation.expectResolution(new Preferences().load(), 
+                () => {
+                    const newItems = addCategories(3);
+
+                    const assertListContainsCategories = list => {
+                        const options = [...list.options].map(op => op.innerText);
+
+                        assert(newItems.every(i => options.includes(i)));
+                    };
+                    
+                    const pageTableDOM = new PagePreferencesDOM();
+                    assertListContainsCategories(pageTableDOM.getCategoryFilterList());
+                    assertListContainsCategories(pageTableDOM.getCategorySelectorList());
+                })
+        );
     });
 
 

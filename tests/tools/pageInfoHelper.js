@@ -51,4 +51,18 @@ export class PageInfoHelper {
             default: isDefault
         };
     }
+
+    static createPageCategoryArray(numberOfItems = 3) {
+        const categories = this.createCategoryArray(numberOfItems);
+        const pageUris = this.createPageInfoArray(numberOfItems * 2).map(p => p.uri);
+
+        return categories.map((c, index) => {
+            const pageIndex = index * 2;
+
+            return {
+                category: c.title,
+                pages: [pageUris[pageIndex], pageUris[pageIndex + 1]]
+            };
+        });
+    }
 }

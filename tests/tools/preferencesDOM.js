@@ -199,6 +199,14 @@ class PagePreferencesDOM extends PreferencesDOM {
     _getRowKey(row) {
         return (row.dataset || row).uri;
     }
+
+    getCategoryFilterList() {
+        return document.getElementById(this._sectionPage + '--filter-category');
+    }
+    
+    getCategorySelectorList() {
+        return document.getElementById(this._sectionPage + '--select-category');
+    }
 }
 
 class CategoryPreferencesDOM extends PreferencesDOM {
