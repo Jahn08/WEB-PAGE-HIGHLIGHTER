@@ -40,7 +40,7 @@ class PreferencesTestHelper {
             searchField => this._tableDOM.dispatchChangeEvent(searchField));
     }
 
-    async removeSomeRows() {
+    async removeFirstTwoRows() {
         const preferences = new Preferences();
 
         await preferences.load();

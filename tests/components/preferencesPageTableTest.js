@@ -125,7 +125,7 @@ describe('components/preferences/pageTable', function () {
         it('should remove several pages', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageInfo()
                 .then(async expectedPageData => {
-                    const removedUris = await preferencesTester.removeSomeRows();
+                    const removedUris = await preferencesTester.removeFirstTwoRows();
 
                     const pageInfos = await PageInfo.getAllSavedPagesFullInfo();
                     assert.deepStrictEqual(pageInfos, 

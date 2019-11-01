@@ -33,16 +33,28 @@ export class StorageHelper {
             .then(() => { return expectedPageData; });
     }
 
-    static saveTestCategories(numberOfItems = 3, predeterminedTitle = null) {
+    static saveTestCategories(numberOfItems = 3) {
         if (!numberOfItems)
             return Promise.resolve();
 
-        const expectedData = PageInfoHelper.createCategoryArray(numberOfItems);
+        return this._saveCategories(PageInfoHelper.createCategoryArray(numberOfItems));
+    }
 
-        if (predeterminedTitle)
-            expectedData[0].title = predeterminedTitle;
-        
-        return new BrowserStorage('categories').set(expectedData)
-            .then(() => { return expectedData; });
+    static _saveCategories(categories = []) {
+        return new BrowserStorage('categories').set(categories)
+            .then(() => { return categories; });
+    }
+
+    static saveTestPageCategories(numberOfItems = 3, defaultCategoryIndex = null) {
+        if (!numberOfItems)
+            return Promise.resolve();
+
+        const pageCategories = PageInfoHelper.createPageCategoryArray(numberOfItems, defaultCategoryIndex);
+        const categories = pageCategories.map(pc => PageInfoHelper.createCategory(pc.category));
+
+        return this._saveCategories(categories).then(() => {
+            return new BrowserStorage('pageCategories').set(pageCategories)
+                .then(() => { return ArrayExtension.sortAsc(pageCategories, 'category'); });
+        });
     }
 }

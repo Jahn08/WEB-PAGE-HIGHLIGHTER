@@ -29,6 +29,7 @@ describe('components/preferences/categoryTable', function () {
         EnvLoader.unloadDomModel();
     });
 
+    const pageTableDOM = new PagePreferencesDOM();
     const categoryTableDOM = new CategoryPreferencesDOM();
 
     describe('#add', function () {
@@ -167,13 +168,11 @@ describe('components/preferences/categoryTable', function () {
                         assert(newItems.every(i => options.includes(i)));
                     };
                     
-                    const pageTableDOM = new PagePreferencesDOM();
                     assertListContainsCategories(pageTableDOM.getCategoryFilterList());
                     assertListContainsCategories(pageTableDOM.getCategorySelectorList());
                 })
         );
     });
-
 
     describe('#makeDefault', function () {
 
@@ -276,18 +275,51 @@ describe('components/preferences/categoryTable', function () {
 
         it('should remove several categories', () =>
             Expectation.expectResolution(StorageHelper.saveTestCategories()
-                .then(async expectedPageData => {
-                    const removedTitles = await preferencesTester.removeSomeRows();
+                .then(async expectedCategories => {
+                    const removedTitles = await preferencesTester.removeFirstTwoRows();
 
                     const categories = await PageInfo.getAllSavedCategories();
                     assert.deepStrictEqual(categories, 
-                        expectedPageData.filter(c => !removedTitles.includes(c.title)));
+                        expectedCategories.filter(c => !removedTitles.includes(c.title)));
                 }))
         );
 
-        it('should remove categories from the page category filter');
+        it('should remove categories from the page category filter and selector', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageCategories(5)
+                .then(async () => {
+                    const removedTitles = await preferencesTester.removeFirstTwoRows();
 
-        it('should choose a default category in the page category filter rather than a removed one');
+                    const assertListHasNoCategories = list => {
+                        const options = [...list.options].map(op => op.innerText);
+
+                        assert(removedTitles.every(i => !options.includes(i)));
+                    };
+
+                    assertListHasNoCategories(pageTableDOM.getCategoryFilterList());
+                    assertListHasNoCategories(pageTableDOM.getCategorySelectorList());
+                }))
+        );
+
+        it('should choose a default category in the page category filter rather than a removed one', () => {
+            const defaultCategoryIndex = 1;
+
+            return Expectation.expectResolution(StorageHelper.saveTestPageCategories(5, defaultCategoryIndex)
+                .then(async pageCategories => {
+                    const defaultCategoryTitle = pageCategories[defaultCategoryIndex].category;
+
+                    const removedTitles = await preferencesTester.removeFirstTwoRows();
+
+                    const filterList = pageTableDOM.getCategoryFilterList();
+                    assert(removedTitles.includes(defaultCategoryTitle));
+
+                    const selectedOption = [...filterList.options].find(op => op.selected);
+                    assert(selectedOption);
+
+                    const selectedCategory = selectedOption.innerText;
+                    assert(removedTitles.every(t => t !== selectedCategory)); 
+                    assert(selectedCategory);
+                }));
+        });
     });
 
     const preferencesTester = new PreferencesTestHelper(categoryTableDOM);

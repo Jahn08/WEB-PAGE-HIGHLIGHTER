@@ -37,8 +37,9 @@ export class PageInfoHelper {
         };
     }
 
-    static createCategoryArray(numberOfItems = 3) {
-        const defaultCategoryIndex = Randomiser.getRandomNumber(numberOfItems - 1);
+    static createCategoryArray(numberOfItems = 3, defaultIndex = null) {
+        const defaultCategoryIndex = defaultIndex && defaultIndex <  numberOfItems ? defaultIndex:
+            Randomiser.getRandomNumber(numberOfItems - 1);
 
         return this._createArray(numberOfItems, 
             index => this.createCategory('' + Randomiser.getRandomNumberUpToMax(), 
@@ -52,8 +53,8 @@ export class PageInfoHelper {
         };
     }
 
-    static createPageCategoryArray(numberOfItems = 3) {
-        const categories = this.createCategoryArray(numberOfItems);
+    static createPageCategoryArray(numberOfItems = 3, defaultIndex = null) {
+        const categories = this.createCategoryArray(numberOfItems, defaultIndex);
         const pageUris = this.createPageInfoArray(numberOfItems * 2).map(p => p.uri);
 
         return categories.map((c, index) => {
