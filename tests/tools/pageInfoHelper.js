@@ -38,8 +38,9 @@ export class PageInfoHelper {
     }
 
     static createCategoryArray(numberOfItems = 3, defaultIndex = null) {
-        const defaultCategoryIndex = defaultIndex != null && defaultIndex <  numberOfItems ? 
-            defaultIndex: Randomiser.getRandomNumber(numberOfItems - 1);
+        const defaultCategoryIndex = defaultIndex == null ? 
+            Randomiser.getRandomNumber(numberOfItems - 1):
+            defaultIndex;
 
         return this._createArray(numberOfItems, 
             index => this.createCategory('' + Randomiser.getRandomNumberUpToMax(), 
@@ -80,5 +81,14 @@ export class PageInfoHelper {
             }),
             categories
         };
+    }
+
+    static getUncategorisedPages(pagesInfo, pageCategories) {
+        const categorisedUris = pageCategories.reduce((prev, cur) => {
+            prev.push(...cur.pages);
+            return prev;
+        }, []);
+
+        return pagesInfo.filter(p => !categorisedUris.includes(p.uri));
     }
 }

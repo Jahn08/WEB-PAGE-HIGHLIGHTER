@@ -9,6 +9,7 @@ import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { FileTransfer } from '../tools/fileTransfer.js';
 import fs from 'fs';
+import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 
 describe('components/preferences/pageTable', function () {
     this.timeout(0);
@@ -144,19 +145,9 @@ describe('components/preferences/pageTable', function () {
 
                     newCategoryPages.push(...pageUrisToMove);
 
-                    let storedPages;
-
-                    if (storedCategory)
-                        storedPages = storedCategory.pages;
-                    else {
-                        const categorisedUris = storedInfo.pageCategories.reduce((prev, cur) => {
-                            prev.push(...cur.pages);
-                            return prev;
-                        }, []);
-
-                        storedPages = storedInfo.pagesInfo.map(pi => pi.uri)
-                            .filter(uri => !categorisedUris.includes(uri));
-                    }
+                    const storedPages = storedCategory ? storedCategory.pages : 
+                        PageInfoHelper.getUncategorisedPages(storedInfo.pagesInfo, 
+                            storedInfo.pageCategories).map(p => p.uri);
 
                     assert.strictEqual(storedPages.length, newCategoryPages.length);
                     assert(newCategoryPages.every(p => storedPages.includes(p)));
@@ -194,13 +185,93 @@ describe('components/preferences/pageTable', function () {
     });
 
     describe('#categoryFilter', function () {
-        it('should show pages related to a default category initially');
 
-        it('should show pages related to the None category if there is no default category');
+        const getOption = (listCtrl, selected) => {
+            const selectedOption = [...listCtrl.options].find(op => op.selected == selected);
+            assert(selectedOption);
 
-        it('should show pages related to a chosen category');
+            return selectedOption;
+        };
 
-        it('should exclude the current filtering category from those available for relocating');
+        const assertChosenCategoryFilter = (chosenCategoryTitle, pagesInfo, pageCategories) => {
+            const selectedCategory = getOption(pageTableDOM.getCategoryFilterList(), true);
+            assert.strictEqual(selectedCategory.innerText, chosenCategoryTitle);
+
+            const chosenPageCategory = pageCategories.find(pc => pc.category === chosenCategoryTitle);
+            assert(chosenPageCategory);
+
+            pageTableDOM.assertTableValues(pagesInfo
+                .filter(p => chosenPageCategory.pages.includes(p.uri)));
+        };
+
+        it('should show pages related to a default category initially', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10),
+                async savedInfo => {
+                    await new Preferences().load();
+
+                    const categories = await PageInfo.getAllSavedCategories();                    
+                    const defaultCategory = categories.find(c => c.default);
+                    assert(defaultCategory);
+
+                    assertChosenCategoryFilter(defaultCategory.title, savedInfo.pagesInfo, 
+                        savedInfo.pageCategories);
+                })
+        );
+
+        const changeFilterCategory = () => {
+            const categoryFilter = pageTableDOM.getCategoryFilterList();
+            const uncheckedCategory = getOption(categoryFilter, false);
+            uncheckedCategory.selected = true;
+
+            pageTableDOM.dispatchChangeEvent(categoryFilter);
+
+            return uncheckedCategory;
+        };
+
+        it('should show pages related to a chosen category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10, false),
+                async savedInfo => {
+                    await new Preferences().load();
+
+                    assertChosenCategoryFilter(changeFilterCategory().innerText, savedInfo.pagesInfo, 
+                        savedInfo.pageCategories);
+                })
+        );
+
+        it('should show pages related to the None category if there is no default category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10, false),
+                async savedInfo => {
+                    await new Preferences().load();
+
+                    const selectedCategory = getOption(pageTableDOM.getCategoryFilterList(), true);
+                    assert(CategoryPreferencesDOM.isNoneCategory(selectedCategory.innerText));
+
+                    pageTableDOM.assertTableValues(PageInfoHelper.getUncategorisedPages(
+                        savedInfo.pagesInfo, savedInfo.pageCategories));
+                })
+        );
+
+        it('should exclude the current filtering category from those available for relocating', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5),
+                async () => {
+                    await new Preferences().load();
+
+                    const filterList = pageTableDOM.getCategoryFilterList();
+                    const selectorList = pageTableDOM.getCategorySelectorList();
+
+                    const assertSelectorHasNoFilter = () => {
+                        const selectorOptions = [...selectorList.options];
+                        const curFilterCategoryTitle = getOption(filterList, true).innerText;
+
+                        assert(!selectorOptions.find(op => op.innerText === curFilterCategoryTitle));
+                    };
+
+                    assertSelectorHasNoFilter();                    
+
+                    changeFilterCategory();
+                    assertSelectorHasNoFilter();                    
+                })
+        );
     });
 
     const preferencesTester = new PreferencesTestHelper(pageTableDOM);

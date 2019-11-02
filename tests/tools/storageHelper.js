@@ -20,13 +20,15 @@ export class StorageHelper {
         };
     }
 
-    static async saveTestPageEnvironment(pageNumber = 3) {
+    static async saveTestPageEnvironment(pageNumber = 3, hasDefaultCategory = true) {
         const expectedPageData = await this.saveTestPageInfo(pageNumber); 
+        
+        const defaultCategoryIndex = hasDefaultCategory ? undefined: -1;
         const pageCategories = await this._savePageCategories(
-            PageInfoHelper.buildPageCategoryArray(expectedPageData));
+            PageInfoHelper.buildPageCategoryArray(expectedPageData, defaultCategoryIndex));
 
         return {
-            pageInfo: expectedPageData,
+            pagesInfo: expectedPageData,
             pageCategories 
         }; 
     }
