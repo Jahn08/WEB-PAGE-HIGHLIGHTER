@@ -539,11 +539,44 @@ class PageTable extends BaseTable {
     }
 
     _getCurrentCategory() {
-        return this._categoryFilter.value || this._NONE_CATEGORY_NAME;
+        return this._getSelectedOption(this._categoryFilter) || this._NONE_CATEGORY_NAME;
+    }
+
+    _getSelectedOption(selectCtrl) {
+        const value = selectCtrl.value;
+        
+        if (value)
+            return value;
+        
+        const options = selectCtrl.options;
+
+        for (let i = 0; i < options.length; ++i) {
+            const option = options.item(i);
+
+            if (option.selected)
+                return option.value || option.innerText;
+        }
+
+        return null;
     }
 
     _movePagesToCategory() {
         this._hideStatus();
+
+        const newCategoryName = this._getSelectedOption(this._categorySelector);
+
+        const moveToNone = newCategoryName === this._NONE_CATEGORY_NAME;
+        let newCategory;
+        
+        if (!moveToNone) {
+            newCategory = this._pageCategories.find(c => c.category === newCategoryName);
+
+            if (!newCategory) {
+                this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', 
+                    newCategoryName));
+                return;
+            }
+        }
 
         const movedPageUris = this._removeRows();
 
@@ -553,20 +586,12 @@ class PageTable extends BaseTable {
         if (curCategory)
             curCategory.pages = curCategory.pages.filter(cp => !movedPageUris.includes(cp));
 
-        const newCategoryName = this._categorySelector.value;
+        this._makeDirty();
 
-        if (newCategoryName === this._NONE_CATEGORY_NAME)
+        if (moveToNone)
             return;
-
-        const newCategory = this._pageCategories.find(c => c.category === newCategoryName);
-
-        if (!newCategory) {
-            this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', newCategoryName));
-            return;
-        }
 
         newCategory.pages.push(...movedPageUris);
-        this._makeDirty();
     }
 
     _getCategoryPages() {
@@ -589,7 +614,8 @@ class PageTable extends BaseTable {
     }
 
     _renderCategoryControls() {
-        const selectedValue = this._categoryFilter.value || this._defaultCategoryTitle;
+        const selectedValue = this._getSelectedOption(this._categoryFilter) || 
+            this._defaultCategoryTitle;
 
         this._clearElement(this._categoryFilter);
         this._categoryFilter.append(...this._createCategoryOptions(selectedValue));
@@ -657,7 +683,9 @@ class PageTable extends BaseTable {
 
         const noneChecked = checkedNumber === 0;
         this._removePageBtn.disabled = noneChecked;
-        this._moveToCategoryBtn.disabled = noneChecked;
+
+        this._moveToCategoryBtn.disabled = noneChecked || 
+            !this._getSelectedOption(this._categorySelector);
 
         if (isFromRowCheckedEvent)
             this._checkAllBtn.checked = checkedNumber === this._tableData.length;
