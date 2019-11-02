@@ -109,7 +109,6 @@ describe('components/preferences', function () {
                     expectedValues.shouldLoad));
         });
 
-        // TODO: CHECK BOTH CATEGORY LISTS AS WELL
         it('should load saved page data from the storage and update the table', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 expectedPageData => new Preferences().load()
@@ -152,17 +151,27 @@ describe('components/preferences', function () {
                 });
         });
 
-        it('should save the preferences page without removing page data', () => {
-            return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
-                expectedPageData => {
+        it('should save the preferences page without changing any data', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(),
+                async expectedPageData => {
                     const preferences = new Preferences();
                     
-                    // TODO: CHECK CATEGORIES AND PAGE CATEGORIES AS WELL
-                    return preferences.load(() => preferences.save().then(() =>
-                        PageInfo.getAllSavedPagesInfo().then(storedInfo =>
-                            assert.deepStrictEqual(storedInfo.pagesInfo, expectedPageData)
-                        )
-                    ));
+                    const savedCategories = await PageInfo.getAllSavedCategories();
+
+                    await preferences.load();
+                    
+                    await preferences.save();
+
+                    const fullPagesInfo = await PageInfo.getAllSavedPagesFullInfo();
+                    assert.deepStrictEqual(fullPagesInfo, expectedPageData.pagesInfo);
+
+                    const storedPageCategories = await PageInfo.getAllSavedPagesInfo();
+                    
+                    assert.deepStrictEqual(storedPageCategories.pageCategories, 
+                        expectedPageData.pageCategories);
+
+                    const storedCategories = await PageInfo.getAllSavedCategories();
+                    assert.deepStrictEqual(storedCategories, savedCategories);
                 });
         });
     });

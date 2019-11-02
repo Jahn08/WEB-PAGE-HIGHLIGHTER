@@ -69,9 +69,7 @@ export class StorageHelper {
     static _savePageCategories(categoryInfo) {
         return this._saveCategories(categoryInfo.categories).then(() => {
             return new BrowserStorage('pageCategories').set(categoryInfo.pageCategories)
-                .then(() => { 
-                    return ArrayExtension.sortAsc(categoryInfo.pageCategories, 'category'); 
-                });
+                .then(() => { return categoryInfo.pageCategories; });
         });
     }
 }
