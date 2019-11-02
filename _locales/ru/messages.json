@@ -139,7 +139,7 @@
     },
 
     "preferences_no_category_warning": {
-        "message": "Категории с именем '$title' не существует",
+        "message": "Категории с именем '$title$' не существует",
         "placeholders": {
             "title" : {
                 "content" : "$1"

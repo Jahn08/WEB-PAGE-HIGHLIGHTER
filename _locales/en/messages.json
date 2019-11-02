@@ -139,7 +139,7 @@
     },
 
     "preferences_no_category_warning": {
-        "message": "There is no category with a name '$title'",
+        "message": "There is no category with a name '$title$'",
         "placeholders": {
             "title" : {
                 "content" : "$1"
