@@ -26,13 +26,11 @@ class PreferencesDOM {
     }
 
     dispatchClickEvent(clickableCtrl) {
-        if (clickableCtrl.disabled)
-            return;
-
         this._dispatchEvent(clickableCtrl, new Event('click'));
     }
 
     _dispatchEvent(ctrl, event) {
+        assert(!ctrl.disabled);
         ctrl.dispatchEvent(event);
     }
 
@@ -66,7 +64,7 @@ class PreferencesDOM {
         return document.getElementById(this._sectionPage + '--txt-search');
     }
 
-    tickAllRowsCheck() {
+    tickAllRowChecks() {
         const allPagesCheck = this._getAllRowsCheck();
                         
         allPagesCheck.checked = !allPagesCheck.checked;
@@ -207,11 +205,19 @@ class PagePreferencesDOM extends PreferencesDOM {
     getCategorySelectorList() {
         return document.getElementById(this._sectionPage + '--select-category');
     }
+
+    getRelocatingBtn() {
+        return this._getButton('move');
+    }
 }
 
 class CategoryPreferencesDOM extends PreferencesDOM {
     constructor() {
         super('category');
+    }
+
+    static isNoneCategory(categoryTitle) { 
+        return (categoryTitle || '').toUpperCase() === 'NONE';
     }
 
     _assertRowValues(rows, expectedRowValues) {

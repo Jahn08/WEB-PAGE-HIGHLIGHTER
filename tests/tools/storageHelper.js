@@ -20,9 +20,20 @@ export class StorageHelper {
         };
     }
 
+    static async saveTestPageEnvironment(pageNumber = 3) {
+        const expectedPageData = await this.saveTestPageInfo(pageNumber); 
+        const pageCategories = await this._savePageCategories(
+            PageInfoHelper.buildPageCategoryArray(expectedPageData));
+
+        return {
+            pageInfo: expectedPageData,
+            pageCategories 
+        }; 
+    }
+
     static saveTestPageInfo(numberOfItems = 3, predeterminedUri = null) {
         if (!numberOfItems)
-            return Promise.resolve();
+            return Promise.resolve([]);
 
         const expectedPageData = PageInfoHelper.createPageInfoArray(numberOfItems);
 
@@ -49,12 +60,16 @@ export class StorageHelper {
         if (!numberOfItems)
             return Promise.resolve();
 
-        const pageCategories = PageInfoHelper.createPageCategoryArray(numberOfItems, defaultCategoryIndex);
-        const categories = pageCategories.map(pc => PageInfoHelper.createCategory(pc.category));
+        return this._savePageCategories(
+            PageInfoHelper.createPageCategoryArray(numberOfItems, defaultCategoryIndex));
+    }
 
-        return this._saveCategories(categories).then(() => {
-            return new BrowserStorage('pageCategories').set(pageCategories)
-                .then(() => { return ArrayExtension.sortAsc(pageCategories, 'category'); });
+    static _savePageCategories(categoryInfo) {
+        return this._saveCategories(categoryInfo.categories).then(() => {
+            return new BrowserStorage('pageCategories').set(categoryInfo.pageCategories)
+                .then(() => { 
+                    return ArrayExtension.sortAsc(categoryInfo.pageCategories, 'category'); 
+                });
         });
     }
 }

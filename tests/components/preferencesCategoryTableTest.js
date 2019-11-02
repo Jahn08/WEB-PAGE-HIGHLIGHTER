@@ -43,10 +43,10 @@ describe('components/preferences/categoryTable', function () {
                     categoryTableDOM.tickRowCheck(1);
                     assert(!addBtn.disabled);
 
-                    categoryTableDOM.tickAllRowsCheck();
+                    categoryTableDOM.tickAllRowChecks();
                     assert(!addBtn.disabled);
 
-                    categoryTableDOM.tickAllRowsCheck();
+                    categoryTableDOM.tickAllRowChecks();
                     assert(!addBtn.disabled);
                 }))
         );
@@ -267,7 +267,7 @@ describe('components/preferences/categoryTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestCategories(),
                 () => new Preferences().load()
                     .then(() => {
-                        categoryTableDOM.tickAllRowsCheck();
+                        categoryTableDOM.tickAllRowChecks();
                         assert(!categoryTableDOM.getRemovingBtn().disabled);
                     })
             );

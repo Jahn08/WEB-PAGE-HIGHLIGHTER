@@ -268,7 +268,7 @@ describe('content_script/pageInfo', function () {
 
     describe('#savePageCategories', function () {
         it('should save page categories into storage', async () => {
-            const testPageCategories = PageInfoHelper.createPageCategoryArray();
+            const testPageCategories = PageInfoHelper.createPageCategoryArray().pageCategories;
             
             await PageInfo.savePageCategories(testPageCategories);
            

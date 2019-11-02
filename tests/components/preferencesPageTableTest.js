@@ -4,7 +4,7 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser.js';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences, PagePackageError } from '../../components/preferences.js';
-import { PagePreferencesDOM } from '../tools/preferencesDOM.js';
+import { PagePreferencesDOM, CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
 import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { FileTransfer } from '../tools/fileTransfer.js';
@@ -78,13 +78,119 @@ describe('components/preferences/pageTable', function () {
     });
 
     describe('#move', function () {
-        it('should enable button for moving several pages to another category');
+        it('should enable button for moving several pages to another category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(),
+                async () => {
+                    await new Preferences().load();
+                    assert(pageTableDOM.getRelocatingBtn().disabled);
 
-        it('should enable button for moving to another category when all pages are checked');
+                    pageTableDOM.tickRowCheck(2);
+                    assert(!pageTableDOM.getRelocatingBtn().disabled);
+                })
+        );
 
-        it('should disable button when there are no categories to move to');
+        it('should enable button for moving to another category when all pages are checked', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(),
+                async () => {
+                    await new Preferences().load();
 
-        it('should move several pages to another category');
+                    pageTableDOM.tickAllRowChecks();
+                    assert(!pageTableDOM.getRelocatingBtn().disabled);
+                })
+        );
+
+        it('should disable button when there are no categories to move to', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(),
+                async () => {
+                    await new Preferences().load();
+
+                    const categoryTableDOM = new CategoryPreferencesDOM();
+                    categoryTableDOM.tickAllRowChecks();
+                    categoryTableDOM.dispatchClickEvent(categoryTableDOM.getRemovingBtn());
+
+                    pageTableDOM.tickAllRowChecks();
+                    assert(pageTableDOM.getRelocatingBtn().disabled);
+                })
+        );
+
+        const moveToCategory = getCategoryFn => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10),
+                async savedInfo => {
+                    const preferences = new Preferences();
+                    await preferences.load();
+
+                    const pageUrisToMove = pageTableDOM.tickRowCheck(2);
+                    const uncheckedCategory = getCategoryFn(
+                        [...pageTableDOM.getCategorySelectorList().options]);
+
+                    assert(uncheckedCategory);
+                    uncheckedCategory.selected = true;
+
+                    const newCategoryTitle = uncheckedCategory.innerText;
+                    const newCategory = savedInfo.pageCategories
+                        .find(c => c.category === newCategoryTitle);
+
+                    const newCategoryPages = newCategory ? newCategory.pages: [];
+                    assert(newCategoryPages.every(p => !pageUrisToMove.includes(p)));
+
+                    pageTableDOM.dispatchClickEvent(pageTableDOM.getRelocatingBtn());
+                    pageTableDOM.assertStatusIsEmpty();
+
+                    await preferences.save();
+                    const storedInfo = await PageInfo.getAllSavedPagesInfo();
+                    
+                    const storedCategory = storedInfo.pageCategories
+                        .find(c => c.category === newCategoryTitle);
+
+                    newCategoryPages.push(...pageUrisToMove);
+
+                    let storedPages;
+
+                    if (storedCategory)
+                        storedPages = storedCategory.pages;
+                    else {
+                        const categorisedUris = storedInfo.pageCategories.reduce((prev, cur) => {
+                            prev.push(...cur.pages);
+                            return prev;
+                        }, []);
+
+                        storedPages = storedInfo.pagesInfo.map(pi => pi.uri)
+                            .filter(uri => !categorisedUris.includes(uri));
+                    }
+
+                    assert.strictEqual(storedPages.length, newCategoryPages.length);
+                    assert(newCategoryPages.every(p => storedPages.includes(p)));
+                });
+        };
+
+        it('should move several pages to another category', () =>
+            moveToCategory(options => options.find(op => 
+                !CategoryPreferencesDOM.isNoneCategory(op.innerText)))
+        );
+
+        it('should uncategorise several pages', () =>
+            moveToCategory(options =>
+                options.find(op => CategoryPreferencesDOM.isNoneCategory(op.innerText))
+            )
+        );
+
+        it('should move no pages to a non-existent category but warn', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5),
+                async () => {
+                    const preferences = new Preferences();
+                    await preferences.load();
+
+                    const pageUrisToMove = pageTableDOM.tickRowCheck(2);
+
+                    pageTableDOM.getCategorySelectorList().value = 
+                        '' + Randomiser.getRandomNumberUpToMax();
+
+                    pageTableDOM.dispatchClickEvent(pageTableDOM.getRelocatingBtn());
+
+                    assert(pageTableDOM.assertStatusIsWarning());
+                    assert.deepStrictEqual(pageTableDOM.tickRowCheck(2), pageUrisToMove);
+                })
+        );
     });
 
     describe('#categoryFilter', function () {
@@ -115,7 +221,7 @@ describe('components/preferences/pageTable', function () {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 () => new Preferences().load()
                     .then(() => {
-                        pageTableDOM.tickAllRowsCheck();
+                        pageTableDOM.tickAllRowChecks();
 
                         assert(!pageTableDOM.getRemovingBtn().disabled);
                     })
@@ -363,7 +469,7 @@ describe('components/preferences/pageTable', function () {
 
         it('should disable export and upsertable import buttons after removing all pages', () =>
             initPreferencesWithExport().then(() => {
-                pageTableDOM.tickAllRowsCheck();
+                pageTableDOM.tickAllRowChecks();
 
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
 
@@ -375,7 +481,7 @@ describe('components/preferences/pageTable', function () {
 
         it('should import a removed page and let it be saved again', () =>
             initPreferencesWithExport(TEST_URI).then(async result => {
-                pageTableDOM.tickAllRowsCheck();
+                pageTableDOM.tickAllRowChecks();
 
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
                 await result.preferences.save();
