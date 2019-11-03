@@ -128,10 +128,8 @@ describe('components/preferences/pageTable', function () {
                     uncheckedCategory.selected = true;
 
                     const newCategoryTitle = uncheckedCategory.innerText;
-                    const newCategory = savedInfo.pageCategories
-                        .find(c => c.category === newCategoryTitle);
 
-                    const newCategoryPages = newCategory ? newCategory.pages: [];
+                    const newCategoryPages = savedInfo.pageCategories[newCategoryTitle] || [];
                     assert(newCategoryPages.every(p => !pageUrisToMove.includes(p)));
 
                     pageTableDOM.dispatchClickEvent(pageTableDOM.getRelocatingBtn());
@@ -140,14 +138,11 @@ describe('components/preferences/pageTable', function () {
                     await preferences.save();
                     const storedInfo = await PageInfo.getAllSavedPagesInfo();
                     
-                    const storedCategory = storedInfo.pageCategories
-                        .find(c => c.category === newCategoryTitle);
-
-                    newCategoryPages.push(...pageUrisToMove);
-
-                    const storedPages = storedCategory ? storedCategory.pages : 
+                    const storedPages = storedInfo.pageCategories[newCategoryTitle] || 
                         PageInfoHelper.getUncategorisedPages(storedInfo.pagesInfo, 
                             storedInfo.pageCategories).map(p => p.uri);
+
+                    newCategoryPages.push(...pageUrisToMove);
 
                     assert.strictEqual(storedPages.length, newCategoryPages.length);
                     assert(newCategoryPages.every(p => storedPages.includes(p)));
@@ -197,11 +192,11 @@ describe('components/preferences/pageTable', function () {
             const selectedCategory = getOption(pageTableDOM.getCategoryFilterList(), true);
             assert.strictEqual(selectedCategory.innerText, chosenCategoryTitle);
 
-            const chosenPageCategory = pageCategories.find(pc => pc.category === chosenCategoryTitle);
-            assert(chosenPageCategory);
+            const chosenPageCategoryPages = pageCategories[chosenCategoryTitle];
+            assert(chosenPageCategoryPages);
 
             pageTableDOM.assertTableValues(pagesInfo
-                .filter(p => chosenPageCategory.pages.includes(p.uri)));
+                .filter(p => chosenPageCategoryPages.includes(p.uri)));
         };
 
         it('should show pages related to a default category initially', () =>

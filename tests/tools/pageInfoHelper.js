@@ -55,17 +55,17 @@ export class PageInfoHelper {
     }
 
     static createPageCategoryArray(numberOfItems = 3, defaultIndex = null) {
-        return this.buildPageCategoryArray(this.createPageInfoArray(numberOfItems * 2), defaultIndex);
+        return this.buildPageCategories(this.createPageInfoArray(numberOfItems * 2), defaultIndex);
     }
 
-    static buildPageCategoryArray(pageInfo = [], defaultIndex = null) {
+    static buildPageCategories(pageInfo = [], defaultIndex = null) {
         const numberOfItems = pageInfo.length;
 
         const categories = this.createCategoryArray(Math.ceil(numberOfItems / 2), defaultIndex);
         const pageUris = pageInfo.map(p => p.uri);
 
         return { 
-            pageCategories: categories.map((c, index) => {
+            pageCategories: categories.reduce((prev, cur, index) => {
                 const pageIndex = index * 2;
                 const pages = [pageUris[pageIndex]];
 
@@ -74,20 +74,19 @@ export class PageInfoHelper {
                 if (nextIndex < numberOfItems)
                     pages.push(pageUris[nextIndex]);
 
-                return {
-                    category: c.title,
-                    pages
-                };
-            }),
+                prev[cur.title] = pages;
+
+                return prev;
+            }, {}),
             categories
         };
     }
 
     static getUncategorisedPages(pagesInfo, pageCategories) {
-        const categorisedUris = pageCategories.reduce((prev, cur) => {
-            prev.push(...cur.pages);
-            return prev;
-        }, []);
+        const categorisedUris = [];
+        
+        for (const categoryName in pageCategories)
+            categorisedUris.push(...pageCategories[categoryName]);
 
         return pagesInfo.filter(p => !categorisedUris.includes(p.uri));
     }

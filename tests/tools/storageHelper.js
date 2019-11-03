@@ -25,7 +25,7 @@ export class StorageHelper {
         
         const defaultCategoryIndex = hasDefaultCategory ? undefined: -1;
         const pageCategories = await this._savePageCategories(
-            PageInfoHelper.buildPageCategoryArray(expectedPageData, defaultCategoryIndex));
+            PageInfoHelper.buildPageCategories(expectedPageData, defaultCategoryIndex));
 
         return {
             pagesInfo: expectedPageData,

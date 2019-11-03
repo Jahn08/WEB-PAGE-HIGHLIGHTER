@@ -462,7 +462,7 @@ class CategoryTable extends BaseTable {
 }
 
 class PageTable extends BaseTable {
-    constructor(pagesInfo = [], pageCategories = [], defaultCategoryTitle = null) {
+    constructor(pagesInfo = [], pageCategories = {}, defaultCategoryTitle = null) {
         super('page', pagesInfo);
 
         this._removedPageUris = [];
@@ -507,15 +507,14 @@ class PageTable extends BaseTable {
     }
 
     addPageCategory(categoryTitle) {
-        this._pageCategories.push({ category: categoryTitle, pages: [] });
+        this._pageCategories[categoryTitle] = [];
 
         this._renderCategoryControls();
         this._makeDirty();
     }
 
     removePageCategories(categoryTitles = []) {
-        this._pageCategories = this._pageCategories
-            .filter(c => !categoryTitles.includes(c.category));
+        ArrayExtension.runForEach(categoryTitles, c => delete this._pageCategories[c]);
 
         this._renderCategoryControls();
 
@@ -566,12 +565,12 @@ class PageTable extends BaseTable {
         const newCategoryName = this._getSelectedOption(this._categorySelector);
 
         const moveToNone = newCategoryName === this._NONE_CATEGORY_NAME;
-        let newCategory;
+        let newCategoryPages;
         
         if (!moveToNone) {
-            newCategory = this._pageCategories.find(c => c.category === newCategoryName);
+            newCategoryPages = this._pageCategories[newCategoryName];
 
-            if (!newCategory) {
+            if (!newCategoryPages) {
                 this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', 
                     newCategoryName));
                 return;
@@ -581,36 +580,37 @@ class PageTable extends BaseTable {
         const movedPageUris = this._removeRows();
 
         const curCategoryName = this._getCurrentCategory();
-        const curCategory = this._pageCategories.find(c => c.category === curCategoryName);
+        const curCategoryPages = this._pageCategories[curCategoryName];
 
-        if (curCategory)
-            curCategory.pages = curCategory.pages.filter(cp => !movedPageUris.includes(cp));
+        if (curCategoryPages)
+            this._pageCategories[curCategoryName] = 
+                curCategoryPages.filter(cp => !movedPageUris.includes(cp));
 
         this._makeDirty();
 
         if (moveToNone)
             return;
 
-        newCategory.pages.push(...movedPageUris);
+        newCategoryPages.push(...movedPageUris);
     }
 
     _getCategoryPages() {
         const curCategoryName = this._getCurrentCategory();
 
         if (curCategoryName === this._NONE_CATEGORY_NAME) {
-            const categorisedPages = this._pageCategories.reduce((p, c) => {
-                p.push(...c.pages);
-                return p;
-            }, []);
+            const categorisedPages = [];
+            for (const categoryName in this._pageCategories)
+                categorisedPages.push(...this._pageCategories[categoryName]);
+
             return this._originalData.filter(d => !categorisedPages.includes(d.uri));
         }
 
-        const curCategory = this._pageCategories.find(c => c.category === curCategoryName);
+        const curCategoryPages = this._pageCategories[curCategoryName];
 
-        if (!curCategory)
+        if (!curCategoryPages)
             return [];
             
-        return this._originalData.filter(d => curCategory.pages.includes(d.uri)) ;
+        return this._originalData.filter(d => curCategoryPages.includes(d.uri)) ;
     }
 
     _renderCategoryControls() {
@@ -624,20 +624,20 @@ class PageTable extends BaseTable {
     }
 
     _createCategoryOptions(selectedCategory) {
-        const catNameField = 'category';
-        
         let hasSelectedValue;
-        const options = ArrayExtension.sortAsc(this._pageCategories, catNameField).map(pc => {
-            const catName = pc[catNameField];
-            const selected = catName === selectedCategory;
+
+        const options = [];
+
+        for (const categoryName in this._pageCategories) {
+            const selected = categoryName === selectedCategory;
             
             if (selected)
                 hasSelectedValue = true;
 
-            return this._createSelectOption(catName, selected);
-        });
-        options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
+            options.push(this._createSelectOption(categoryName, selected));
+        }
 
+        options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
         return options;
     }
 
