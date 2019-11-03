@@ -181,6 +181,22 @@ describe('components/preferences/pageTable', function () {
 
     describe('#categoryFilter', function () {
 
+        it('should reveal only existent categories for filtering', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10, false),
+                async () => {
+                    await new Preferences().load();
+
+                    const savedCategories = await PageInfo.getAllSavedCategories();
+
+                    const filterCategories = [...pageTableDOM.getCategoryFilterList().options]
+                        .map(op => op.innerText)
+                        .filter(c => !CategoryPreferencesDOM.isNoneCategory(c));
+                    assert.strictEqual(filterCategories.length, savedCategories.length);
+                    assert(savedCategories.map(c => c.title)
+                        .every(ct => filterCategories.includes(ct)));
+                })
+        );
+
         const getOption = (listCtrl, selected) => {
             const selectedOption = [...listCtrl.options].find(op => op.selected == selected);
             assert(selectedOption);
@@ -459,11 +475,29 @@ describe('components/preferences/pageTable', function () {
         const IMPORTED_DATA_JSON = fs.readFileSync('./tests/resources/testStorage.hltr')
             .toString('utf8');    
 
-        const startImporting = () => {
+        const fakePromise = (action = null) => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    try {
+                        if (action)
+                            action();
+        
+                        resolve();
+                    }
+                    catch(ex) {
+                        reject(ex);
+                    }
+                }, 100);
+            });
+        };
+            
+        const startImporting = async () => {
             FileTransfer.fileReaderClass.setResultPackage(IMPORTED_DATA_JSON);
 
             const fileBtn = FileTransfer.addFileToInput(getFileImportBtn());
             pageTableDOM.dispatchChangeEvent(fileBtn);
+
+            return fakePromise();
         };
 
         const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
@@ -473,7 +507,7 @@ describe('components/preferences/pageTable', function () {
             const importBtn = getImportBtn(shouldUpdateExistentPages);
             importBtn.click();
 
-            startImporting();
+            await startImporting();
 
             assert.strictEqual(importBtn.disabled, false);
 
@@ -515,21 +549,11 @@ describe('components/preferences/pageTable', function () {
         );
         
         it('should reinitialise an export button after importing', () =>
-            initPreferencesWithExport(null, 0).then(() =>  {
-                startImporting();
+            Expectation.expectResolution(initPreferencesWithExport(null, 0), async () =>  {
+                await startImporting();
                 const exportBtn = getExportBtn();
 
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        try {
-                            assert.strictEqual(exportBtn.disabled, false);
-                            resolve();
-                        }
-                        catch(ex) {
-                            reject(ex);
-                        }
-                    }, 100);
-                });
+                await fakePromise(() => assert.strictEqual(exportBtn.disabled, false));
             })
         );
 
@@ -552,7 +576,7 @@ describe('components/preferences/pageTable', function () {
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
                 await result.preferences.save();
 
-                startImporting();
+                await startImporting();
                 
                 const storedInfo = await PageInfo.getAllSavedPagesInfo();
                 const storedPages = storedInfo.pagesInfo;

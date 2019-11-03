@@ -288,6 +288,13 @@ class BaseTable {
     _makeDirty() { 
         this._isDirty = true; 
     }
+
+    _emitEvent(callback, arg) {
+        if (!callback)
+            return;
+
+        callback(arg);
+    }
 }
 
 class CategoryTable extends BaseTable {
@@ -334,13 +341,6 @@ class CategoryTable extends BaseTable {
 
     _getRowKey(el) { return el.dataset.title; }
 
-    _emitEvent(callback, arg) {
-        if (!callback)
-            return;
-
-        callback(arg);
-    }
-
     _addCategory() {
         this._hideStatus();
 
@@ -360,8 +360,7 @@ class CategoryTable extends BaseTable {
             return;
         }
 
-        const newCategory = { title: name };
-        this._tableData.push(newCategory);
+        this._tableData.push(this._createNewCategory(name));
 
         this._sortTableData();
 
@@ -372,6 +371,10 @@ class CategoryTable extends BaseTable {
         this._categoryTitleTxt.value = null;
 
         this._emitEvent(this.onAdded, name);
+    }
+
+    _createNewCategory(name) {
+        return { title: name };
     }
 
     _makeCategoryDefault() {
@@ -459,11 +462,24 @@ class CategoryTable extends BaseTable {
         
         super._clearTableRows();
     }
+
+    refreshCategories(categories) {
+        if (!categories || !categories.length)
+            return;
+
+        this._tableData = categories;
+
+        this._sortTableData();
+
+        this._rerender();
+    }
 }
 
 class PageTable extends BaseTable {
     constructor(pagesInfo = [], pageCategories = {}, defaultCategoryTitle = null) {
         super('page', pagesInfo);
+
+        this.onImported = null;
 
         this._removedPageUris = [];
 
@@ -626,18 +642,16 @@ class PageTable extends BaseTable {
     _createCategoryOptions(selectedCategory) {
         let hasSelectedValue;
 
-        const options = [];
-
-        for (const categoryName in this._pageCategories) {
-            const selected = categoryName === selectedCategory;
+        const options = Object.getOwnPropertyNames(this._pageCategories).sort().map(catName => {
+            const selected = catName === selectedCategory;
             
             if (selected)
                 hasSelectedValue = true;
 
-            options.push(this._createSelectOption(categoryName, selected));
-        }
-
+            return this._createSelectOption(catName, selected);
+        });
         options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
+
         return options;
     }
 
@@ -744,7 +758,7 @@ class PageTable extends BaseTable {
         }
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async event => {
             try {
                 this._updateImportBtnsAvailability(false);
 
@@ -765,12 +779,19 @@ class PageTable extends BaseTable {
                             !this._originalData.find(pi => pi.uri === imp.uri));
                 }
                 
-                const importedPages = PageInfo.savePages(pagesToImport);
+                const importedData = await PageInfo.savePages(pagesToImport);
+                
+                this._emitEvent(this.onImported, importedData);
+
+                const importedPages = importedData.importedPages;
                 this._originalData = this._originalData.concat(importedPages);
 
                 const presentPageUris = this._originalData.map(p => p.uri);
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
+
+                if (importedData.pageCategories)
+                    this._pageCategories = importedData.pageCategories;
 
                 this._tableData = this._getCategoryPages();
                 this._sortTableData();
@@ -960,6 +981,9 @@ class Preferences {
                     this._pageTable.bindToThis(this._pageTable.addPageCategory);
                 this._categoryTable.onRemoved = 
                     this._pageTable.bindToThis(this._pageTable.removePageCategories);
+
+                this._pageTable.onImported = importedData =>
+                    this._categoryTable.refreshCategories(importedData.categories);
             }
         });
     }

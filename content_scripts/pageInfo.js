@@ -128,7 +128,7 @@ class PageInfo {
             });
 
             return {
-                pageCategories: pageCategories || [],
+                pageCategories: pageCategories || {},
                 pagesInfo
             };
         });
@@ -146,10 +146,11 @@ class PageInfo {
         return BrowserStorage.remove(pageUris);
     }
 
-    static savePages(pagesInfo) {
+    static async savePages(pagesInfo) {
         const htmlPropName = this.HTML_PROP_NAME;
 
         const importedFiles = [];
+        const categorisedUris = {};
 
         ArrayExtension.runForEach(pagesInfo, pi => {
             if (!this._isUriValid(pi.uri))
@@ -167,9 +168,18 @@ class PageInfo {
             });
 
             importedFiles.push(this._excludeHtml(pi));
+
+            if (pi.category)
+                categorisedUris[pi.uri] = pi.category;
         });
 
-        return importedFiles;
+        const pageCategories = await this._savePageCategories(categorisedUris);
+            
+        return {
+            importedPages: importedFiles,
+            pageCategories,
+            categories: []
+        };
     }
 
     static _getValidTicks(ticks) {
@@ -191,6 +201,40 @@ class PageInfo {
         return pageInfo;
     }
     
+    static async _savePageCategories(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const pageCategoryStorage = new BrowserStorage(this._PAGE_CATEGORY_KEY);
+        const storedPageCategories = await pageCategoryStorage.get();
+
+        const storedCategorisedUris = {};
+        for (const categoryName in storedPageCategories)
+            ArrayExtension.runForEach(storedPageCategories[categoryName], uri =>
+                storedCategorisedUris[uri] = categoryName);
+            
+        for (const uri in categorisedUris) {
+            const existentCategory = storedCategorisedUris[uri];
+            const newCategory = categorisedUris[uri];
+
+            if (!existentCategory || newCategory !== existentCategory)
+                storedCategorisedUris[uri] = newCategory;
+        }
+
+        const updatedPageCategories = {};
+        for (const uri in storedCategorisedUris) {
+            const category = storedCategorisedUris[uri];
+
+            const updatedPageCategory = updatedPageCategories[category] || [];
+            updatedPageCategory.push(uri);
+            updatedPageCategories[category] = updatedPageCategory;
+        }
+        
+        await pageCategoryStorage.set(updatedPageCategories);
+
+        return updatedPageCategories;
+    }
+
     static getAllSavedCategories() {
         return new BrowserStorage(this._CATEGORY_KEY).get();
     }
