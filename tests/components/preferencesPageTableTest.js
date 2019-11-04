@@ -34,6 +34,7 @@ describe('components/preferences/pageTable', function () {
     });
 
     const pageTableDOM = new PagePreferencesDOM();
+    const categoryTableDOM = new CategoryPreferencesDOM();
 
     describe('#open', function () {
 
@@ -105,7 +106,6 @@ describe('components/preferences/pageTable', function () {
                 async () => {
                     await new Preferences().load();
 
-                    const categoryTableDOM = new CategoryPreferencesDOM();
                     categoryTableDOM.tickAllRowChecks();
                     categoryTableDOM.dispatchClickEvent(categoryTableDOM.getRemovingBtn());
 
@@ -188,8 +188,8 @@ describe('components/preferences/pageTable', function () {
 
                     const savedCategories = await PageInfo.getAllSavedCategories();
 
-                    const filterCategories = [...pageTableDOM.getCategoryFilterList().options]
-                        .map(op => op.innerText)
+                    const filterCategories = PagePreferencesDOM.getSelectTextOptions(
+                        pageTableDOM.getCategoryFilterList())
                         .filter(c => !CategoryPreferencesDOM.isNoneCategory(c));
                     assert.strictEqual(filterCategories.length, savedCategories.length);
                     assert(savedCategories.map(c => c.title)
@@ -511,11 +511,21 @@ describe('components/preferences/pageTable', function () {
 
             assert.strictEqual(importBtn.disabled, false);
 
+            const categories = (await PageInfo.getAllSavedCategories()) || [];
+            categoryTableDOM.assertTableValues(categories);
+
+            const categoryOptions = PagePreferencesDOM.getSelectTextOptions(
+                pageTableDOM.getCategoryFilterList());
+            assert(categories.every(c => categoryOptions.includes(c.title)));
+
+            const storedData = await PageInfo.getAllSavedPagesInfo();
+            const uncategorisedPages = PageInfoHelper.getUncategorisedPages(storedData.pagesInfo, 
+                storedData.pageCategories);
+            pageTableDOM.assertTableValues(uncategorisedPages);
+
             const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
-            pageTableDOM.assertTableValues(fullInfo);
-            
             const importedPages = JSON.parse(IMPORTED_DATA_JSON);
-                
+
             importedPages.forEach(imp => {
                 const savedPage = fullInfo.find(pi => pi.uri === imp.uri);
 
@@ -536,7 +546,7 @@ describe('components/preferences/pageTable', function () {
 
             const statusMsg = pageTableDOM.assertStatusIsMessage();
             assert(statusMsg);
-            assert(statusMsg.endsWith(shouldUpdateExistentPages ? '1' : '0'));
+            assert(statusMsg.endsWith(shouldUpdateExistentPages ? '2' : '1'));
         };
 
         it('should import all pages from a package file and update current ones', () =>
@@ -580,8 +590,8 @@ describe('components/preferences/pageTable', function () {
                 
                 const storedInfo = await PageInfo.getAllSavedPagesInfo();
                 const storedPages = storedInfo.pagesInfo;
-                assert.strictEqual(storedPages.length, 1);
-                assert.strictEqual(storedPages[0].uri, TEST_URI);
+                assert.strictEqual(storedPages.length, 2);
+                assert.strictEqual(storedPages.filter(p => p.uri === TEST_URI).length, 1);
             })
         );
 

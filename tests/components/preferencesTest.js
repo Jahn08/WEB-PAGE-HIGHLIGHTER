@@ -163,6 +163,7 @@ describe('components/preferences', function () {
                     await preferences.save();
 
                     const fullPagesInfo = await PageInfo.getAllSavedPagesFullInfo();
+                    fullPagesInfo.forEach(pi => delete pi.category);
                     assert.deepStrictEqual(fullPagesInfo, expectedPageData.pagesInfo);
 
                     const storedPageCategories = await PageInfo.getAllSavedPagesInfo();

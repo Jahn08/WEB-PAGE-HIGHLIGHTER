@@ -135,7 +135,30 @@ class PageInfo {
     }
 
     static getAllSavedPagesFullInfo() {
-        return this._getAllSavedPagesInfo(true).then(info => info.pagesInfo);
+        return this._getAllSavedPagesInfo(true).then(info => {
+            if (!info.pagesInfo.length)
+                return info.pagesInfo;
+            
+            const categorisedUris = this._buildCategorisedUris(info.pageCategories);
+
+            ArrayExtension.runForEach(info.pagesInfo, pi => {
+                const categoryTitle = categorisedUris[pi.uri];
+                
+                if (categoryTitle)
+                    pi.category = categoryTitle;
+            });
+
+            return info.pagesInfo;
+        });
+    }
+
+    static _buildCategorisedUris(pageCategories = {}) {
+        const categorisedUris = {};
+        for (const categoryName in pageCategories)
+            ArrayExtension.runForEach(pageCategories[categoryName], uri =>
+                categorisedUris[uri] = categoryName);
+
+        return categorisedUris;
     }
 
     static generateLoadingUrl(url) {
@@ -161,6 +184,11 @@ class PageInfo {
             if (!pi.title)
                 pi.title = this._fetchTitleFromUri(pi.uri);
 
+            if (pi.category) {
+                categorisedUris[pi.uri] = pi.category;
+                delete pi.category;
+            }
+
             new BrowserStorage(pi.uri).set({
                 [htmlPropName]: pi[htmlPropName],
                 date: pi.date,
@@ -168,17 +196,15 @@ class PageInfo {
             });
 
             importedFiles.push(this._excludeHtml(pi));
-
-            if (pi.category)
-                categorisedUris[pi.uri] = pi.category;
         });
 
-        const pageCategories = await this._savePageCategories(categorisedUris);
+        const responses = await Promise.all([this._savePageCategories(categorisedUris),
+            this._saveCategories(categorisedUris)]);
             
         return {
             importedPages: importedFiles,
-            pageCategories,
-            categories: []
+            pageCategories: responses[0] || {},
+            categories: responses[1] || []
         };
     }
 
@@ -206,12 +232,8 @@ class PageInfo {
             return;
 
         const pageCategoryStorage = new BrowserStorage(this._PAGE_CATEGORY_KEY);
-        const storedPageCategories = await pageCategoryStorage.get();
-
-        const storedCategorisedUris = {};
-        for (const categoryName in storedPageCategories)
-            ArrayExtension.runForEach(storedPageCategories[categoryName], uri =>
-                storedCategorisedUris[uri] = categoryName);
+        const storedCategorisedUris = this._buildCategorisedUris(
+            await pageCategoryStorage.get());
             
         for (const uri in categorisedUris) {
             const existentCategory = storedCategorisedUris[uri];
@@ -233,6 +255,39 @@ class PageInfo {
         await pageCategoryStorage.set(updatedPageCategories);
 
         return updatedPageCategories;
+    }
+
+    static async _saveCategories(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const newCategories = new Set();
+
+        for (const uri in categorisedUris)
+            newCategories.add(categorisedUris[uri]);
+        
+        const categoryStorage = new BrowserStorage(this._CATEGORY_KEY);
+        const storedCategories = (await categoryStorage.get()) || [];
+
+        let newCategoryWasAdded = false;
+        newCategories.forEach(val => {
+            if (!storedCategories.find(c => c.title === val)) {
+                storedCategories.push(this.createCategory(val));
+                newCategoryWasAdded = true;
+            }
+        });
+
+        if (newCategoryWasAdded)
+            await categoryStorage.set(storedCategories);
+
+        return storedCategories;
+    }
+
+    static createCategory(title, isDefault = false) {
+        return  {
+            default: isDefault,
+            title
+        };
     }
 
     static getAllSavedCategories() {

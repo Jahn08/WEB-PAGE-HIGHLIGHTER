@@ -182,6 +182,10 @@ class PagePreferencesDOM extends PreferencesDOM {
         super('page');
     }
 
+    static getSelectTextOptions(selectCtrl) {
+        return [...selectCtrl.options].map(op => op.innerText);
+    }
+
     _assertRowValues(rows, expectedRowValues) {
         const rowContents = rows.map(r => r.textContent);
         assert(expectedRowValues.every(rv => rowContents.find(rc => 

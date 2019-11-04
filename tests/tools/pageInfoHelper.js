@@ -90,4 +90,25 @@ export class PageInfoHelper {
 
         return pagesInfo.filter(p => !categorisedUris.includes(p.uri));
     }
+
+    static fillPageCategories(pagesInfo, pageCategories) {
+        const categorisedUris = this.buildCategorisedUris(pageCategories);
+        ArrayExtension.runForEach(pagesInfo, pi => {
+            const categoryTitle = categorisedUris[pi.uri];
+
+            if (categoryTitle)
+                pi.category = categoryTitle;
+        });
+
+        return pagesInfo;
+    }
+
+    static buildCategorisedUris(pageCategories = {}) {
+        const categorisedUris = {};
+        for (const categoryName in pageCategories)
+            ArrayExtension.runForEach(pageCategories[categoryName], uri =>
+                categorisedUris[uri] = categoryName);
+
+        return categorisedUris;
+    }
 }

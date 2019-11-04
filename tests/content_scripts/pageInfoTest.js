@@ -129,12 +129,16 @@ describe('content_script/pageInfo', function () {
 
     describe('#getAllSavedPagesFullInfo', function () {
         it('should get previously saved page info items with html from the storage', () =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
-                const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10), 
+                async expectedPageInfos => {
+                    const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
 
-                assert(actualPageInfos.every(pi => pi[PageInfo.HTML_PROP_NAME]));
-                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
-            })
+                    assert(actualPageInfos.every(pi => pi[PageInfo.HTML_PROP_NAME]));
+
+                    const categorisedPages = PageInfoHelper.fillPageCategories(
+                        expectedPageInfos.pagesInfo, expectedPageInfos.pageCategories);
+                    assert.deepStrictEqual(actualPageInfos, categorisedPages);
+                })
         );
     });
 
@@ -160,14 +164,24 @@ describe('content_script/pageInfo', function () {
     });
 
     describe('#savePages', function () {
-        const copyPageArray = (sourceArray) => sourceArray.map(p => Object.assign({}, p));
+        const copyArray = (sourceArray) => sourceArray.map(p => Object.assign({}, p));
 
-        it('should save pages into storage', () => {
+        const assertAbsenceOfCategories = (categories, pageCategories) => {
+            assert(categories);
+            assert(!categories.length);
+
+            assert(pageCategories);
+            assert(!Object.getOwnPropertyNames(pageCategories).length);
+        };
+
+        it('should save pages without categories into storage', () => {
             const testPages = PageInfoHelper.createPageInfoArray();
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
             return Expectation.expectResolution(PageInfo.savePages(testPages), 
                 async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+                    
                     const savedPages = savedData.importedPages;
                     assert(savedPages);
                     assert.strictEqual(savedPages.length, expectedPages.length);
@@ -185,10 +199,12 @@ describe('content_script/pageInfo', function () {
             const pageWithInvalidUri = Randomiser.getRandomArrayItem(testPages);
             pageWithInvalidUri.uri = Randomiser.getRandomNumberUpToMax();
 
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
             return Expectation.expectResolution(PageInfo.savePages(testPages), 
                 async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+
                     const savedPages = savedData.importedPages;
                     assert(savedPages);
                     assert.strictEqual(savedPages.length, expectedPages.length - 1);
@@ -206,7 +222,7 @@ describe('content_script/pageInfo', function () {
             const pageWithInvalidDate = Randomiser.getRandomArrayItem(testPages);
             pageWithInvalidDate.date = Randomiser.getRandomNumberUpToMax();
 
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
             const assureExpectedDate = (actualPages) => {
                 const nowString = new Date(Date.now()).toUTCString();
@@ -217,6 +233,8 @@ describe('content_script/pageInfo', function () {
 
             return Expectation.expectResolution(PageInfo.savePages(testPages),
                 async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+
                     const savedPages = savedData.importedPages;
                     assert(savedPages);
                     assert.strictEqual(savedPages.length, expectedPages.length);
@@ -237,7 +255,7 @@ describe('content_script/pageInfo', function () {
             const pageWithUriTitle = testPages[1];
             pageWithUriTitle.title = '';
 
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
             const assureExpectedTitles = (actualPages) => {
                 let actualPage = actualPages.find(p => p.uri === pageWithDefaultTitle.uri);
@@ -250,6 +268,8 @@ describe('content_script/pageInfo', function () {
 
             return Expectation.expectResolution(PageInfo.savePages(testPages), 
                 async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+
                     const savedPages = savedData.importedPages;
                     assert(savedPages);
                     assert.strictEqual(savedPages.length, expectedPages.length);
@@ -257,6 +277,68 @@ describe('content_script/pageInfo', function () {
                     assureExpectedTitles(savedPages);
                     const storedPages = await PageInfo.getAllSavedPagesFullInfo();
                     assureExpectedTitles(storedPages);
+                });
+        });
+
+        it('should save pages adding new categories and expanding existent ones in storage', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10),
+                async initialInfo => {
+                    const pagesToSave = PageInfoHelper.createPageInfoArray(8);            
+
+                    const categorisedUris = 
+                        PageInfoHelper.buildCategorisedUris(initialInfo.pageCategories);
+
+                    const storedCategories = await PageInfo.getAllSavedCategories();
+
+                    const categories = copyArray(storedCategories);
+                    pagesToSave.forEach((p, index) => {
+                        if (!(index % 3))
+                            return;
+
+                        const createNewCategory = index % 2;
+                        const category = createNewCategory ? 
+                            '' + Randomiser.getRandomNumberUpToMax(): 
+                            Randomiser.getRandomArrayItem(storedCategories).title;
+
+                        categorisedUris[p.uri] = category;
+                        p.category = category;
+
+                        if (createNewCategory)
+                            categories.push(PageInfoHelper.createCategory(category, false));
+                    });
+
+                    const expectedPages = copyArray(pagesToSave);
+
+                    const savedData = await PageInfo.savePages(pagesToSave);
+
+                    assert.deepStrictEqual(savedData.importedPages, 
+                        expectedPages.map(p => {
+                            const copy = Object.assign({}, p);
+                            delete copy[PageInfo.HTML_PROP_NAME];
+                            delete copy.category;
+
+                            return copy;
+                        }));
+                    
+                    assert.deepStrictEqual(
+                        PageInfoHelper.buildCategorisedUris(savedData.pageCategories), 
+                        categorisedUris);
+
+                    assert.deepStrictEqual(savedData.categories, categories);
+
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo();
+
+                    expectedPages.forEach(ep =>
+                        assert.deepStrictEqual(storedPages.find(sp => sp.uri === ep.uri), ep));
+                    
+                    initialInfo.pagesInfo.forEach(pi => {
+                        const actualPage = storedPages.find(sp => sp.uri === pi.uri);
+                        assert(actualPage);
+                        assert.strictEqual(actualPage.category, categorisedUris[pi.uri]);
+
+                        delete actualPage.category;
+                        assert.deepStrictEqual(actualPage, pi);
+                    });
                 });
         });
     });

@@ -790,8 +790,10 @@ class PageTable extends BaseTable {
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
 
-                if (importedData.pageCategories)
+                if (importedData.pageCategories) {
                     this._pageCategories = importedData.pageCategories;
+                    this._renderCategoryControls();
+                }
 
                 this._tableData = this._getCategoryPages();
                 this._sortTableData();
