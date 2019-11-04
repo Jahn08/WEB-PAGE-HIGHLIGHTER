@@ -974,7 +974,7 @@ class Preferences {
     }
 
     _initPageTable() {
-        return PageInfo.getAllSavedPagesInfo().then(info => {
+        return PageInfo.getAllSavedPagesWithCategories().then(info => {
             this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, 
                 this._defaultCategoryTitle);
 

@@ -136,7 +136,7 @@ describe('components/preferences/pageTable', function () {
                     pageTableDOM.assertStatusIsEmpty();
 
                     await preferences.save();
-                    const storedInfo = await PageInfo.getAllSavedPagesInfo();
+                    const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
                     
                     const storedPages = storedInfo.pageCategories[newCategoryTitle] || 
                         PageInfoHelper.getUncategorisedPages(storedInfo.pagesInfo, 
@@ -518,7 +518,7 @@ describe('components/preferences/pageTable', function () {
                 pageTableDOM.getCategoryFilterList());
             assert(categories.every(c => categoryOptions.includes(c.title)));
 
-            const storedData = await PageInfo.getAllSavedPagesInfo();
+            const storedData = await PageInfo.getAllSavedPagesWithCategories();
             const uncategorisedPages = PageInfoHelper.getUncategorisedPages(storedData.pagesInfo, 
                 storedData.pageCategories);
             pageTableDOM.assertTableValues(uncategorisedPages);
@@ -588,7 +588,7 @@ describe('components/preferences/pageTable', function () {
 
                 await startImporting();
                 
-                const storedInfo = await PageInfo.getAllSavedPagesInfo();
+                const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
                 const storedPages = storedInfo.pagesInfo;
                 assert.strictEqual(storedPages.length, 2);
                 assert.strictEqual(storedPages.filter(p => p.uri === TEST_URI).length, 1);

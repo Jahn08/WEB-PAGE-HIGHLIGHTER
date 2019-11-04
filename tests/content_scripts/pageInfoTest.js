@@ -114,11 +114,11 @@ describe('content_script/pageInfo', function () {
         );
     });
 
-    describe('#getAllSavedPagesInfo', function () {
+    describe('#getAllSavedPagesWithCategories', function () {
         it('should get previously saved page info items without html alongsdide their categories', () =>
             Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(), 
                 async savedInfo => {
-                    const storedInfo = await PageInfo.getAllSavedPagesInfo();
+                    const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
 
                     savedInfo.pagesInfo.forEach(pi => delete pi[PageInfo.HTML_PROP_NAME]);
                     assert.deepStrictEqual(storedInfo.pagesInfo, savedInfo.pagesInfo);
@@ -364,7 +364,7 @@ describe('content_script/pageInfo', function () {
             
             await PageInfo.savePageCategories(testPageCategories);
            
-            return Expectation.expectResolution(PageInfo.getAllSavedPagesInfo(), 
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesWithCategories(), 
                 pageInfo => {
                     const savedPageCategories = pageInfo.pageCategories;
                     assert(savedPageCategories);

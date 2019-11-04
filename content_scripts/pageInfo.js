@@ -87,7 +87,7 @@ class PageInfo {
         return '#highlighterPageLoading';
     }
 
-    static getAllSavedPagesInfo() {
+    static getAllSavedPagesWithCategories() {
         return this._getAllSavedPagesInfo();
     }
 

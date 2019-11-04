@@ -166,7 +166,7 @@ describe('components/preferences', function () {
                     fullPagesInfo.forEach(pi => delete pi.category);
                     assert.deepStrictEqual(fullPagesInfo, expectedPageData.pagesInfo);
 
-                    const storedPageCategories = await PageInfo.getAllSavedPagesInfo();
+                    const storedPageCategories = await PageInfo.getAllSavedPagesWithCategories();
                     
                     assert.deepStrictEqual(storedPageCategories.pageCategories, 
                         expectedPageData.pageCategories);
