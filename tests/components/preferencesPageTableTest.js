@@ -129,23 +129,30 @@ describe('components/preferences/pageTable', function () {
 
                     const newCategoryTitle = uncheckedCategory.innerText;
 
-                    const newCategoryPages = savedInfo.pageCategories[newCategoryTitle] || [];
-                    assert(newCategoryPages.every(p => !pageUrisToMove.includes(p)));
+                    const newCategoryPages = PageInfoHelper.getCategoryPages(savedInfo.pageCategories, 
+                        newCategoryTitle);
+                    assert(pageUrisToMove.every(uri => !newCategoryPages.includes(uri)));
 
                     pageTableDOM.dispatchClickEvent(pageTableDOM.getRelocatingBtn());
                     pageTableDOM.assertStatusIsEmpty();
 
                     await preferences.save();
-                    const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
-                    
-                    const storedPages = storedInfo.pageCategories[newCategoryTitle] || 
-                        PageInfoHelper.getUncategorisedPages(storedInfo.pagesInfo, 
-                            storedInfo.pageCategories).map(p => p.uri);
 
                     newCategoryPages.push(...pageUrisToMove);
 
-                    assert.strictEqual(storedPages.length, newCategoryPages.length);
-                    assert(newCategoryPages.every(p => storedPages.includes(p)));
+                    const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
+                    
+                    let storedPages;
+
+                    if (CategoryPreferencesDOM.isNoneCategory(newCategoryTitle))
+                        storedPages = PageInfoHelper.getUncategorisedPages(storedInfo.pagesInfo, 
+                            storedInfo.pageCategories).map(p => p.uri);
+                    else
+                        storedPages = PageInfoHelper.getCategoryPages(storedInfo.pageCategories, 
+                            newCategoryTitle);
+
+                    assert.strictEqual(newCategoryPages.length, storedPages.length);
+                    assert(newCategoryPages.every(uri => storedPages.includes(uri)));
                 });
         };
 
@@ -208,7 +215,8 @@ describe('components/preferences/pageTable', function () {
             const selectedCategory = getOption(pageTableDOM.getCategoryFilterList(), true);
             assert.strictEqual(selectedCategory.innerText, chosenCategoryTitle);
 
-            const chosenPageCategoryPages = pageCategories[chosenCategoryTitle];
+            const chosenPageCategoryPages = PageInfoHelper.getCategoryPages(
+                pageCategories, chosenCategoryTitle);
             assert(chosenPageCategoryPages);
 
             pageTableDOM.assertTableValues(pagesInfo
@@ -512,6 +520,7 @@ describe('components/preferences/pageTable', function () {
             assert.strictEqual(importBtn.disabled, false);
 
             const categories = (await PageInfo.getAllSavedCategories()) || [];
+            
             categoryTableDOM.assertTableValues(categories);
 
             const categoryOptions = PagePreferencesDOM.getSelectTextOptions(

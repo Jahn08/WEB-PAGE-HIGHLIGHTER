@@ -139,10 +139,8 @@ class PageInfo {
             if (!info.pagesInfo.length)
                 return info.pagesInfo;
             
-            const categorisedUris = this._buildCategorisedUris(info.pageCategories);
-
             ArrayExtension.runForEach(info.pagesInfo, pi => {
-                const categoryTitle = categorisedUris[pi.uri];
+                const categoryTitle = info.pageCategories[pi.uri];
                 
                 if (categoryTitle)
                     pi.category = categoryTitle;
@@ -150,15 +148,6 @@ class PageInfo {
 
             return info.pagesInfo;
         });
-    }
-
-    static _buildCategorisedUris(pageCategories = {}) {
-        const categorisedUris = {};
-        for (const categoryName in pageCategories)
-            ArrayExtension.runForEach(pageCategories[categoryName], uri =>
-                categorisedUris[uri] = categoryName);
-
-        return categorisedUris;
     }
 
     static generateLoadingUrl(url) {
@@ -173,7 +162,7 @@ class PageInfo {
         const htmlPropName = this.HTML_PROP_NAME;
 
         const importedFiles = [];
-        const categorisedUris = {};
+        const pageCategories = {};
 
         ArrayExtension.runForEach(pagesInfo, pi => {
             if (!this._isUriValid(pi.uri))
@@ -185,7 +174,7 @@ class PageInfo {
                 pi.title = this._fetchTitleFromUri(pi.uri);
 
             if (pi.category) {
-                categorisedUris[pi.uri] = pi.category;
+                pageCategories[pi.uri] = pi.category;
                 delete pi.category;
             }
 
@@ -198,8 +187,8 @@ class PageInfo {
             importedFiles.push(this._excludeHtml(pi));
         });
 
-        const responses = await Promise.all([this._savePageCategories(categorisedUris),
-            this._saveCategories(categorisedUris)]);
+        const responses = await Promise.all([this._savePageCategories(pageCategories),
+            this._saveCategories(pageCategories)]);
             
         return {
             importedPages: importedFiles,
@@ -232,40 +221,21 @@ class PageInfo {
             return;
 
         const pageCategoryStorage = new BrowserStorage(this._PAGE_CATEGORY_KEY);
-        const storedCategorisedUris = this._buildCategorisedUris(
-            await pageCategoryStorage.get());
+        const storedPageCategories = (await pageCategoryStorage.get()) || {};
             
-        for (const uri in categorisedUris) {
-            const existentCategory = storedCategorisedUris[uri];
-            const newCategory = categorisedUris[uri];
-
-            if (!existentCategory || newCategory !== existentCategory)
-                storedCategorisedUris[uri] = newCategory;
-        }
-
-        const updatedPageCategories = {};
-        for (const uri in storedCategorisedUris) {
-            const category = storedCategorisedUris[uri];
-
-            const updatedPageCategory = updatedPageCategories[category] || [];
-            updatedPageCategory.push(uri);
-            updatedPageCategories[category] = updatedPageCategory;
-        }
+        for (const uri in categorisedUris)
+            storedPageCategories[uri] = categorisedUris[uri];
         
-        await pageCategoryStorage.set(updatedPageCategories);
+        await pageCategoryStorage.set(storedPageCategories);
 
-        return updatedPageCategories;
+        return storedPageCategories;
     }
 
     static async _saveCategories(categorisedUris = {}) {
         if (!Object.getOwnPropertyNames(categorisedUris).length)
             return;
 
-        const newCategories = new Set();
-
-        for (const uri in categorisedUris)
-            newCategories.add(categorisedUris[uri]);
-        
+        const newCategories = new Set(Object.values(categorisedUris));
         const categoryStorage = new BrowserStorage(this._CATEGORY_KEY);
         const storedCategories = (await categoryStorage.get()) || [];
 

@@ -54,7 +54,7 @@ export class PageInfoHelper {
         };
     }
 
-    static createPageCategoryArray(numberOfItems = 3, defaultIndex = null) {
+    static createPageCategories(numberOfItems = 3, defaultIndex = null) {
         return this.buildPageCategories(this.createPageInfoArray(numberOfItems * 2), defaultIndex);
     }
 
@@ -67,15 +67,14 @@ export class PageInfoHelper {
         return { 
             pageCategories: categories.reduce((prev, cur, index) => {
                 const pageIndex = index * 2;
-                const pages = [pageUris[pageIndex]];
+                const _uris = [pageUris[pageIndex]];
 
                 const nextIndex = pageIndex + 1;
 
                 if (nextIndex < numberOfItems)
-                    pages.push(pageUris[nextIndex]);
+                    _uris.push(pageUris[nextIndex]);
 
-                prev[cur.title] = pages;
-
+                _uris.forEach(uri => prev[uri] = cur.title);
                 return prev;
             }, {}),
             categories
@@ -83,32 +82,22 @@ export class PageInfoHelper {
     }
 
     static getUncategorisedPages(pagesInfo, pageCategories) {
-        const categorisedUris = [];
-        
-        for (const categoryName in pageCategories)
-            categorisedUris.push(...pageCategories[categoryName]);
+        return pagesInfo.filter(pi => !pageCategories[pi.uri]);
+    }
 
-        return pagesInfo.filter(p => !categorisedUris.includes(p.uri));
+    static getCategoryPages(pageCategories, categoryTitle) {
+        return Object.entries(pageCategories)
+            .filter(e => e[1] === categoryTitle).map(e => e[0]);
     }
 
     static fillPageCategories(pagesInfo, pageCategories) {
-        const categorisedUris = this.buildCategorisedUris(pageCategories);
-        ArrayExtension.runForEach(pagesInfo, pi => {
-            const categoryTitle = categorisedUris[pi.uri];
+        pagesInfo.forEach(pi => {
+            const categoryTitle = pageCategories[pi.uri];
 
             if (categoryTitle)
                 pi.category = categoryTitle;
         });
 
         return pagesInfo;
-    }
-
-    static buildCategorisedUris(pageCategories = {}) {
-        const categorisedUris = {};
-        for (const categoryName in pageCategories)
-            ArrayExtension.runForEach(pageCategories[categoryName], uri =>
-                categorisedUris[uri] = categoryName);
-
-        return categorisedUris;
     }
 }

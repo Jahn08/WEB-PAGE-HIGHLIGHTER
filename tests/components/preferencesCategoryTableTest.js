@@ -305,7 +305,7 @@ describe('components/preferences/categoryTable', function () {
 
             return Expectation.expectResolution(StorageHelper.saveTestPageCategories(5, defaultCategoryIndex)
                 .then(async pageCategories => {
-                    const defaultCategoryTitle = Object.getOwnPropertyNames(pageCategories)
+                    const defaultCategoryTitle = [...new Set(Object.values(pageCategories))]
                         .sort()[defaultCategoryIndex];
 
                     const removedTitles = await preferencesTester.removeFirstTwoRows();

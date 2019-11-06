@@ -63,7 +63,7 @@ export class StorageHelper {
             return Promise.resolve();
 
         return this._savePageCategories(
-            PageInfoHelper.createPageCategoryArray(numberOfItems, defaultCategoryIndex));
+            PageInfoHelper.createPageCategories(numberOfItems, defaultCategoryIndex));
     }
 
     static _savePageCategories(categoryInfo) {

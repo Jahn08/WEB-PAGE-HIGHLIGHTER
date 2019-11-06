@@ -475,8 +475,17 @@ class CategoryTable extends BaseTable {
     }
 }
 
+class CategoryView {
+    constructor(categories = [], defaultCategoryTitle = null) {
+        this.categoryTitles = categories.map(c => c.title);
+        this._defaultCategoryTitle = defaultCategoryTitle;
+    }
+
+    get defaultCategoryTitle() { return this._defaultCategoryTitle; }
+}
+
 class PageTable extends BaseTable {
-    constructor(pagesInfo = [], pageCategories = {}, defaultCategoryTitle = null) {
+    constructor(pagesInfo = [], pageCategories = {}, categoryView = {}) {
         super('page', pagesInfo);
 
         this.onImported = null;
@@ -508,7 +517,9 @@ class PageTable extends BaseTable {
 
         this._pageCategories = pageCategories;
 
-        this._defaultCategoryTitle = defaultCategoryTitle;
+        this._categoryTitles = categoryView.categoryTitles;
+        this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
+
         this._categoryFilter = this._getControlByName('filter-category');
         this._categoryFilter.onchange = this.bindToThis(this._showCategoryPages);
 
@@ -523,14 +534,14 @@ class PageTable extends BaseTable {
     }
 
     addPageCategory(categoryTitle) {
-        this._pageCategories[categoryTitle] = [];
+        this._categoryTitles.push(categoryTitle);
 
         this._renderCategoryControls();
         this._makeDirty();
     }
 
     removePageCategories(categoryTitles = []) {
-        ArrayExtension.runForEach(categoryTitles, c => delete this._pageCategories[c]);
+        this._categoryTitles = this._categoryTitles.filter(ct => !categoryTitles.includes(ct));
 
         this._renderCategoryControls();
 
@@ -581,51 +592,30 @@ class PageTable extends BaseTable {
         const newCategoryName = this._getSelectedOption(this._categorySelector);
 
         const moveToNone = newCategoryName === this._NONE_CATEGORY_NAME;
-        let newCategoryPages;
         
-        if (!moveToNone) {
-            newCategoryPages = this._pageCategories[newCategoryName];
-
-            if (!newCategoryPages) {
-                this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', 
-                    newCategoryName));
-                return;
-            }
+        if (!moveToNone && !this._categoryTitles.includes(newCategoryName)) {
+            this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', 
+                newCategoryName));
+            return;
         }
 
         const movedPageUris = this._removeRows();
-
-        const curCategoryName = this._getCurrentCategory();
-        const curCategoryPages = this._pageCategories[curCategoryName];
-
-        if (curCategoryPages)
-            this._pageCategories[curCategoryName] = 
-                curCategoryPages.filter(cp => !movedPageUris.includes(cp));
-
         this._makeDirty();
 
-        if (moveToNone)
-            return;
-
-        newCategoryPages.push(...movedPageUris);
+        ArrayExtension.runForEach(movedPageUris, 
+            uri => moveToNone ? delete this._pageCategories[uri]: 
+                this._pageCategories[uri] = newCategoryName);
     }
 
     _getCategoryPages() {
         const curCategoryName = this._getCurrentCategory();
 
-        if (curCategoryName === this._NONE_CATEGORY_NAME) {
-            const categorisedPages = [];
-            for (const categoryName in this._pageCategories)
-                categorisedPages.push(...this._pageCategories[categoryName]);
+        if (curCategoryName === this._NONE_CATEGORY_NAME)
+            return this._originalData.filter(d => !this._pageCategories[d.uri]);
 
-            return this._originalData.filter(d => !categorisedPages.includes(d.uri));
-        }
-
-        const curCategoryPages = this._pageCategories[curCategoryName];
-
-        if (!curCategoryPages)
-            return [];
-            
+        const curCategoryPages = Object.entries(this._pageCategories)
+            .filter(pc => pc[1] === curCategoryName)
+            .map(pc => pc[0]);
         return this._originalData.filter(d => curCategoryPages.includes(d.uri)) ;
     }
 
@@ -642,13 +632,13 @@ class PageTable extends BaseTable {
     _createCategoryOptions(selectedCategory) {
         let hasSelectedValue;
 
-        const options = Object.getOwnPropertyNames(this._pageCategories).sort().map(catName => {
-            const selected = catName === selectedCategory;
+        const options = this._categoryTitles.sort().map(catTitle => {
+            const selected = catTitle === selectedCategory;
             
             if (selected)
                 hasSelectedValue = true;
 
-            return this._createSelectOption(catName, selected);
+            return this._createSelectOption(catTitle, selected);
         });
         options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
 
@@ -792,6 +782,9 @@ class PageTable extends BaseTable {
 
                 if (importedData.pageCategories) {
                     this._pageCategories = importedData.pageCategories;
+                    this._categoryTitles = new CategoryView(importedData.categories)
+                        .categoryTitles;
+
                     this._renderCategoryControls();
                 }
 
@@ -906,6 +899,7 @@ class Preferences {
         this._initColourList();
 
         this._pageTable = null;
+        this._categories = null;
         this._defaultCategoryTitle = null;
 
         this._categoryTable = null;
@@ -976,7 +970,7 @@ class Preferences {
     _initPageTable() {
         return PageInfo.getAllSavedPagesWithCategories().then(info => {
             this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, 
-                this._defaultCategoryTitle);
+                new CategoryView(this._categories, this._defaultCategoryTitle));
 
             if (this._categoryTable) {
                 this._categoryTable.onAdded = 
@@ -994,6 +988,8 @@ class Preferences {
         return PageInfo.getAllSavedCategories().then(categories => {
             this._categoryTable = new CategoryTable(categories);
             this._defaultCategoryTitle = this._categoryTable.defaultCategoryTitle;
+            
+            this._categories = categories;
         });
     }
 

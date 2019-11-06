@@ -285,9 +285,6 @@ describe('content_script/pageInfo', function () {
                 async initialInfo => {
                     const pagesToSave = PageInfoHelper.createPageInfoArray(8);            
 
-                    const categorisedUris = 
-                        PageInfoHelper.buildCategorisedUris(initialInfo.pageCategories);
-
                     const storedCategories = await PageInfo.getAllSavedCategories();
 
                     const categories = copyArray(storedCategories);
@@ -300,7 +297,7 @@ describe('content_script/pageInfo', function () {
                             '' + Randomiser.getRandomNumberUpToMax(): 
                             Randomiser.getRandomArrayItem(storedCategories).title;
 
-                        categorisedUris[p.uri] = category;
+                        initialInfo.pageCategories[p.uri] = category;
                         p.category = category;
 
                         if (createNewCategory)
@@ -320,9 +317,7 @@ describe('content_script/pageInfo', function () {
                             return copy;
                         }));
                     
-                    assert.deepStrictEqual(
-                        PageInfoHelper.buildCategorisedUris(savedData.pageCategories), 
-                        categorisedUris);
+                    assert.deepStrictEqual(savedData.pageCategories, initialInfo.pageCategories);
 
                     assert.deepStrictEqual(savedData.categories, categories);
 
@@ -334,7 +329,7 @@ describe('content_script/pageInfo', function () {
                     initialInfo.pagesInfo.forEach(pi => {
                         const actualPage = storedPages.find(sp => sp.uri === pi.uri);
                         assert(actualPage);
-                        assert.strictEqual(actualPage.category, categorisedUris[pi.uri]);
+                        assert.strictEqual(actualPage.category, initialInfo.pageCategories[pi.uri]);
 
                         delete actualPage.category;
                         assert.deepStrictEqual(actualPage, pi);
@@ -360,7 +355,7 @@ describe('content_script/pageInfo', function () {
 
     describe('#savePageCategories', function () {
         it('should save page categories into storage', async () => {
-            const testPageCategories = PageInfoHelper.createPageCategoryArray().pageCategories;
+            const testPageCategories = PageInfoHelper.createPageCategories().pageCategories;
             
             await PageInfo.savePageCategories(testPageCategories);
            
