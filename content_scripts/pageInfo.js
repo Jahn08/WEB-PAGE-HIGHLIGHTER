@@ -1,7 +1,120 @@
+class Category {
+    static async upsert(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const newCategories = new Set(Object.values(categorisedUris));
+        const categoryStorage = this._createStorage();
+        const storedCategories = (await categoryStorage.get()) || [];
+
+        let newCategoryWasAdded = false;
+        newCategories.forEach(val => {
+            if (!storedCategories.find(c => c.title === val)) {
+                storedCategories.push(this._createCategory(val));
+                newCategoryWasAdded = true;
+            }
+        });
+
+        if (newCategoryWasAdded)
+            await categoryStorage.set(storedCategories);
+
+        return storedCategories;
+    }
+
+    static _createCategory(title, isDefault = false) {
+        return  {
+            default: isDefault,
+            title
+        };
+    }
+
+    static _createStorage() {
+        return new BrowserStorage('categories');
+    }
+
+    static get() {
+        return this._createStorage().get();
+    }
+
+    static save(data) {
+        return this._createStorage().set(data);
+    }
+}
+
+class PageCategory {
+    constructor(uri) {
+        this._uri = uri;
+        this._storage = null;
+
+        this._category = null;
+    }
+
+    async load() {
+        this._category = await this._getPageCategory();
+    }
+
+    async _getPageCategory() {
+        const pageCategories = await this._browserStorage.get();
+        return pageCategories[this._uri];
+    }
+
+    get _browserStorage() {
+        if (!this._storage)
+            this._storage = PageCategory._createStorage();
+
+        return this._storage;
+    }
+
+    static _createStorage() {
+        return new BrowserStorage('pageCategories');
+    }
+
+    async update(categoryTitle) {
+        if (categoryTitle === null || this._category === categoryTitle)
+            return;
+
+        const pageCategories = await this._browserStorage.get();
+
+        if (categoryTitle)
+            pageCategories[this._uri] = categoryTitle;
+        else
+            delete pageCategories[this._uri];
+        
+        await this._browserStorage.set(pageCategories);
+
+        this._category = categoryTitle;
+    }
+
+    static async upsert(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const pageCategoryStorage = this._createStorage();
+        const storedPageCategories = (await pageCategoryStorage.get()) || {};
+            
+        for (const uri in categorisedUris)
+            storedPageCategories[uri] = categorisedUris[uri];
+        
+        await pageCategoryStorage.set(storedPageCategories);
+
+        return storedPageCategories;
+    }
+    
+    static save(data) {
+        return this._createStorage().set(data);
+    }
+
+    static get() {
+        return this._createStorage().get();
+    }
+}
+
 class PageInfo {
     constructor () {
         this._uri = this._computeUri();
         this._storage = null;
+
+        this._pageCategory = new PageCategory(this._uri);
     }
 
     _computeUri() {
@@ -13,7 +126,9 @@ class PageInfo {
         return 'htmlBase64'; 
     }
 
-    save() {
+    async save(categoryTitle = null) {
+        await this._pageCategory.update(categoryTitle);
+        
         return this._browserStorage.set(this._serialise());
     }
 
@@ -49,6 +164,8 @@ class PageInfo {
             this._throwNoContentError();
 
         this._renderHtml(this._deserialiseHtml(serialisedHtml));
+
+        this._pageCategory.load();
     }
 
     _throwNoContentError() {
@@ -91,47 +208,37 @@ class PageInfo {
         return this._getAllSavedPagesInfo();
     }
 
-    static get _PAGE_CATEGORY_KEY() { return 'pageCategories'; }
+    static async _getAllSavedPagesInfo(includeHtml = false) {
+        const objs = await BrowserStorage.getAll();
+    
+        const props = Object.getOwnPropertyNames(objs);
 
-    static _getAllSavedPagesInfo(includeHtml = false) {
-        return BrowserStorage.getAll().then(objs => {
-            const props = Object.getOwnPropertyNames(objs);
+        const pagesInfo = [];
 
-            const pagesInfo = [];
+        const htmlPropName = this.HTML_PROP_NAME;
 
-            const htmlPropName = this.HTML_PROP_NAME;
+        ArrayExtension.runForEach(props, prop => {
+            if (!this._isUriValid(prop))
+                return;
 
-            const pageCategoryProp = this._PAGE_CATEGORY_KEY;
-            let pageCategories;
+            const obj = objs[prop];
 
-            ArrayExtension.runForEach(props, prop => {
-                if (prop === pageCategoryProp) {
-                    pageCategories = objs[prop];
-                    return;
-                }
-
-                if (!this._isUriValid(prop))
-                    return;
-
-                const obj = objs[prop];
-
-                const pageInfo = {
-                    uri: prop, 
-                    title: obj.title,
-                    date: obj.date
-                };
-
-                if (includeHtml)
-                    pageInfo[htmlPropName] = obj[htmlPropName];
-                
-                pagesInfo.push(pageInfo);
-            });
-
-            return {
-                pageCategories: pageCategories || {},
-                pagesInfo
+            const pageInfo = {
+                uri: prop, 
+                title: obj.title,
+                date: obj.date
             };
+
+            if (includeHtml)
+                pageInfo[htmlPropName] = obj[htmlPropName];
+            
+            pagesInfo.push(pageInfo);
         });
+
+        return {
+            pageCategories: (await PageCategory.get()) || {},
+            pagesInfo
+        };
     }
 
     static getAllSavedPagesFullInfo() {
@@ -187,8 +294,8 @@ class PageInfo {
             importedFiles.push(this._excludeHtml(pi));
         });
 
-        const responses = await Promise.all([this._savePageCategories(pageCategories),
-            this._saveCategories(pageCategories)]);
+        const responses = await Promise.all([PageCategory.upsert(pageCategories),
+            Category.upsert(pageCategories)]);
             
         return {
             importedPages: importedFiles,
@@ -216,61 +323,15 @@ class PageInfo {
         return pageInfo;
     }
     
-    static async _savePageCategories(categorisedUris = {}) {
-        if (!Object.getOwnPropertyNames(categorisedUris).length)
-            return;
-
-        const pageCategoryStorage = new BrowserStorage(this._PAGE_CATEGORY_KEY);
-        const storedPageCategories = (await pageCategoryStorage.get()) || {};
-            
-        for (const uri in categorisedUris)
-            storedPageCategories[uri] = categorisedUris[uri];
-        
-        await pageCategoryStorage.set(storedPageCategories);
-
-        return storedPageCategories;
-    }
-
-    static async _saveCategories(categorisedUris = {}) {
-        if (!Object.getOwnPropertyNames(categorisedUris).length)
-            return;
-
-        const newCategories = new Set(Object.values(categorisedUris));
-        const categoryStorage = new BrowserStorage(this._CATEGORY_KEY);
-        const storedCategories = (await categoryStorage.get()) || [];
-
-        let newCategoryWasAdded = false;
-        newCategories.forEach(val => {
-            if (!storedCategories.find(c => c.title === val)) {
-                storedCategories.push(this.createCategory(val));
-                newCategoryWasAdded = true;
-            }
-        });
-
-        if (newCategoryWasAdded)
-            await categoryStorage.set(storedCategories);
-
-        return storedCategories;
-    }
-
-    static createCategory(title, isDefault = false) {
-        return  {
-            default: isDefault,
-            title
-        };
-    }
-
     static getAllSavedCategories() {
-        return new BrowserStorage(this._CATEGORY_KEY).get();
+        return Category.get();
     }
-
-    static get _CATEGORY_KEY() { return 'categories'; }
 
     static saveCategories(data) {
-        return new BrowserStorage(this._CATEGORY_KEY).set(data);
+        return Category.save(data);
     }
 
     static savePageCategories(data) {
-        return new BrowserStorage(this._PAGE_CATEGORY_KEY).set(data);
+        return PageCategory.save(data);
     }
 }

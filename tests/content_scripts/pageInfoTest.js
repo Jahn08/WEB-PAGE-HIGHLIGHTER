@@ -65,23 +65,22 @@ describe('content_script/pageInfo', function () {
             document.body.appendChild(parentDiv);
 
             const pageInfo = new PageInfo();
-            pageInfo.save();
 
-            parentDiv.remove();
+            return Expectation.expectResolution(pageInfo.save(), async () => {
+                parentDiv.remove();
 
-            assert.strictEqual(document.getElementById(parentDiv.id), null);
-
-            return Expectation.expectResolution(new PageInfo().load(),
-                () => {
-                    assert.strictEqual(storage.length, 1);
-
-                    const loadedDiv = document.getElementById(parentDiv.id);
-                    assert(loadedDiv);
-                    assert.strictEqual(loadedDiv.childElementCount, 1);
-
-                    assert.strictEqual(loadedDiv.firstElementChild.innerHTML, 
-                        childLabel.innerHTML);
-                });
+                assert.strictEqual(document.getElementById(parentDiv.id), null);
+    
+                await new PageInfo().load();
+    
+                assert.strictEqual(storage.length, 1);
+    
+                const loadedDiv = document.getElementById(parentDiv.id);
+                assert(loadedDiv);
+                assert.strictEqual(loadedDiv.childElementCount, 1);
+    
+                assert.strictEqual(loadedDiv.firstElementChild.innerHTML, childLabel.innerHTML);
+            });
         });
     });
 
