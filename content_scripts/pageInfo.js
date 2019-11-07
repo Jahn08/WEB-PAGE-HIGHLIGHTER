@@ -31,6 +31,11 @@ class Category {
     static _createStorage() {
         return new BrowserStorage('categories');
     }
+        
+    static async getDefault() {
+        const categories = (await this.get()) || [];
+        return (categories.find(c => c.default) || {}).title;
+    }
 
     static get() {
         return this._createStorage().get();
@@ -54,8 +59,12 @@ class PageCategory {
     }
 
     async _getPageCategory() {
-        const pageCategories = await this._browserStorage.get();
+        const pageCategories = await PageCategory._getPageCategories(this._browserStorage);
         return pageCategories[this._uri];
+    }
+
+    static async _getPageCategories(storage) {
+        return (await storage.get()) || {};
     }
 
     get _browserStorage() {
@@ -70,10 +79,10 @@ class PageCategory {
     }
 
     async update(categoryTitle) {
-        if (categoryTitle === null || this._category === categoryTitle)
+        if (this._category == categoryTitle)
             return;
 
-        const pageCategories = await this._browserStorage.get();
+        const pageCategories = await PageCategory._getPageCategories(this._browserStorage);
 
         if (categoryTitle)
             pageCategories[this._uri] = categoryTitle;
@@ -90,7 +99,7 @@ class PageCategory {
             return;
 
         const pageCategoryStorage = this._createStorage();
-        const storedPageCategories = (await pageCategoryStorage.get()) || {};
+        const storedPageCategories = await this._getPageCategories(pageCategoryStorage);
             
         for (const uri in categorisedUris)
             storedPageCategories[uri] = categorisedUris[uri];
@@ -114,8 +123,13 @@ class PageInfo {
         this._uri = this._computeUri();
         this._storage = null;
 
+        this._pageIsStored = false;
+
         this._pageCategory = new PageCategory(this._uri);
     }
+
+
+    get uri() { return this._uri; }
 
     _computeUri() {
         const location = document.location;
@@ -126,10 +140,21 @@ class PageInfo {
         return 'htmlBase64'; 
     }
 
-    async save(categoryTitle = null) {
+    async saveToCategory(categoryTitle) {
         await this._pageCategory.update(categoryTitle);
-        
+
+        return this._saveInternally();
+    }
+
+    _saveInternally() {
         return this._browserStorage.set(this._serialise());
+    }
+
+    async save() {
+        if (!this._pageIsStored)
+            await this._pageCategory.update(await Category.getDefault());
+
+        return this._saveInternally();
     }
 
     get _browserStorage() {
@@ -152,7 +177,7 @@ class PageInfo {
     }
 
     async canLoad() {
-        return await this._browserStorage.contains();
+        return (this._pageIsStored = await this._browserStorage.contains());
     }
 
     async load() {

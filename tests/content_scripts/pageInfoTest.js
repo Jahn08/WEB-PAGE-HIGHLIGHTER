@@ -55,7 +55,7 @@ describe('content_script/pageInfo', function () {
             );
         });
 
-        it('should load a page previously saved in the storage', () => {
+        const testSavingPage = (saveFn,  checkPageCategoriesFn) => {
             const parentDiv = document.createElement('div');
             parentDiv.id = Randomiser.getRandomNumberUpToMax();
 
@@ -66,14 +66,16 @@ describe('content_script/pageInfo', function () {
 
             const pageInfo = new PageInfo();
 
-            return Expectation.expectResolution(pageInfo.save(), async () => {
+            return Expectation.expectResolution(saveFn(pageInfo), async () => {
                 parentDiv.remove();
 
                 assert.strictEqual(document.getElementById(parentDiv.id), null);
     
-                await new PageInfo().load();
-    
-                assert.strictEqual(storage.length, 1);
+                const pageInfoToLoad = new PageInfo();
+                await pageInfoToLoad.load();
+
+                checkPageCategoriesFn(
+                    (await PageInfo.getAllSavedPagesWithCategories()).pageCategories, pageInfoToLoad);
     
                 const loadedDiv = document.getElementById(parentDiv.id);
                 assert(loadedDiv);
@@ -81,6 +83,36 @@ describe('content_script/pageInfo', function () {
     
                 assert.strictEqual(loadedDiv.firstElementChild.innerHTML, childLabel.innerHTML);
             });
+        };
+
+        it('should load a page previously saved in the storage without a category', () =>
+            testSavingPage(pageInfo => pageInfo.save(), pageCategories => {
+                assert.strictEqual(Object.getOwnPropertyNames(pageCategories).length, 0);
+                assert.strictEqual(storage.length, 1);
+            })
+        );
+
+        it('should load a page previously saved in the storage with a default category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(), 
+                async () => {
+                    const storedCategories = await PageInfo.getAllSavedCategories();
+                    const defaultCategoryTitle = storedCategories.find(c => c.default).title;
+
+                    return testSavingPage(pageInfo => pageInfo.save(), (pageCategories, pageInfo) =>
+                        assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
+                    );
+                }
+            )
+        );
+
+        it('should load a page previously saved in the storage with a category', () => {
+            const categoryTitle = '' + Randomiser.getRandomNumberUpToMax();
+
+            return testSavingPage(pageInfo => pageInfo.saveToCategory(categoryTitle), 
+                (pageCategories, pageInfo) => {
+                    assert.strictEqual(pageCategories[pageInfo.uri], categoryTitle);
+                    assert.strictEqual(storage.length, 2);
+                });
         });
     });
 
