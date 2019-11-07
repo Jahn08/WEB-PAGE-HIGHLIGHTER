@@ -31,6 +31,9 @@ describe('content_script/menuMessageEvent', function () {
     const IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME = 'isAddNoteLinksEvent';
     const IS_GO_TO_NOTE_EVENT_METHOD_NAME = 'isGoToNoteEvent';
     
+    const IS_ADD_CATEGORIES_EVENT_METHOD_NAME = 'isAddCategoriesEvent';
+    const IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME = 'isSaveToCategoryEvent';
+    
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
         IS_UNMARK_EVENT_METHOD_NAME, IS_LOAD_EVENT_METHOD_NAME, IS_SAVE_EVENT_METHOD_NAME,
@@ -38,7 +41,8 @@ describe('content_script/menuMessageEvent', function () {
         IS_LOAD_PREFERENCES_EVENT_METHOD_NAME, IS_LOAD_TAB_STATE_METHOD_NAME, 
         IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME, IS_ADD_NOTE_EVENT_METHOD_NAME,
         IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME, IS_REMOVE_NOTE_EVENT_METHOD_NAME,
-        IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, IS_GO_TO_NOTE_EVENT_METHOD_NAME
+        IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, IS_GO_TO_NOTE_EVENT_METHOD_NAME,
+        IS_ADD_CATEGORIES_EVENT_METHOD_NAME, IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME
     ];
 
     const createEventWithArgAndCheckIt = function (createEventMethodName, checkEventMethodName, 
@@ -80,7 +84,7 @@ describe('content_script/menuMessageEvent', function () {
 
     createTestForCheckingEventWithColour('createChangeColourEvent', IS_CHANGE_COLOUR_EVENT_METHOD_NAME);
 
-    const createRandomNoteLink = () => {
+    const createRandomLink = () => {
         return {
             id: '' + Randomiser.getRandomNumberUpToMax(),
             text: '' + Randomiser.getRandomNumberUpToMax()
@@ -91,10 +95,10 @@ describe('content_script/menuMessageEvent', function () {
         useSeveralNoteLinks = false) => {
         describe('#' + createEventMethodName, () =>
             it('should build a certain type of an event with passed note links', () => {
-                const arg = useSeveralNoteLinks ? [createRandomNoteLink(), createRandomNoteLink()] :
-                    createRandomNoteLink();
+                const noteLinks = useSeveralNoteLinks ? [createRandomLink(), createRandomLink()] :
+                    createRandomLink();
                 createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
-                    'getNoteLinks', arg);
+                    'getNoteLinks', noteLinks);
             })
         );
     };
@@ -102,6 +106,25 @@ describe('content_script/menuMessageEvent', function () {
     createTestForCheckingEventWithNoteLink('createAddNoteLinksEvent', IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, true);
 
     createTestForCheckingEventWithNoteLink('createGoToNoteEvent', IS_GO_TO_NOTE_EVENT_METHOD_NAME);
+
+    const createTestForCheckingEventWithCategories = (createEventMethodName, checkEventMethodName, 
+        useSeveralNoteLinks = false) => {
+        describe('#' + createEventMethodName, () =>
+            it('should build a certain type of an event with passed categories', () => {
+                const categoryTitles = useSeveralNoteLinks ? 
+                    [Randomiser.getRandomString(), Randomiser.getRandomString()] :
+                    Randomiser.getRandomString();
+                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
+                    'getCategories', categoryTitles);
+            })
+        );
+    };
+
+    createTestForCheckingEventWithCategories('createAddCategoriesEvent', 
+        IS_ADD_CATEGORIES_EVENT_METHOD_NAME, true);
+
+    createTestForCheckingEventWithCategories('createSaveToCategoryEvent', 
+        IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME);
 
     const createEventAndCheckIt = (createEventMethodName, checkEventMethodName) => {
         const msgEvent = new MenuMessageEvent();
@@ -163,12 +186,16 @@ describe('content_script/menuMessageEvent', function () {
             const addNoteReadyEvent = msgEvent.createAddNoteReadyEvent(); 
             const addNoteEvent = msgEvent.createAddNoteEvent();
 
-            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            const expectedNoteLinks = [createRandomLink(), createRandomLink()];
             const addNoteLinksEvent = msgEvent.createAddNoteLinksEvent(expectedNoteLinks);
+            
+            const expectedCategoryTitles = [Randomiser.getRandomString(), 
+                Randomiser.getRandomString()];
+            const addCategoriesEvent = msgEvent.createAddCategoriesEvent(expectedCategoryTitles);
 
             const _events = msgEvent.combineEvents([changeColourEvent, markEvent, 
                 unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
-                addNoteReadyEvent, addNoteEvent, addNoteLinksEvent]);
+                addNoteReadyEvent, addNoteEvent, addNoteLinksEvent, addCategoriesEvent]);
             
             assert(!msgEvent.isSetMarkReadyEvent(_events));
             assert(!msgEvent.isLoadEvent(_events));
@@ -178,6 +205,7 @@ describe('content_script/menuMessageEvent', function () {
             assert(!msgEvent.isSetRemoveNoteReadyEvent(_events));
             assert(!msgEvent.isRemoveNoteEvent(_events));
             assert(!msgEvent.isGoToNoteEvent(_events));
+            assert(!msgEvent.isSaveToCategoryEvent(_events));
 
             assert(msgEvent.isMarkEvent(_events));
             assert(msgEvent.isChangeColourEvent(_events));
@@ -188,9 +216,11 @@ describe('content_script/menuMessageEvent', function () {
             assert(msgEvent.isSetAddNoteReadyEvent(_events));
             assert(msgEvent.isAddNoteEvent(_events));
             assert(msgEvent.isAddNoteLinksEvent(_events));
+            assert(msgEvent.isAddCategoriesEvent(_events));
 
             assert.deepStrictEqual(msgEvent.getMarkColourClass(_events), markColourClass);
             assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
+            assert.deepStrictEqual(msgEvent.getCategories(_events), expectedCategoryTitles);
         });
     });
 });

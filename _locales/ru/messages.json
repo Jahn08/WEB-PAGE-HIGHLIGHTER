@@ -73,7 +73,7 @@
         "message": "Сохранить страницу",
         "description": "Title for a context menu item saving marks and notes on a page"
     },
-
+    
     "save_error": {
         "message": "Ошибка сохранения страницы: $details$",
         "placeholders": {
@@ -96,6 +96,15 @@
     "load_msg": {
         "message": "Страница загружается",
         "description": "What user sees when a page is being loaded from storage"
+    },
+
+    "load_error": {
+        "message": "Ошибка загрузки страницы: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
     },
 
     "load_success_msg": {

@@ -47,9 +47,9 @@ void function() {
                 return event.returnValue = this._browserApi.locale.getString('page-unload-warn');
         }
     
-        async _performStorageAction(callback) {
+        async _performStorageAction(callback, arg) {
             try {
-                await callback.bind(this)();
+                await callback.bind(this, arg)();
     
                 this._canLoad = await this._pageInfo.canLoad();
     
@@ -61,10 +61,15 @@ void function() {
         }
 
         async _load() {
-            MessageControl.show(this._browserApi.locale.getString('load-msg'));
-            await this._pageInfo.load();
-            
-            MessageControl.show(this._browserApi.locale.getString('load-success-msg'));
+            try {
+                MessageControl.show(this._browserApi.locale.getString('load-msg'));
+                await this._pageInfo.load();
+                
+                MessageControl.show(this._browserApi.locale.getString('load-success-msg'));
+            }
+            catch (err) {
+                alert(this._browserApi.locale.getStringWithArgs('load-error', err.toString()));
+            }
         }
 
         _setUpContextMenu(event) {
@@ -165,6 +170,8 @@ void function() {
                 }
                 else if (receiver.shouldSave())
                     await this._performStorageAction(this._save);
+                else if (receiver.shouldSaveToCategory())
+                    await this._performStorageAction(this._saveToCategory, receiver.category);
                 else if (receiver.shouldLoad())
                     await this._performStorageAction(this._load);
                 else if (receiver.shouldReturnTabState())
@@ -191,14 +198,23 @@ void function() {
             return !RangeMarker.domContainsMarkers() && !RangeNote.getNoteLinks().length;
         }
 
-        async _save() {
+        _save() {
+            return this._processSaving(this._pageInfo.save.bind(this._pageInfo));
+        }
+
+        async _processSaving(savingFn, arg = null) {
             try {
-                await this._pageInfo.save();
+                await savingFn(arg);
                 MessageControl.show(this._browserApi.locale.getString('save-success-msg'));
             }
             catch (err) {
                 alert(this._browserApi.locale.getStringWithArgs('save-error', err.toString()));
             }
+        }
+
+        _saveToCategory(categoryTitle) {
+            return this._processSaving(this._pageInfo.saveToCategory.bind(this._pageInfo), 
+                categoryTitle);
         }
     }
 

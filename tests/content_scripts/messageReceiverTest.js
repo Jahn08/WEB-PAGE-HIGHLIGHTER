@@ -13,21 +13,28 @@ describe('content_script/messageReceiver', function () {
             .catch(done);
     });
 
-    const testReceivingEvents = (senderEvent, receiverEvent, colourClass = null, noteLinkId = null) => {
-        const receiver = new MessageReceiver(MessageSender[senderEvent](colourClass || noteLinkId));
+    const testReceivingEvents = (senderEvent, receiverEvent, arg = null) => {
+        const receiver = new MessageReceiver(MessageSender[senderEvent](arg));
 
         assert.strictEqual(receiver[receiverEvent](), true);
         assert.strictEqual([receiver.shouldChangeColour(), receiver.shouldLoad(),
-            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark(), receiver.shouldReturnTabState(),
-            receiver.shouldAddNote(), receiver.shouldRemoveNote(), receiver.shouldGoToNote()].filter(e => e).length, 1);
+            receiver.shouldMark(), receiver.shouldSave(), receiver.shouldUnmark(), 
+            receiver.shouldReturnTabState(), receiver.shouldAddNote(), 
+            receiver.shouldRemoveNote(), receiver.shouldGoToNote(), 
+            receiver.shouldSaveToCategory()].filter(e => e).length, 1);
 
-        assert.strictEqual(receiver.markColourClass, colourClass);
-        assert.deepStrictEqual(receiver.noteLink, noteLinkId ? { id: noteLinkId } : null);
+        return receiver;
     };
 
     describe('#shouldMark', () => 
-        it('should recognise an event as marking', () =>
-            testReceivingEvents('startMarking', 'shouldMark', Randomiser.getRandomNumberUpToMax()))
+        it('should recognise an event as marking', () => {
+            const colourClass = Randomiser.getRandomNumberUpToMax();
+            const receiver = testReceivingEvents('startMarking', 'shouldMark', colourClass);
+            
+            assert.strictEqual(receiver.markColourClass, colourClass);
+            assert(!receiver.noteLink);
+            assert(!receiver.category);
+        })
     );
 
     describe('#shouldChangeColour', () => 
@@ -43,6 +50,18 @@ describe('content_script/messageReceiver', function () {
     describe('#shouldSave', () => 
         it('should recognise an event as saving', () =>
             testReceivingEvents('startSaving', 'shouldSave'))
+    );
+
+    describe('#shouldSaveToCategory', () => 
+        it('should recognise an event as adding categories', () => {
+            const categoryTitle = Randomiser.getRandomString();
+            const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', 
+                categoryTitle);
+            
+            assert.deepStrictEqual(receiver.category, categoryTitle);
+            assert(!receiver.noteLink);
+            assert(!receiver.markColourClass);
+        })  
     );
 
     describe('#shouldLoad', () => 
@@ -66,21 +85,26 @@ describe('content_script/messageReceiver', function () {
     );
 
     describe('#shouldGoToNote', () => 
-        it('should recognise an event as going to a note', () =>
-            testReceivingEvents('startGoingToNote', 'shouldGoToNote', undefined, 
-                Randomiser.getRandomNumberUpToMax()))
+        it('should recognise an event as going to a note', () => {
+            const noteLink = Randomiser.getRandomString();
+            const receiver = testReceivingEvents('startGoingToNote', 'shouldGoToNote', noteLink);
+            
+            assert.deepStrictEqual(receiver.noteLink, { id: noteLink });
+            assert(!receiver.category);
+            assert(!receiver.markColourClass);
+        })  
     );
 
-    const testSendingEvents = (receiverEvent, senderEvent, noteLinks = []) => {
-        const sender = new MessageSender(MessageReceiver[receiverEvent](noteLinks));
+    const testSendingEvents = (receiverEvent, senderEvent, links = []) => {
+        const sender = new MessageSender(MessageReceiver[receiverEvent](links));
 
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
             sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldReturnPreferences(),
             sender.shouldSetAddNoteMenuReady(), sender.shouldSetRemoveNoteMenuReady(), 
-            sender.shouldAddNoteLinks()].filter(e => e).length, 1);
+            sender.shouldAddNoteLinks(), sender.shouldAddCategories()].filter(e => e).length, 1);
 
-        assert.deepStrictEqual(sender.noteLinks, noteLinks);
+        return sender;
     };
 
     describe('#setMarkMenuReady', () => 
@@ -118,17 +142,27 @@ describe('content_script/messageReceiver', function () {
             testSendingEvents('setRemoveNoteMenuReady', 'shouldSetRemoveNoteMenuReady'))
     );
 
-    const createRandomNoteLink = () => {
+    const createRandomLink = () => {
         return {
-            id: '' + Randomiser.getRandomNumberUpToMax(),
-            text: '' + Randomiser.getRandomNumberUpToMax()
+            id: Randomiser.getRandomString(),
+            text: Randomiser.getRandomString()
         };
     };
 
     describe('#addNoteLinks', () =>
-        it('should recognise an event as adding note links to menu', () =>
-            testSendingEvents('addNoteLinks', 'shouldAddNoteLinks', 
-                [createRandomNoteLink(), createRandomNoteLink()]))
+        it('should recognise an event as adding note links to menu', () => {
+            const links = [createRandomLink(), createRandomLink()];
+            const sender = testSendingEvents('addNoteLinks', 'shouldAddNoteLinks', links);
+            assert.deepStrictEqual(sender.noteLinks, links);
+        })
+    );
+
+    describe('#addCategories', () =>
+        it('should recognise an event as adding categories to menu', () => {
+            const categoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
+            const sender = testSendingEvents('addCategories', 'shouldAddCategories', categoryTitles);
+            assert.deepStrictEqual(sender.categories, categoryTitles);
+        })
     );
 
     describe('#combineEvents', function () {
@@ -137,22 +171,27 @@ describe('content_script/messageReceiver', function () {
                 MessageReceiver.combineEvents(undefined, undefined), null));
 
         it('should filter out null events and combine the rest correctly', () => {
-            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
+            const expectedNoteLinks = [createRandomLink(), createRandomLink()];
+            const expectedCategoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
 
-            const msg =  MessageReceiver.combineEvents(undefined, 
+            const msg = MessageReceiver.combineEvents(undefined, 
                 MessageReceiver.setLoadMenuReady(), undefined, 
                 MessageReceiver.setSaveMenuReady(), null, 
                 MessageReceiver.setMarkMenuReady(),
                 MessageReceiver.setRemoveNoteMenuReady(),
-                MessageReceiver.addNoteLinks(expectedNoteLinks));
+                MessageReceiver.addNoteLinks(expectedNoteLinks),
+                MessageReceiver.addCategories(expectedCategoryTitles));
 
             assert(msg);
 
             assert(msg.event);
-            assert.strictEqual(msg.event.length, 5);
+            assert.strictEqual(msg.event.length, 6);
 
             assert(msg.noteLink);
             assert.deepStrictEqual(msg.noteLink, expectedNoteLinks);
+
+            assert(msg.category);
+            assert.deepStrictEqual(msg.category, expectedCategoryTitles);
 
             const sender = new MessageSender(msg);
             assert(sender.shouldSetSaveMenuReady());
@@ -163,6 +202,9 @@ describe('content_script/messageReceiver', function () {
             
             assert(sender.shouldAddNoteLinks());
             assert.deepStrictEqual(sender.noteLinks, expectedNoteLinks);
+
+            assert(sender.shouldAddCategories());
+            assert.deepStrictEqual(sender.categories, expectedCategoryTitles);
         });
     });
 });

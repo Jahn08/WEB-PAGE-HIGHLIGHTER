@@ -5,6 +5,7 @@ export class MessageSender {
         this._msg = msg;
 
         this._noteLinks = [];
+        this._categories = [];
     }
 
     shouldSetMarkMenuReady() { return msgEvent.isSetMarkReadyEvent(this._msg); }
@@ -20,6 +21,23 @@ export class MessageSender {
     shouldSetSaveMenuReady() { return msgEvent.isSetSaveReadyEvent(this._msg); }
 
     static startSaving() { return msgEvent.createSaveEvent(); }
+
+    shouldAddCategories() {
+        const isAddingCategories = msgEvent.isAddCategoriesEvent(this._msg);
+
+        if (isAddingCategories)
+            this._setCategories();
+
+        return isAddingCategories;
+    }
+
+    _setCategories() { this._categories = msgEvent.getCategories(this._msg); }
+    
+    get categories() { return this._categories; }
+
+    static startSavingToCategory(categoryTitle) { 
+        return msgEvent.createSaveToCategoryEvent(categoryTitle);
+    }
 
     shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
 

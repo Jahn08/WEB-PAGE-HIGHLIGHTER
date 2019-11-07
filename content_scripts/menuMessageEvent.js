@@ -10,6 +10,9 @@ class MenuMessageEvent {
         this._saveReadyEvent = 'setSaveReady';
         this._saveEvent = 'save';
 
+        this._addCategoriesEvent = 'addCategories';
+        this._saveToCategoryEvent = 'saveTo';
+
         this._loadReadyEvent = 'setLoadReady';
         this._loadEvent = 'load';
 
@@ -62,6 +65,7 @@ class MenuMessageEvent {
 
             this._combineProps(p, c, this._COLOUR_CLASS_FIELD);
             this._combineProps(p, c, this._NOTE_LINK_FIELD);
+            this._combineProps(p, c, this._CATEGORY_FIELD);
             
             return p;
         }, { event: [] });
@@ -69,6 +73,10 @@ class MenuMessageEvent {
 
     get _NOTE_LINK_FIELD() {
         return 'noteLink';
+    }
+    
+    get _CATEGORY_FIELD() {
+        return 'category';
     }
 
     _combineProps(targetObj, sourceObj, propName) {
@@ -101,6 +109,23 @@ class MenuMessageEvent {
 
     createSaveEvent() { return this._createEvent(this._saveEvent); }
     isSaveEvent(msg) { return this._isEvent(msg, this._saveEvent); }   
+
+    createAddCategoriesEvent(categoryTitles) { 
+        return this._createEventWithCategories(this._addCategoriesEvent, categoryTitles); 
+    }
+
+    _createEventWithCategories(eventName, categoryTitles) {
+        return this._createEventWithArgs(eventName, categoryTitles, this._CATEGORY_FIELD);
+    }
+
+    isAddCategoriesEvent(msg) { return this._isEvent(msg, this._addCategoriesEvent); }
+
+    getCategories(msg) { return msg ? msg[this._CATEGORY_FIELD]: []; }
+
+    createSaveToCategoryEvent(categoryTitle) {
+        return this._createEventWithCategories(this._saveToCategoryEvent, [categoryTitle]); 
+    }
+    isSaveToCategoryEvent(msg) { return this._isEvent(msg, this._saveToCategoryEvent); }
 
     createLoadReadyEvent() { return this._createEvent(this._loadReadyEvent); }
     isSetLoadReadyEvent(msg) { return this._isEvent(msg, this._loadReadyEvent); }

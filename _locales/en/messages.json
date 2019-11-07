@@ -98,6 +98,15 @@
         "description": "What user sees when a page is being loaded from storage"
     },
 
+    "load_error": {
+        "message": "An error occurred while trying to load the page: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
+    },
+
     "load_success_msg": {
         "message": "The page has been loaded successfully",
         "description": "What user sees after a page has been loaded from storage"
