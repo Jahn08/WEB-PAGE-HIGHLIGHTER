@@ -31,11 +31,6 @@ class Category {
     static _createStorage() {
         return new BrowserStorage('categories');
     }
-        
-    static async getDefault() {
-        const categories = (await this.get()) || [];
-        return (categories.find(c => c.default) || {}).title;
-    }
 
     static get() {
         return this._createStorage().get();
@@ -44,6 +39,24 @@ class Category {
     static save(data) {
         return this._createStorage().set(data);
     }
+}
+
+class CategoryView {
+    constructor(categories = []) {
+        this.categoryTitles = [];
+        this._defaultCategoryTitle = null;
+
+        ArrayExtension.runForEach(categories, cat => {
+            const title = cat.title;
+
+            if (cat.default)
+                this._defaultCategoryTitle = title;
+
+            this.categoryTitles.push(title);
+        });
+    }
+
+    get defaultCategoryTitle() { return this._defaultCategoryTitle; }
 }
 
 class PageCategory {
@@ -150,9 +163,9 @@ class PageInfo {
         return this._browserStorage.set(this._serialise());
     }
 
-    async save() {
-        if (!this._pageIsStored)
-            await this._pageCategory.update(await Category.getDefault());
+    async save(defaultCategoryTitle = null) {
+        if (!this._pageIsStored && defaultCategoryTitle)
+            await this._pageCategory.update(defaultCategoryTitle);
 
         return this._saveInternally();
     }

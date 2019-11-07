@@ -21,8 +21,8 @@ describe('components/preferences/categoryTable', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo').then(() => done())
-            .catch(done);
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
+            .then(() => done()).catch(done);
     });
 
     afterEach('releaseResources', () => {        

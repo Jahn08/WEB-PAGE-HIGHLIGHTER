@@ -43,7 +43,7 @@ export class MessageSender {
 
     static startLoading() { return msgEvent.createLoadEvent(); }
 
-    shouldReturnPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
+    shouldLoadPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
 
     static startLoadingTabState() { return msgEvent.createLoadTabStateEvent(this._msg); }
     

@@ -77,6 +77,13 @@ export class BrowserMocked {
         };
     }
 
+    dispatchMenuClick(id) {
+        const clickFn = (this._menuOptions.find(i => i.id === id) || {}).onclick;
+
+        if (clickFn)
+            clickFn({});
+    }
+
     get menuOptions() { return this._menuOptions; }
 
     setBrowserTab() {

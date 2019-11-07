@@ -453,10 +453,6 @@ class CategoryTable extends BaseTable {
         return this._isDirty ? this._tableData: null;
     }
 
-    get defaultCategoryTitle() {
-        return this._defaultCategoryTitle;
-    }
-
     _clearTableRows() {
         this._defaultCategoryTitle = null;
         
@@ -473,15 +469,6 @@ class CategoryTable extends BaseTable {
 
         this._rerender();
     }
-}
-
-class CategoryView {
-    constructor(categories = [], defaultCategoryTitle = null) {
-        this.categoryTitles = categories.map(c => c.title);
-        this._defaultCategoryTitle = defaultCategoryTitle;
-    }
-
-    get defaultCategoryTitle() { return this._defaultCategoryTitle; }
 }
 
 class PageTable extends BaseTable {
@@ -987,8 +974,6 @@ class Preferences {
     _initCategoryTable() {
         return PageInfo.getAllSavedCategories().then(categories => {
             this._categoryTable = new CategoryTable(categories);
-            this._defaultCategoryTitle = this._categoryTable.defaultCategoryTitle;
-            
             this._categories = categories;
         });
     }

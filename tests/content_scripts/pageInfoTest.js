@@ -20,7 +20,7 @@ describe('content_script/pageInfo', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
             .then(() => done())
             .catch(done);
     });
@@ -98,8 +98,9 @@ describe('content_script/pageInfo', function () {
                     const storedCategories = await PageInfo.getAllSavedCategories();
                     const defaultCategoryTitle = storedCategories.find(c => c.default).title;
 
-                    return testSavingPage(pageInfo => pageInfo.save(), (pageCategories, pageInfo) =>
-                        assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
+                    return testSavingPage(pageInfo => pageInfo.save(defaultCategoryTitle), 
+                        (pageCategories, pageInfo) =>
+                            assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
                     );
                 }
             )

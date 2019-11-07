@@ -129,11 +129,11 @@ class ButtonMenuItem extends BaseMenuItem {
         this._addToMenu(onclick, icon);
     }
 
-    _addToMenu(onclick, icon) { 
+    _addToMenu(onclick, icon) {
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
-            onclick,
+            onclick: info => onclick(Object.assign(info, { title: this._title })),
             title: this._title,
             enabled: this._enabled
         });

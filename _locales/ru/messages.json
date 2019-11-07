@@ -73,7 +73,12 @@
         "message": "Сохранить страницу",
         "description": "Title for a context menu item saving marks and notes on a page"
     },
-    
+
+    "save_to": {
+        "message": "Сохранить страницу в",
+        "description": "Title for a context menu item to choose a category to save marks and notes on a page"
+    },
+
     "save_error": {
         "message": "Ошибка сохранения страницы: $details$",
         "placeholders": {

@@ -24,11 +24,11 @@ describe('components/ContextMenu', () => {
             new ContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
-            assert.strictEqual(itemOptions.length, 17);
+            assert.strictEqual(itemOptions.length, 18);
 
             assert.strictEqual(itemOptions.filter(i => i.type === SEPARATOR_TYPE).length, 2);
 
-            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 9);
+            assert.strictEqual(itemOptions.filter(i => i.type === BTN_TYPE).length, 10);
             
             assert.strictEqual(itemOptions.filter(i => i.type === RADIO_TYPE).length, 6);
         });
@@ -91,13 +91,13 @@ describe('components/ContextMenu', () => {
                     .filter(i => i.type === BTN_TYPE && i.enabled === enabled).length, expectedLength);
             };
                 
-            assertItemsAvailability(false, 8);
+            assertItemsAvailability(false, 9);
 
             contextMenu.enableMarkingBtn();
             contextMenu.enableUnmarkingBtn();
             contextMenu.enableLoadBtn();
 
-            assertItemsAvailability(false, 4);
+            assertItemsAvailability(false, 5);
 
             contextMenu.enableSaveBtn();
             contextMenu.enableAddingNoteBtn();
@@ -109,13 +109,13 @@ describe('components/ContextMenu', () => {
             contextMenu.disableUnmarkingBtn();
             contextMenu.disableSaveBtn();
 
-            assertItemsAvailability(false, 4);
+            assertItemsAvailability(false, 5);
 
             contextMenu.disableLoadBtn();
             contextMenu.disableAddingNoteBtn();
             contextMenu.disableRemovingNoteBtn();
             
-            assertItemsAvailability(false, 8);
+            assertItemsAvailability(false, 9);
         });
     });
 
@@ -175,6 +175,16 @@ describe('components/ContextMenu', () => {
 
         return actualMenuOptions.filter(i => i.type === BTN_TYPE && i.id === parentId).length === 1;
     };
+
+    describe('#renderCategories', () => {
+        it('should render categories for saving in menu');
+
+        it('should remove all previous categories in menu while rendering afresh');
+
+        it('should disable the category submenu when rendering the empty list and enable it otherwise');
+        
+        it('should disable the category submenu if the save menu is not available');
+    });
 
     describe('#renderNoteLinks', () => {
 

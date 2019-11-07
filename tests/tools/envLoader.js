@@ -3,7 +3,7 @@ import fs from 'fs';
 import _path from 'path';
 
 export class EnvLoader {
-    static loadClass(scriptPath, className) {
+    static loadClass(scriptPath, ...classNames) {
         return this._wrapWithPromise(resolve => {
             this._checkPathExistence(scriptPath);
             
@@ -11,7 +11,7 @@ export class EnvLoader {
                 if (err)
                     throw err;
 
-                const globalInitialiser = `global.${className}=${className};`;
+                const globalInitialiser = classNames.map(cl => `global.${cl}=${cl};`).join('');
                 eval(data.toString('utf8').replace('export class', 'class') + globalInitialiser);
 
                 resolve();

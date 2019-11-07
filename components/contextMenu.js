@@ -128,9 +128,9 @@ export class ContextMenu {
         if (this._storageMenu)
             return;
 
-        const onSavingFn = async  () => { 
+        const onSavingFn = async (categoryTitle) => { 
             try {
-                await this._passTabInfoToCallback(this.onSaving);
+                await this._passTabInfoToCallback(this.onSaving, { categoryTitle });
             }
             catch (ex) {
                 console.error('Error while trying to save: ' + ex.toString());
@@ -198,46 +198,41 @@ export class ContextMenu {
     removeNoteLink(noteId) {
         this._noteNavigation.removeLink(noteId);
     }
+
+    renderPageCategories(categoryTitles) { this._storageMenu.render(categoryTitles); }
 }
 
-class NoteNavigation {
-    constructor(onGoingToNoteFn) {
-        this._onGoingToNote = onGoingToNoteFn;
-        
-        this._noteLinkBtns = [];
+class LinkMenu {
+    constructor(menuId, onClickFn, parentMenuId = null) {
+        this._onClickFn = onClickFn;
+        this._menuBtn = new ButtonMenuItem(menuId, parentMenuId);
 
-        this._noteNavigationBtn = null;
-        this._initNavigationBtn();
+        this._menuLinks = [];
     }
 
-    _initNavigationBtn() {
-        if (this._noteNavigationBtn)
-            return;
+    _appendLinkMenuBtn() {
+        this._menuBtn.addToMenu();
 
-        const noteLinksMenuId = 'note-navigation';
-        this._noteNavigationBtn = new ButtonMenuItem(noteLinksMenuId);
-        this._noteNavigationBtn.addToMenu();
-
-        this._setNavigationBtnAvailability();
+        this._setMenuBtnAvailability();
     }
     
-    _setNavigationBtnAvailability() {
-        return this._noteLinkBtns.length ? this._noteNavigationBtn.enable() : 
-            this._noteNavigationBtn.disable();
+    _setMenuBtnAvailability() {
+        return this._menuLinks.length ? this._menuBtn.enable() : 
+            this._menuBtn.disable();
     }
 
-    render(noteLinks) {
-        noteLinks = noteLinks || [];
+    render(links) {
+        links = links || [];
         
-        if (!noteLinks.length)
-            return this._noteNavigationBtn.disable();
+        if (!links.length)
+            return this._menuBtn.disable();
 
         const updatedBtnIds = [];
 
         let wasUpdated = false;
 
-        ArrayExtension.runForEach(noteLinks, li => {
-            const existentLink = this._noteLinkBtns.find(btn => btn.id === li.id);
+        ArrayExtension.runForEach(links, li => {
+            const existentLink = this._menuLinks.find(btn => btn.id === li.id);
 
             if (!existentLink) {
                 this.appendLink(li.id, li.text);
@@ -249,7 +244,7 @@ class NoteNavigation {
             updatedBtnIds.push(li.id);
         });
 
-        ArrayExtension.runForEach(this._noteLinkBtns, btn => {
+        ArrayExtension.runForEach(this._menuLinks, btn => {
             const btnId = btn.id;
 
             if (!updatedBtnIds.includes(btnId)) {
@@ -258,33 +253,51 @@ class NoteNavigation {
             }
         });
 
-        return wasUpdated || this._setNavigationBtnAvailability();
+        return wasUpdated || this._setMenuBtnAvailability();
     }
 
     appendLink(noteId, noteText) {
-        const linkBtn = new ButtonMenuItem(noteId, this._noteNavigationBtn.id, noteText);
-        this._noteLinkBtns.push(linkBtn);
+        const linkBtn = new ButtonMenuItem(noteId, this._menuBtn.id, noteText);
+        this._menuLinks.push(linkBtn);
         
-        linkBtn.addToMenu(this._onGoingToNote, null, true);
+        linkBtn.addToMenu(this._onClickFn, null, true);
 
-        this._setNavigationBtnAvailability();
+        this._setMenuBtnAvailability();
     }
 
     removeLink(noteId) {
-        const linkToRemove = this._noteLinkBtns.find(li => li.id === noteId);
+        const linkToRemove = this._menuLinks.find(li => li.id === noteId);
 
         if (!linkToRemove)
             return;
 
         linkToRemove.removeFromMenu();
-        this._noteLinkBtns = this._noteLinkBtns.filter(li => li.id !== noteId);
+        this._menuLinks = this._menuLinks.filter(li => li.id !== noteId);
 
-        this._setNavigationBtnAvailability();
+        this._setMenuBtnAvailability();
+    }
+
+    _createLink(id, text) {
+        return {
+            id,
+            text
+        };
     }
 }
 
-class PageStorageMenu {
+class NoteNavigation extends LinkMenu {
+    constructor(onGoingToNoteFn) {
+        super('note-navigation', onGoingToNoteFn);
+
+        this._appendLinkMenuBtn();
+    }
+}
+
+class PageStorageMenu extends LinkMenu {
     constructor(onSavingFn, onLoadingFn) {
+        super('save-to', async (info) => await onSavingFn(info.title), 
+            PageStorageMenu._PARENT_MENU_ID);
+
         this._storageBtn = null;
         this._saveBtn = null;
         this._loadBtn = null;
@@ -292,21 +305,34 @@ class PageStorageMenu {
         this._init(onSavingFn, onLoadingFn);
     }
 
+    static get _PARENT_MENU_ID() { return 'storage'; }
+
     _init(onSavingFn, onLoadingFn) {
         if (this._storageBtn)
             return;
 
         new SeparatorMenuItem().addToMenu();
 
-        const storageOptionId = 'storage';
+        const storageOptionId = PageStorageMenu._PARENT_MENU_ID;
         this._storageBtn = new ButtonMenuItem(storageOptionId);
         this._storageBtn.addToMenu();
 
+        const saveIcon = new MenuIcon('save');
         this._saveBtn = new ButtonMenuItem('save', storageOptionId);
-        this._saveBtn.addToMenu(onSavingFn, new MenuIcon('save'));
+        this._saveBtn.addToMenu(async () => await onSavingFn(), saveIcon);
+
+        this._appendLinkMenuBtn();
 
         this._loadBtn = new ButtonMenuItem('load', storageOptionId);
         this._loadBtn.addToMenu(onLoadingFn, new MenuIcon('load'));
+    }
+
+    render(categoryTitles) {
+        super.render(this._getCategoryLinks(categoryTitles));
+    }
+
+    _getCategoryLinks(categoryTitles) {
+        return (categoryTitles || []).map((ct, index) => this._createLink('category-' + index, ct));
     }
 
     disableSaveBtn() { this._setParentBtnAvailability(this._saveBtn.disable()); }

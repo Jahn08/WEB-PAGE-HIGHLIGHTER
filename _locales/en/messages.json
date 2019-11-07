@@ -74,6 +74,11 @@
         "description": "Title for a context menu item saving marks and notes on a page"
     },
 
+    "save_to": {
+        "message": "Save Page To",
+        "description": "Title for a context menu item to choose a category to save marks and notes on a page"
+    },
+
     "save_error": {
         "message": "An error occurred while trying to save the page: $details$",
         "placeholders": {

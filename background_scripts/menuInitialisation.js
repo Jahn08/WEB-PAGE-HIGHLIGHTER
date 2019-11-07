@@ -17,7 +17,11 @@ menu.onChangingColour = (info) => sendMessageToTab(info.tabId,
 
 menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
 
-menu.onSaving = (info) => sendMessageToTab(info.tabId, MessageSender.startSaving());
+menu.onSaving = info => {
+    const msg = info.categoryTitle ? MessageSender.startSavingToCategory(info.categoryTitle):
+        MessageSender.startSaving();
+    sendMessageToTab(info.tabId, msg);
+};
 
 menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
 
@@ -39,10 +43,13 @@ browserApi.runtime.onMessage(async msg => {
     try {
         const sender = new MessageSender(msg);
     
-        if (sender.shouldReturnPreferences()) {
-            const preferences = await Preferences.loadFromStorage();
+        if (sender.shouldAddCategories())
+            menu.renderPageCategories(sender.categories);
 
-            if (preferences && preferences.defaultColourToken)
+        if (sender.shouldLoadPreferences()) {
+            const preferences = (await Preferences.loadFromStorage()) || {};
+
+            if (preferences.defaultColourToken)
                 menu.checkColourRadio(preferences.defaultColourToken);
 
             return preferences;

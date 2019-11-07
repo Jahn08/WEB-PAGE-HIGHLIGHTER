@@ -23,7 +23,7 @@ describe('components/preferences/pageTable', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
             .then(() => EnvLoader.loadClass('./content_scripts/lzwCompressor.js', 'LZWCompressor')
                 .then(() => done()))
             .catch(done);

@@ -53,7 +53,7 @@ describe('content_script/messageReceiver', function () {
     );
 
     describe('#shouldSaveToCategory', () => 
-        it('should recognise an event as adding categories', () => {
+        it('should recognise an event as saving a page to a category', () => {
             const categoryTitle = Randomiser.getRandomString();
             const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', 
                 categoryTitle);
@@ -100,7 +100,7 @@ describe('content_script/messageReceiver', function () {
 
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
-            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldReturnPreferences(),
+            sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldLoadPreferences(),
             sender.shouldSetAddNoteMenuReady(), sender.shouldSetRemoveNoteMenuReady(), 
             sender.shouldAddNoteLinks(), sender.shouldAddCategories()].filter(e => e).length, 1);
 
@@ -129,7 +129,7 @@ describe('content_script/messageReceiver', function () {
 
     describe('#loadPreferences', () =>
         it('should recognise an event as loading preferences', () =>
-            testSendingEvents('loadPreferences', 'shouldReturnPreferences'))
+            testSendingEvents('loadPreferences', 'shouldLoadPreferences'))
     );
 
     describe('#setAddNoteMenuReady', () =>

@@ -11,35 +11,42 @@ void function() {
             this._browserApi.runtime.onMessage(this._processMessage.bind(this));
 
             this._pageInfo = new PageInfo();
+            this._defaultCategoryTitle;
             this._initUnloadEvent();
 
             document.addEventListener('mousedown', this._setUpContextMenu.bind(this));
         }
 
-        _initUnloadEvent() {
+        async _initUnloadEvent() {
             const beforeUnloadEvent = 'beforeunload';
 
             const eventCallback = this._warnIfDomIsDirty.bind(this);
             window.addEventListener(beforeUnloadEvent, eventCallback);
 
-            this._browserApi.runtime.sendMessage(MessageReceiver.loadPreferences())
-                .then(async settings => {
-                    try {
-                        const preferences = Object.assign({}, settings);
-            
-                        if (preferences.shouldWarn === false)
-                            window.removeEventListener(beforeUnloadEvent, eventCallback);
-            
-                        this._canLoad = await this._pageInfo.canLoad();
-            
-                        if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
-                            await this._performStorageAction(this._load);
-                    }
-                    catch (ex) {
-                        console.error('An error occurred while trying to apply the extension preferences: ' + 
-                            ex.toString());
-                    }
-                }).catch(error => console.error('An error while trying to get preferences: ' + error.toString()));
+            const categories = await PageInfo.getAllSavedCategories();
+            const categoryView = new CategoryView(categories);
+
+            const msg = MessageReceiver.addCategories(categoryView.categoryTitles);
+            this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
+
+            this._browserApi.runtime.sendMessage(MessageReceiver.combineEvents(msg, 
+                MessageReceiver.loadPreferences())).then(async settings => {
+                try {
+                    const preferences = Object.assign({}, settings);
+
+                    if (preferences.shouldWarn === false)
+                        window.removeEventListener(beforeUnloadEvent, eventCallback);
+        
+                    this._canLoad = await this._pageInfo.canLoad();
+        
+                    if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
+                        await this._performStorageAction(this._load);
+                }
+                catch (ex) {
+                    console.error('An error occurred while trying to apply the extension preferences: ' + 
+                        ex.toString());
+                }
+            }).catch(error => console.error('An error while trying to get preferences: ' + error.toString()));
         }
 
         _warnIfDomIsDirty(event) {
@@ -199,7 +206,8 @@ void function() {
         }
 
         _save() {
-            return this._processSaving(this._pageInfo.save.bind(this._pageInfo));
+            return this._processSaving(this._pageInfo.save.bind(this._pageInfo),
+                this._defaultCategoryTitle);
         }
 
         async _processSaving(savingFn, arg = null) {
