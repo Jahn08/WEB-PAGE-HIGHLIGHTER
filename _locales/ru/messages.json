@@ -93,6 +93,16 @@
         "description": "What user sees after a page has been saved to storage"
     },
 
+    "save_to_category_success_msg": {
+        "message": "Страница сохранена в категорию '$category$'",
+        "description": "What user sees after a page with a category has been saved to storage",
+        "placeholders": {
+            "category" : {
+                "content" : "$1"
+            }
+        }
+    },
+
     "load": {
         "message": "Загрузить страницу",
         "description": "Title for a context menu item loading marks and notes on a page"

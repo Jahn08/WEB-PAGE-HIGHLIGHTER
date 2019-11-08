@@ -212,8 +212,11 @@ void function() {
 
         async _processSaving(savingFn, arg = null) {
             try {
-                await savingFn(arg);
-                MessageControl.show(this._browserApi.locale.getString('save-success-msg'));
+                const category = await savingFn(arg);
+                MessageControl.show(category ? 
+                    this._browserApi.locale.getStringWithArgs(
+                        'save-to-category-success-msg', category):
+                    this._browserApi.locale.getString('save-success-msg'));
             }
             catch (err) {
                 alert(this._browserApi.locale.getStringWithArgs('save-error', err.toString()));

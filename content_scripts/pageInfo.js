@@ -67,6 +67,8 @@ class PageCategory {
         this._category = null;
     }
 
+    get category() { return this._category; }
+
     async load() {
         this._category = await this._getPageCategory();
     }
@@ -141,7 +143,6 @@ class PageInfo {
         this._pageCategory = new PageCategory(this._uri);
     }
 
-
     get uri() { return this._uri; }
 
     _computeUri() {
@@ -159,8 +160,9 @@ class PageInfo {
         return this._saveInternally();
     }
 
-    _saveInternally() {
-        return this._browserStorage.set(this._serialise());
+    async _saveInternally() {
+        await this._browserStorage.set(this._serialise());
+        return this._pageCategory.category;
     }
 
     async save(defaultCategoryTitle = null) {
