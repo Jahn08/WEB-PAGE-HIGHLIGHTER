@@ -112,7 +112,7 @@ describe('components/preferences/categoryTable', function () {
         it('should warn while adding a category with an existent name', () => 
             Expectation.expectResolution(new Preferences().load(), 
                 () => {
-                    const duplicatedCategoryName = '' + Randomiser.getRandomNumberUpToMax();
+                    const duplicatedCategoryName = Randomiser.getRandomString();
 
                     const newItems = addCategories(5, [duplicatedCategoryName, duplicatedCategoryName],
                         () => categoryTableDOM.assertStatusIsWarning(duplicatedCategoryName));
@@ -132,6 +132,20 @@ describe('components/preferences/categoryTable', function () {
                             categoryTableDOM.assertStatusIsWarning();
                             assert.strictEqual(input, emptyName);
                         });
+
+                    categoryTableDOM.assertTableValues(newItems.map(
+                        c => PageInfoHelper.createCategory(c)));
+                })
+        );
+
+        it('should warn while adding a category with a too long name', () => 
+            Expectation.expectResolution(new Preferences().load(), 
+                () => {
+                    const tooLongCategoryName = Randomiser.getRandomString() + 
+                        Randomiser.getRandomString();
+
+                    const newItems = addCategories(5, [tooLongCategoryName],
+                        () => categoryTableDOM.assertStatusIsWarning());
 
                     categoryTableDOM.assertTableValues(newItems.map(
                         c => PageInfoHelper.createCategory(c)));

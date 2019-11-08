@@ -161,6 +161,15 @@
         }
     },
 
+    "preferences_long_category_name_warning": {
+        "message": "Имя категории не может быть длиннее $number$ символов",
+        "placeholders": {
+            "number" : {
+                "content" : "$1"
+            }
+        }
+    },
+
     "preferences_unnamed_category_warning": {
         "message": "Пожалуйста, введите имя новой категории"
     },

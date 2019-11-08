@@ -346,8 +346,15 @@ class CategoryTable extends BaseTable {
 
         const name = this._categoryTitleTxt.value;
 
+        const nameMaxLength = 25;
+
         if (!name) {
             this._showStatus(this._locale.getString('preferences-unnamed-category-warning'));
+            return;
+        }
+        else if (name.length > nameMaxLength) {
+            this._showStatus(this._locale.getStringWithArgs(
+                'preferences-long-category-name-warning', nameMaxLength));
             return;
         }
         else if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
