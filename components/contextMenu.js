@@ -213,12 +213,16 @@ class LinkMenu {
     _appendLinkMenuBtn() {
         this._menuBtn.addToMenu();
 
-        this._setMenuBtnAvailability();
+        this._setMenuLinkBtnAvailability();
     }
     
-    _setMenuBtnAvailability() {
-        return this._menuLinks.length ? this._menuBtn.enable() : 
+    _setMenuLinkBtnAvailability() {
+        return this._isMenuLinkBtnAvailable() ? this._menuBtn.enable() : 
             this._menuBtn.disable();
+    }
+
+    _isMenuLinkBtnAvailable() {
+        return this._menuLinks.length > 0;
     }
 
     render(links) {
@@ -253,7 +257,7 @@ class LinkMenu {
             }
         });
 
-        return wasUpdated || this._setMenuBtnAvailability();
+        return wasUpdated || this._setMenuLinkBtnAvailability();
     }
 
     appendLink(noteId, noteText) {
@@ -262,7 +266,7 @@ class LinkMenu {
         
         linkBtn.addToMenu(this._onClickFn, null, true);
 
-        this._setMenuBtnAvailability();
+        this._setMenuLinkBtnAvailability();
     }
 
     removeLink(noteId) {
@@ -274,7 +278,7 @@ class LinkMenu {
         linkToRemove.removeFromMenu();
         this._menuLinks = this._menuLinks.filter(li => li.id !== noteId);
 
-        this._setMenuBtnAvailability();
+        this._setMenuLinkBtnAvailability();
     }
 
     _createLink(id, text) {
@@ -303,6 +307,10 @@ class PageStorageMenu extends LinkMenu {
         this._loadBtn = null;
 
         this._init(onSavingFn, onLoadingFn);
+    }
+
+    _isMenuLinkBtnAvailable() {
+        return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable();
     }
 
     static get _PARENT_MENU_ID() { return 'storage'; }
@@ -335,7 +343,17 @@ class PageStorageMenu extends LinkMenu {
         return (categoryTitles || []).map((ct, index) => this._createLink('category-' + index, ct));
     }
 
-    disableSaveBtn() { this._setParentBtnAvailability(this._saveBtn.disable()); }
+    disableSaveBtn() { 
+        if (!this._saveBtn.disable())
+            return;
+
+        this._changeSavingRelatedBtnsAvailability();
+    }
+
+    _changeSavingRelatedBtnsAvailability() {
+        this._setParentBtnAvailability(true);
+        this._setMenuLinkBtnAvailability(); 
+    }
     
     _setParentBtnAvailability(availabilityChanged) {
         if (!availabilityChanged)
@@ -347,7 +365,12 @@ class PageStorageMenu extends LinkMenu {
             this._storageBtn.disable();
     }
 
-    enableSaveBtn() { this._setParentBtnAvailability(this._saveBtn.enable()); }
+    enableSaveBtn() { 
+        if (!this._saveBtn.enable())
+            return;
+
+        this._changeSavingRelatedBtnsAvailability();
+    }
 
     disableLoadBtn() { this._setParentBtnAvailability(this._loadBtn.disable()); }
     

@@ -153,6 +153,113 @@ describe('components/ContextMenu', () => {
         };
     };
 
+    const testRenderingLinks = (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
+        const browserMocked = mockBrowser();
+        const contextMenu = new ContextMenu();
+
+        const expectedLinks = createLinksFn(contextMenu);
+        
+        contextMenu[renderingMethodName](expectedLinks);
+        
+        assert(hasAvailableLinksFn(expectedLinks, browserMocked.menuOptions));
+    };
+
+    const testRerenderingLinks = (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
+        const browserMocked = mockBrowser();
+        const contextMenu = new ContextMenu();
+
+        const linksToRemove = createLinksFn(contextMenu);
+        contextMenu[renderingMethodName](linksToRemove);
+
+        const expectedLinks = createLinksFn(contextMenu);
+        contextMenu[renderingMethodName](expectedLinks);
+
+        assert(!hasAvailableLinksFn(linksToRemove, browserMocked.menuOptions));
+        assert(hasAvailableLinksFn(expectedLinks, browserMocked.menuOptions));
+    };
+
+    const assertParentAvailability = (parentId, actualMenuOptions, shouldBeAvailable) => {
+        const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
+        assert(parentBtn);
+
+        assert.strictEqual(parentBtn.enabled, shouldBeAvailable);
+    };
+
+    const testDisablingParentLinkMenuWhenEmpty = (renderingMethodName, createLinksFn, parentMenuId) => {
+        const browserMocked = mockBrowser();
+
+        const contextMenu = new ContextMenu();
+
+        const links = createLinksFn(contextMenu);
+        contextMenu[renderingMethodName](links);
+
+        contextMenu[renderingMethodName]([]);
+        assertParentAvailability(parentMenuId, browserMocked.menuOptions, false);
+
+        contextMenu[renderingMethodName](links);
+        assertParentAvailability(parentMenuId, browserMocked.menuOptions, true);
+    };
+
+    const CATEGORY_LINK_RENDERING_METHOD_NAME = 'renderPageCategories';
+    describe('#' + CATEGORY_LINK_RENDERING_METHOD_NAME, () => {
+
+        const createTestCategoryTitles = contextMenu => {
+            contextMenu.enableSaveBtn();
+            return [Randomiser.getRandomString(), Randomiser.getRandomString()];
+        };
+
+        const menuHasAvailableCategoryLinks = (expectedNoteLinks, actualMenuOptions) => {
+            const actualNoteLinkBtns = actualMenuOptions.filter(i => i.type === BTN_TYPE && 
+                expectedNoteLinks.includes(i.title));
+            const actualBtnIds = new Set(actualNoteLinkBtns.map(i => i.id));
+
+            if (actualNoteLinkBtns.length !== expectedNoteLinks.length || 
+                actualBtnIds.size !== expectedNoteLinks.length)
+                return false;
+    
+            const parentId = actualNoteLinkBtns[0].parentId;
+            
+            const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
+            
+            if (!parentBtn || !parentBtn.enabled)
+                return false;
+    
+            if (!actualNoteLinkBtns.every(btn => btn.parentId === parentId) || 
+                !actualNoteLinkBtns.every(btn => expectedNoteLinks.find(categoryTitle => btn.id && 
+                    btn.title === categoryTitle)))
+                return false;
+    
+            return actualMenuOptions.filter(i => i.type === BTN_TYPE && i.id === parentId).length === 1;
+        };
+
+        it('should render categories for saving in menu', 
+            () => testRenderingLinks(CATEGORY_LINK_RENDERING_METHOD_NAME, createTestCategoryTitles, 
+                menuHasAvailableCategoryLinks));
+
+        it('should remove all previous categories in menu while rendering afresh', 
+            () => testRerenderingLinks(CATEGORY_LINK_RENDERING_METHOD_NAME, createTestCategoryTitles,
+                menuHasAvailableCategoryLinks));
+
+        const SAVING_SUB_MENU_ID = 'save-to';
+        it('should disable the category submenu when rendering the empty list and enable it otherwise', 
+            () => testDisablingParentLinkMenuWhenEmpty(CATEGORY_LINK_RENDERING_METHOD_NAME, 
+                createTestCategoryTitles, SAVING_SUB_MENU_ID));
+        
+        it('should disable the category submenu if the save menu is not available', () => {
+            const browserMocked = mockBrowser();
+
+            const contextMenu = new ContextMenu();
+
+            const noteLinks = createTestCategoryTitles(contextMenu);
+            contextMenu.renderPageCategories(noteLinks);
+            
+            assertParentAvailability(SAVING_SUB_MENU_ID, browserMocked.menuOptions, true);
+
+            contextMenu.disableSaveBtn();
+            assertParentAvailability(SAVING_SUB_MENU_ID, browserMocked.menuOptions, false);
+        });
+    });
+
     const menuHasAvailableNoteLinks = (expectedNoteLinks, actualMenuOptions) => {
         const expectedNoteLinkIds = expectedNoteLinks.map(l => l.id);
         const actualNoteLinkBtns = actualMenuOptions.filter(i => i.type === BTN_TYPE && 
@@ -176,65 +283,22 @@ describe('components/ContextMenu', () => {
         return actualMenuOptions.filter(i => i.type === BTN_TYPE && i.id === parentId).length === 1;
     };
 
-    describe('#renderCategories', () => {
-        it('should render categories for saving in menu');
+    const NOTE_LINK_RENDERING_METHOD_NAME = 'renderNoteLinks';
+    describe('#' + NOTE_LINK_RENDERING_METHOD_NAME, () => {
 
-        it('should remove all previous categories in menu while rendering afresh');
+        const createTestNoteLinks = () => [createRandomNoteLink(), createRandomNoteLink()];
 
-        it('should disable the category submenu when rendering the empty list and enable it otherwise');
-        
-        it('should disable the category submenu if the save menu is not available');
-    });
+        it('should render note links in menu', 
+            () => testRenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, 
+                menuHasAvailableNoteLinks));
 
-    describe('#renderNoteLinks', () => {
+        it('should remove all previous note links in menu while rendering afresh', 
+            () => testRerenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, 
+                menuHasAvailableNoteLinks));
 
-        it('should render note links in menu', () => {
-            const browserMocked = mockBrowser();
-            const contextMenu = new ContextMenu();
-
-            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
-            
-            contextMenu.renderNoteLinks(expectedNoteLinks);
-            
-            assert(menuHasAvailableNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
-        });
-
-        it('should remove all previous note links in menu while rendering afresh', () => {
-            const browserMocked = mockBrowser();
-            const contextMenu = new ContextMenu();
-
-            const noteLinksToRemove = [createRandomNoteLink(), createRandomNoteLink()];
-            contextMenu.renderNoteLinks(noteLinksToRemove);
-
-            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink()];
-            contextMenu.renderNoteLinks(expectedNoteLinks);
-
-            assert(!menuHasAvailableNoteLinks(noteLinksToRemove, browserMocked.menuOptions));
-            assert(menuHasAvailableNoteLinks(expectedNoteLinks, browserMocked.menuOptions));
-        });
-
-        const assertParentAvailability = (actualMenuOptions, shouldBeAvailable) => {
-            const parentId = 'note-navigation';
-            const parentBtn = actualMenuOptions.find(btn => btn.id === parentId);
-            assert(parentBtn);
-
-            assert.strictEqual(parentBtn.enabled, shouldBeAvailable);
-        };
-
-        it('should disable the navigational note submenu when rendering an empty list of notes and enable it otherwise', () => {
-            const browserMocked = mockBrowser();
-
-            const contextMenu = new ContextMenu();
-
-            const noteLinks = [createRandomNoteLink(), createRandomNoteLink()];
-            contextMenu.renderNoteLinks(noteLinks);
-
-            contextMenu.renderNoteLinks([]);
-            assertParentAvailability(browserMocked.menuOptions, false);
-
-            contextMenu.renderNoteLinks(noteLinks);
-            assertParentAvailability(browserMocked.menuOptions, true);
-        });
+        it('should disable the navigational note submenu when rendering an empty list of notes and enable it otherwise', 
+            () => testDisablingParentLinkMenuWhenEmpty(NOTE_LINK_RENDERING_METHOD_NAME, 
+                createTestNoteLinks, 'note-navigation'));
     });
 
     describe('#appendNoteLink', () => {
