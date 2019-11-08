@@ -208,13 +208,13 @@ describe('components/ContextMenu', () => {
             return [Randomiser.getRandomString(), Randomiser.getRandomString()];
         };
 
-        const menuHasAvailableCategoryLinks = (expectedNoteLinks, actualMenuOptions) => {
+        const menuHasAvailableCategoryLinks = (expectedLinks, actualMenuOptions) => {
             const actualNoteLinkBtns = actualMenuOptions.filter(i => i.type === BTN_TYPE && 
-                expectedNoteLinks.includes(i.title));
+                expectedLinks.includes(i.title));
             const actualBtnIds = new Set(actualNoteLinkBtns.map(i => i.id));
 
-            if (actualNoteLinkBtns.length !== expectedNoteLinks.length || 
-                actualBtnIds.size !== expectedNoteLinks.length)
+            if (actualNoteLinkBtns.length !== expectedLinks.length || 
+                actualBtnIds.size !== expectedLinks.length)
                 return false;
     
             const parentId = actualNoteLinkBtns[0].parentId;
@@ -225,7 +225,7 @@ describe('components/ContextMenu', () => {
                 return false;
     
             if (!actualNoteLinkBtns.every(btn => btn.parentId === parentId) || 
-                !actualNoteLinkBtns.every(btn => expectedNoteLinks.find(categoryTitle => btn.id && 
+                !actualNoteLinkBtns.every(btn => expectedLinks.find(categoryTitle => btn.id && 
                     btn.title === categoryTitle)))
                 return false;
     
@@ -252,12 +252,28 @@ describe('components/ContextMenu', () => {
 
             const noteLinks = createTestCategoryTitles(contextMenu);
             contextMenu.renderPageCategories(noteLinks);
-            
+
             assertParentAvailability(SAVING_SUB_MENU_ID, browserMocked.menuOptions, true);
 
             contextMenu.disableSaveBtn();
             assertParentAvailability(SAVING_SUB_MENU_ID, browserMocked.menuOptions, false);
         });
+
+        it('should render the none category available for saving only when there are other categories',
+            () => {
+                const browserMocked = mockBrowser();
+
+                const contextMenu = new ContextMenu();
+
+                const noneCategoryName = 'None';
+
+                const noteLinks = createTestCategoryTitles(contextMenu);
+                contextMenu.renderPageCategories(noteLinks);
+                assert(menuHasAvailableCategoryLinks([noneCategoryName], browserMocked.menuOptions));
+                
+                contextMenu.renderPageCategories([]);
+                assert(!menuHasAvailableCategoryLinks([noneCategoryName], browserMocked.menuOptions));
+            });
     });
 
     const menuHasAvailableNoteLinks = (expectedNoteLinks, actualMenuOptions) => {

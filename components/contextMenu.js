@@ -146,7 +146,8 @@ export class ContextMenu {
             }
         };
 
-        this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn);
+        const noneCategoryName = this._browser.locale.getString('preferences-none-category');
+        this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn, noneCategoryName);
     }
 
     get currentColourClass() { return this._curColourClass; }
@@ -298,9 +299,12 @@ class NoteNavigation extends LinkMenu {
 }
 
 class PageStorageMenu extends LinkMenu {
-    constructor(onSavingFn, onLoadingFn) {
-        super('save-to', async (info) => await onSavingFn(info.title), 
-            PageStorageMenu._PARENT_MENU_ID);
+    constructor(onSavingFn, onLoadingFn, noneCategoryName) {
+        super('save-to', async (info) =>
+            await onSavingFn(info.title === this._noneCategoryName ? null: info.title),
+        PageStorageMenu._PARENT_MENU_ID);
+
+        this._noneCategoryName = noneCategoryName;
 
         this._storageBtn = null;
         this._saveBtn = null;
@@ -340,7 +344,13 @@ class PageStorageMenu extends LinkMenu {
     }
 
     _getCategoryLinks(categoryTitles) {
-        return (categoryTitles || []).map((ct, index) => this._createLink('category-' + index, ct));
+        const categories = (categoryTitles || []);
+
+        if (!categories.length)
+            return [];
+
+        return [this._noneCategoryName].concat(categories)
+            .map((ct, index) => this._createLink('category-' + index, ct));
     }
 
     disableSaveBtn() { 

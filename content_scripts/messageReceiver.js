@@ -43,7 +43,7 @@ class MessageReceiver {
 
     _setCategory() { 
         this._category = MessageReceiver.msgEvent.getCategories(this._msg)[0];
-        return this._category ? true: false;
+        return this._category !== undefined;
     }
 
     get category() { return this._category; }

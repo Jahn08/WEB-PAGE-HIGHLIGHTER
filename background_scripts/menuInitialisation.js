@@ -18,8 +18,8 @@ menu.onChangingColour = (info) => sendMessageToTab(info.tabId,
 menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
 
 menu.onSaving = info => {
-    const msg = info.categoryTitle ? MessageSender.startSavingToCategory(info.categoryTitle):
-        MessageSender.startSaving();
+    const msg = info.categoryTitle === undefined ? MessageSender.startSaving():
+        MessageSender.startSavingToCategory(info.categoryTitle);
     sendMessageToTab(info.tabId, msg);
 };
 

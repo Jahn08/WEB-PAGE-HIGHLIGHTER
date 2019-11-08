@@ -75,7 +75,7 @@
     },
 
     "save_to": {
-        "message": "Save Page To",
+        "message": "Save To Category",
         "description": "Title for a context menu item to choose a category to save marks and notes on a page"
     },
 
