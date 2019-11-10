@@ -26,8 +26,9 @@ void function() {
             const categories = await PageInfo.getAllSavedCategories();
             const categoryView = new CategoryView(categories);
 
-            const msg = MessageReceiver.addCategories(categoryView.categoryTitles);
             this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
+            const msg = MessageReceiver.addCategories(categoryView.categoryTitles, 
+                this._defaultCategoryTitle);
 
             this._browserApi.runtime.sendMessage(MessageReceiver.combineEvents(msg, 
                 MessageReceiver.loadPreferences())).then(async settings => {

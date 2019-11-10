@@ -44,7 +44,7 @@ browserApi.runtime.onMessage(async msg => {
         const sender = new MessageSender(msg);
     
         if (sender.shouldAddCategories())
-            menu.renderPageCategories(sender.categories);
+            menu.renderPageCategories(sender.categories, sender.defaultCategory);
 
         if (sender.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};

@@ -81,7 +81,7 @@ export class BrowserMocked {
         const clickFn = (this._menuOptions.find(i => i.id === id) || {}).onclick;
 
         if (clickFn)
-            clickFn({});
+            clickFn({ menuItemId: id });
     }
 
     get menuOptions() { return this._menuOptions; }

@@ -191,7 +191,9 @@ describe('content_script/menuMessageEvent', function () {
             
             const expectedCategoryTitles = [Randomiser.getRandomString(), 
                 Randomiser.getRandomString()];
-            const addCategoriesEvent = msgEvent.createAddCategoriesEvent(expectedCategoryTitles);
+            const expectedDefaultCategoryTitle = Randomiser.getRandomString();
+            const addCategoriesEvent = msgEvent.createAddCategoriesEvent(expectedCategoryTitles,
+                expectedDefaultCategoryTitle);
 
             const _events = msgEvent.combineEvents([changeColourEvent, markEvent, 
                 unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
@@ -220,7 +222,10 @@ describe('content_script/menuMessageEvent', function () {
 
             assert.deepStrictEqual(msgEvent.getMarkColourClass(_events), markColourClass);
             assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
+
             assert.deepStrictEqual(msgEvent.getCategories(_events), expectedCategoryTitles);
+            assert.strictEqual(msgEvent.getDefaultCategory(_events), 
+                expectedDefaultCategoryTitle);
         });
     });
 });

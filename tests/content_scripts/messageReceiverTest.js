@@ -95,9 +95,10 @@ describe('content_script/messageReceiver', function () {
         })  
     );
 
-    const testSendingEvents = (receiverEvent, senderEvent, links = []) => {
-        const sender = new MessageSender(MessageReceiver[receiverEvent](links));
-
+    const testSendingEvents = (receiverEvent, senderEvent, ...args) => {
+        const msg = MessageReceiver[receiverEvent].call(null, ...args);
+        const sender = new MessageSender(msg);
+        
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
             sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldLoadPreferences(),
@@ -160,8 +161,12 @@ describe('content_script/messageReceiver', function () {
     describe('#addCategories', () =>
         it('should recognise an event as adding categories to menu', () => {
             const categoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
-            const sender = testSendingEvents('addCategories', 'shouldAddCategories', categoryTitles);
+            const defaultCategoryTitle = Randomiser.getRandomString();
+            
+            const sender = testSendingEvents('addCategories', 'shouldAddCategories', 
+                categoryTitles, defaultCategoryTitle);
             assert.deepStrictEqual(sender.categories, categoryTitles);
+            assert.deepStrictEqual(sender.defaultCategory, defaultCategoryTitle);
         })
     );
 
@@ -173,6 +178,7 @@ describe('content_script/messageReceiver', function () {
         it('should filter out null events and combine the rest correctly', () => {
             const expectedNoteLinks = [createRandomLink(), createRandomLink()];
             const expectedCategoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
+            const expectedDefaultCategoryTitles = Randomiser.getRandomString();
 
             const msg = MessageReceiver.combineEvents(undefined, 
                 MessageReceiver.setLoadMenuReady(), undefined, 
@@ -180,7 +186,8 @@ describe('content_script/messageReceiver', function () {
                 MessageReceiver.setMarkMenuReady(),
                 MessageReceiver.setRemoveNoteMenuReady(),
                 MessageReceiver.addNoteLinks(expectedNoteLinks),
-                MessageReceiver.addCategories(expectedCategoryTitles));
+                MessageReceiver.addCategories(expectedCategoryTitles, 
+                    expectedDefaultCategoryTitles));
 
             assert(msg);
 
@@ -205,6 +212,7 @@ describe('content_script/messageReceiver', function () {
 
             assert(sender.shouldAddCategories());
             assert.deepStrictEqual(sender.categories, expectedCategoryTitles);
+            assert.deepStrictEqual(sender.defaultCategory, expectedDefaultCategoryTitles);
         });
     });
 });

@@ -200,7 +200,9 @@ export class ContextMenu {
         this._noteNavigation.removeLink(noteId);
     }
 
-    renderPageCategories(categoryTitles) { this._storageMenu.render(categoryTitles); }
+    renderPageCategories(categoryTitles, defaultCategoryTitle) { 
+        this._storageMenu.render(categoryTitles, defaultCategoryTitle); 
+    }
 }
 
 class LinkMenu {
@@ -300,11 +302,14 @@ class NoteNavigation extends LinkMenu {
 
 class PageStorageMenu extends LinkMenu {
     constructor(onSavingFn, onLoadingFn, noneCategoryName) {
-        super('save-to', async (info) =>
-            await onSavingFn(info.title === this._noneCategoryName ? null: info.title),
-        PageStorageMenu._PARENT_MENU_ID);
+        super('save-to', async (info) => {
+            const title = (this._defaultCategory || {})[info.menuItemId] || info.title;
+            await onSavingFn(title === this._noneCategoryName ? null: title);
+        }, PageStorageMenu._PARENT_MENU_ID);
 
         this._noneCategoryName = noneCategoryName;
+
+        this._defaultCategory = null;
 
         this._storageBtn = null;
         this._saveBtn = null;
@@ -339,18 +344,31 @@ class PageStorageMenu extends LinkMenu {
         this._loadBtn.addToMenu(onLoadingFn, new MenuIcon('load'));
     }
 
-    render(categoryTitles) {
-        super.render(this._getCategoryLinks(categoryTitles));
+    render(categoryTitles, defaultCategoryTitle) {
+        super.render(this._getCategoryLinks(categoryTitles, defaultCategoryTitle));
     }
 
-    _getCategoryLinks(categoryTitles) {
+    _getCategoryLinks(categoryTitles, defaultCategoryTitle) {
+        defaultCategoryTitle = defaultCategoryTitle || this._noneCategoryName;
+
+        this._defaultCategory = null;
+
         const categories = (categoryTitles || []);
 
         if (!categories.length)
             return [];
 
         return [this._noneCategoryName].concat(categories)
-            .map((ct, index) => this._createLink('category-' + index, ct));
+            .map((title, index) => {
+                const isDefaultOption = title === defaultCategoryTitle;
+
+                const optionId = 'category-' + index;
+
+                if (isDefaultOption)
+                    this._defaultCategory = { [optionId]: defaultCategoryTitle };
+
+                return this._createLink(optionId, (isDefaultOption ? '✓ ': '') + title);
+            });
     }
 
     disableSaveBtn() { 

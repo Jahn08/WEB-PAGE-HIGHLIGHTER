@@ -33,8 +33,9 @@ class MessageReceiver {
 
     shouldSave() { return MessageReceiver.msgEvent.isSaveEvent(this._msg); }
 
-    static addCategories(categoryTitles) { 
-        return MessageReceiver.msgEvent.createAddCategoriesEvent(categoryTitles); 
+    static addCategories(categoryTitles, defauflCategoryTitle) { 
+        return MessageReceiver.msgEvent.createAddCategoriesEvent(categoryTitles, 
+            defauflCategoryTitle); 
     }
 
     shouldSaveToCategory() {
