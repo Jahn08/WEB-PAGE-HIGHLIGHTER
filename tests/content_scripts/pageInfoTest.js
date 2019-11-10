@@ -20,7 +20,7 @@ describe('content_script/pageInfo', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
             .then(() => done())
             .catch(done);
     });
@@ -55,7 +55,7 @@ describe('content_script/pageInfo', function () {
             );
         });
 
-        it('should load a page previously saved in the storage', () => {
+        const testSavingPage = (saveFn,  checkPageCategoriesFn) => {
             const parentDiv = document.createElement('div');
             parentDiv.id = Randomiser.getRandomNumberUpToMax();
 
@@ -65,22 +65,54 @@ describe('content_script/pageInfo', function () {
             document.body.appendChild(parentDiv);
 
             const pageInfo = new PageInfo();
-            pageInfo.save();
 
-            parentDiv.remove();
+            return Expectation.expectResolution(saveFn(pageInfo), async () => {
+                parentDiv.remove();
 
-            assert.strictEqual(document.getElementById(parentDiv.id), null);
+                assert.strictEqual(document.getElementById(parentDiv.id), null);
+    
+                const pageInfoToLoad = new PageInfo();
+                await pageInfoToLoad.load();
 
-            return Expectation.expectResolution(new PageInfo().load(),
-                () => {
-                    assert.strictEqual(storage.length, 1);
+                checkPageCategoriesFn(
+                    (await PageInfo.getAllSavedPagesWithCategories()).pageCategories, pageInfoToLoad);
+    
+                const loadedDiv = document.getElementById(parentDiv.id);
+                assert(loadedDiv);
+                assert.strictEqual(loadedDiv.childElementCount, 1);
+    
+                assert.strictEqual(loadedDiv.firstElementChild.innerHTML, childLabel.innerHTML);
+            });
+        };
 
-                    const loadedDiv = document.getElementById(parentDiv.id);
-                    assert(loadedDiv);
-                    assert.strictEqual(loadedDiv.childElementCount, 1);
+        it('should load a page previously saved in the storage without a category', () =>
+            testSavingPage(pageInfo => pageInfo.save(), pageCategories => {
+                assert.strictEqual(Object.getOwnPropertyNames(pageCategories).length, 0);
+                assert.strictEqual(storage.length, 1);
+            })
+        );
 
-                    assert.strictEqual(loadedDiv.firstElementChild.innerHTML, 
-                        childLabel.innerHTML);
+        it('should load a page previously saved in the storage with a default category', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(), 
+                async () => {
+                    const storedCategories = await PageInfo.getAllSavedCategories();
+                    const defaultCategoryTitle = storedCategories.find(c => c.default).title;
+
+                    return testSavingPage(pageInfo => pageInfo.save(defaultCategoryTitle), 
+                        (pageCategories, pageInfo) =>
+                            assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
+                    );
+                }
+            )
+        );
+
+        it('should load a page previously saved in the storage with a category', () => {
+            const categoryTitle = '' + Randomiser.getRandomNumberUpToMax();
+
+            return testSavingPage(pageInfo => pageInfo.saveToCategory(categoryTitle), 
+                (pageCategories, pageInfo) => {
+                    assert.strictEqual(pageCategories[pageInfo.uri], categoryTitle);
+                    assert.strictEqual(storage.length, 2);
                 });
         });
     });
@@ -105,25 +137,40 @@ describe('content_script/pageInfo', function () {
         });
     });
 
-    describe('#getAllSavedPagesInfo', function () {
-        it('should get previously saved page info items without html from the storage', () =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
-                const actualPageInfos = await PageInfo.getAllSavedPagesInfo();
-
-                expectedPageInfos.forEach(pi => delete pi[PageInfo.HTML_PROP_NAME]);
-                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
+    describe('#getAllSavedCategories', function () {
+        it('should get previously saved categories',  () =>
+            Expectation.expectResolution(StorageHelper.saveTestCategories(), async categories => {
+                const storedInfo = await PageInfo.getAllSavedCategories();
+                assert.deepStrictEqual(storedInfo, categories);
             })
+        );
+    });
+
+    describe('#getAllSavedPagesWithCategories', function () {
+        it('should get previously saved page info items without html alongsdide their categories', () =>
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(), 
+                async savedInfo => {
+                    const storedInfo = await PageInfo.getAllSavedPagesWithCategories();
+
+                    savedInfo.pagesInfo.forEach(pi => delete pi[PageInfo.HTML_PROP_NAME]);
+                    assert.deepStrictEqual(storedInfo.pagesInfo, savedInfo.pagesInfo);
+                    assert.deepStrictEqual(storedInfo.pageCategories, savedInfo.pageCategories);
+                })
         );
     });
 
     describe('#getAllSavedPagesFullInfo', function () {
         it('should get previously saved page info items with html from the storage', () =>
-            Expectation.expectResolution(StorageHelper.saveTestPageInfo(), async expectedPageInfos => {
-                const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10), 
+                async expectedPageInfos => {
+                    const actualPageInfos = await PageInfo.getAllSavedPagesFullInfo();
 
-                assert(actualPageInfos.every(pi => pi[PageInfo.HTML_PROP_NAME]));
-                assert.deepStrictEqual(actualPageInfos, expectedPageInfos);
-            })
+                    assert(actualPageInfos.every(pi => pi[PageInfo.HTML_PROP_NAME]));
+
+                    const categorisedPages = PageInfoHelper.fillPageCategories(
+                        expectedPageInfos.pagesInfo, expectedPageInfos.pageCategories);
+                    assert.deepStrictEqual(actualPageInfos, categorisedPages);
+                })
         );
     });
 
@@ -149,20 +196,33 @@ describe('content_script/pageInfo', function () {
     });
 
     describe('#savePages', function () {
-        const copyPageArray = (sourceArray) => sourceArray.map(p => Object.assign({}, p));
+        const copyArray = (sourceArray) => sourceArray.map(p => Object.assign({}, p));
 
-        it('should save pages into storage', () => {
+        const assertAbsenceOfCategories = (categories, pageCategories) => {
+            assert(categories);
+            assert(!categories.length);
+
+            assert(pageCategories);
+            assert(!Object.getOwnPropertyNames(pageCategories).length);
+        };
+
+        it('should save pages without categories into storage', () => {
             const testPages = PageInfoHelper.createPageInfoArray();
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
-            const savedPages = PageInfo.savePages(testPages);
-            assert(savedPages);
-            assert.strictEqual(savedPages.length, expectedPages.length);
-            
-            assert.deepStrictEqual(savedPages, testPages);
-
-            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
-                storedPages => assert.deepStrictEqual(storedPages, expectedPages));
+            return Expectation.expectResolution(PageInfo.savePages(testPages), 
+                async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+                    
+                    const savedPages = savedData.importedPages;
+                    assert(savedPages);
+                    assert.strictEqual(savedPages.length, expectedPages.length);
+                    
+                    assert.deepStrictEqual(savedPages, testPages);
+                
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo();
+                    assert.deepStrictEqual(storedPages, expectedPages);
+                });
         });
 
         it('should save pages into storage excluding those with invalid uris', () => {
@@ -171,16 +231,21 @@ describe('content_script/pageInfo', function () {
             const pageWithInvalidUri = Randomiser.getRandomArrayItem(testPages);
             pageWithInvalidUri.uri = Randomiser.getRandomNumberUpToMax();
 
-            const expectedPages = copyPageArray(testPages);
+            const expectedPages = copyArray(testPages);
 
-            const savedPages = PageInfo.savePages(testPages);
-            assert(savedPages);
-            assert.strictEqual(savedPages.length, expectedPages.length - 1);
+            return Expectation.expectResolution(PageInfo.savePages(testPages), 
+                async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
 
-            assert(!savedPages.find(p => p.uri === pageWithInvalidUri.uri));
+                    const savedPages = savedData.importedPages;
+                    assert(savedPages);
+                    assert.strictEqual(savedPages.length, expectedPages.length - 1);
+        
+                    assert(!savedPages.find(p => p.uri === pageWithInvalidUri.uri));
 
-            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
-                storedPages => assert(!storedPages.find(p => p.uri === pageWithInvalidUri.uri)));
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo(); 
+                    assert(!storedPages.find(p => p.uri === pageWithInvalidUri.uri));
+                });
         });
 
         it('should save pages into storage substituting invalid dates with nowadays', () => {
@@ -189,11 +254,7 @@ describe('content_script/pageInfo', function () {
             const pageWithInvalidDate = Randomiser.getRandomArrayItem(testPages);
             pageWithInvalidDate.date = Randomiser.getRandomNumberUpToMax();
 
-            const expectedPages = copyPageArray(testPages);
-
-            const savedPages = PageInfo.savePages(testPages);
-            assert(savedPages);
-            assert.strictEqual(savedPages.length, expectedPages.length);
+            const expectedPages = copyArray(testPages);
 
             const assureExpectedDate = (actualPages) => {
                 const nowString = new Date(Date.now()).toUTCString();
@@ -202,10 +263,18 @@ describe('content_script/pageInfo', function () {
                 assert.strictEqual(new Date(actualPage.date).toUTCString(), nowString);
             };
 
-            assureExpectedDate(savedPages);
+            return Expectation.expectResolution(PageInfo.savePages(testPages),
+                async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
 
-            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
-                storedPages => assureExpectedDate(storedPages));
+                    const savedPages = savedData.importedPages;
+                    assert(savedPages);
+                    assert.strictEqual(savedPages.length, expectedPages.length);
+        
+                    assureExpectedDate(savedPages);
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo();
+                    assureExpectedDate(storedPages);
+                });
         });
 
         it('should save pages into storage substituting empty titles with default ones', () => {
@@ -218,11 +287,7 @@ describe('content_script/pageInfo', function () {
             const pageWithUriTitle = testPages[1];
             pageWithUriTitle.title = '';
 
-            const expectedPages = copyPageArray(testPages);
-
-            const savedPages = PageInfo.savePages(testPages);
-            assert(savedPages);
-            assert.strictEqual(savedPages.length, expectedPages.length);
+            const expectedPages = copyArray(testPages);
 
             const assureExpectedTitles = (actualPages) => {
                 let actualPage = actualPages.find(p => p.uri === pageWithDefaultTitle.uri);
@@ -233,10 +298,106 @@ describe('content_script/pageInfo', function () {
                     new URL(pageWithUriTitle.uri).pathname.substring(1));
             };
 
-            assureExpectedTitles(savedPages);
+            return Expectation.expectResolution(PageInfo.savePages(testPages), 
+                async savedData => {
+                    assertAbsenceOfCategories(savedData.categories, savedData.pageCategories);
+
+                    const savedPages = savedData.importedPages;
+                    assert(savedPages);
+                    assert.strictEqual(savedPages.length, expectedPages.length);
+        
+                    assureExpectedTitles(savedPages);
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo();
+                    assureExpectedTitles(storedPages);
+                });
+        });
+
+        it('should save pages adding new categories and expanding existent ones in storage', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10),
+                async initialInfo => {
+                    const pagesToSave = PageInfoHelper.createPageInfoArray(8);            
+
+                    const storedCategories = await PageInfo.getAllSavedCategories();
+
+                    const categories = copyArray(storedCategories);
+                    pagesToSave.forEach((p, index) => {
+                        if (!(index % 3))
+                            return;
+
+                        const createNewCategory = index % 2;
+                        const category = createNewCategory ? 
+                            '' + Randomiser.getRandomNumberUpToMax(): 
+                            Randomiser.getRandomArrayItem(storedCategories).title;
+
+                        initialInfo.pageCategories[p.uri] = category;
+                        p.category = category;
+
+                        if (createNewCategory)
+                            categories.push(PageInfoHelper.createCategory(category, false));
+                    });
+
+                    const expectedPages = copyArray(pagesToSave);
+
+                    const savedData = await PageInfo.savePages(pagesToSave);
+
+                    assert.deepStrictEqual(savedData.importedPages, 
+                        expectedPages.map(p => {
+                            const copy = Object.assign({}, p);
+                            delete copy[PageInfo.HTML_PROP_NAME];
+                            delete copy.category;
+
+                            return copy;
+                        }));
+                    
+                    assert.deepStrictEqual(savedData.pageCategories, initialInfo.pageCategories);
+
+                    assert.deepStrictEqual(savedData.categories, categories);
+
+                    const storedPages = await PageInfo.getAllSavedPagesFullInfo();
+
+                    expectedPages.forEach(ep =>
+                        assert.deepStrictEqual(storedPages.find(sp => sp.uri === ep.uri), ep));
+                    
+                    initialInfo.pagesInfo.forEach(pi => {
+                        const actualPage = storedPages.find(sp => sp.uri === pi.uri);
+                        assert(actualPage);
+                        assert.strictEqual(actualPage.category, initialInfo.pageCategories[pi.uri]);
+
+                        delete actualPage.category;
+                        assert.deepStrictEqual(actualPage, pi);
+                    });
+                });
+        });
+    });
+
+    describe('#saveCategories', function () {
+        it('should save categories into storage', async () => {
+            const testCategories = PageInfoHelper.createCategoryArray();
             
-            return Expectation.expectResolution(PageInfo.getAllSavedPagesFullInfo(), 
-                storedPages => assureExpectedTitles(storedPages));
+            await PageInfo.saveCategories(testCategories);
+           
+            return Expectation.expectResolution(PageInfo.getAllSavedCategories(), 
+                savedCategories => {
+                    assert(savedCategories);
+                    assert.strictEqual(savedCategories.length, testCategories.length);
+                    assert.deepStrictEqual(savedCategories, testCategories);
+                });
+        });
+    });
+
+    describe('#savePageCategories', function () {
+        it('should save page categories into storage', async () => {
+            const testPageCategories = PageInfoHelper.createPageCategories().pageCategories;
+            
+            await PageInfo.savePageCategories(testPageCategories);
+           
+            return Expectation.expectResolution(PageInfo.getAllSavedPagesWithCategories(), 
+                pageInfo => {
+                    const savedPageCategories = pageInfo.pageCategories;
+                    assert(savedPageCategories);
+                    assert.strictEqual(savedPageCategories.length, testPageCategories.length);
+                    assert.deepStrictEqual(savedPageCategories, testPageCategories);
+                });
         });
     });
 });

@@ -3,6 +3,7 @@ class MessageReceiver {
         this._msg = msg;       
         this._markColourClass = null;
         this._noteLink = null;
+        this._category = null;
     }
 
     get markColourClass() { return this._markColourClass; }
@@ -32,6 +33,22 @@ class MessageReceiver {
 
     shouldSave() { return MessageReceiver.msgEvent.isSaveEvent(this._msg); }
 
+    static addCategories(categoryTitles, defauflCategoryTitle) { 
+        return MessageReceiver.msgEvent.createAddCategoriesEvent(categoryTitles, 
+            defauflCategoryTitle); 
+    }
+
+    shouldSaveToCategory() {
+        return MessageReceiver.msgEvent.isSaveToCategoryEvent(this._msg) && this._setCategory();
+    }
+
+    _setCategory() { 
+        this._category = MessageReceiver.msgEvent.getCategories(this._msg)[0];
+        return this._category !== undefined;
+    }
+
+    get category() { return this._category; }
+
     static setLoadMenuReady() { return MessageReceiver.msgEvent.createLoadReadyEvent(); }
 
     shouldLoad() { return MessageReceiver.msgEvent.isLoadEvent(this._msg); }
@@ -58,12 +75,12 @@ class MessageReceiver {
         return MessageReceiver.msgEvent.isGoToNoteEvent(this._msg) && this._setNoteLink();
     }
 
-    get noteLink() { return this._noteLink; }
-
     _setNoteLink() { 
         this._noteLink = MessageReceiver.msgEvent.getNoteLinks(this._msg)[0];
         return this._noteLink ? true: false;
     }
+
+    get noteLink() { return this._noteLink; }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

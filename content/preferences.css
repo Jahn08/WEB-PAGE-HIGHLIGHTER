@@ -10,23 +10,27 @@
     width: 100%;
 }
 
+.form--table thead, .form--table tbody {
+    width: inherit;
+}
+
 .form--table tr {
     width: 100%;
 }
 
-#form--section-page--table th:nth-child(2), 
-#form--section-page--table td:nth-child(2) {
+.form--table th:nth-child(2), 
+.form--table td:nth-child(2) {
     width: 75vw;
 }
 
-#form--section-page--table th:last-child, 
-#form--section-page--table td:last-child {
+.form--table th:last-child, 
+.form--table td:last-child {
     width: 15vw;
 }
 
 .form--table tbody {
     display: block;
-    height: 35vh;
+    height: 25vh;
     overflow-y: auto;
 }
 
@@ -75,4 +79,8 @@
 
 .form-section-status--label-warning {
     color: brown !important;    
+}
+
+.form--table-category--row-default td:last-child > label::after {
+    content: '✓';
 }

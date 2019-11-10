@@ -5,6 +5,9 @@ export class MessageSender {
         this._msg = msg;
 
         this._noteLinks = [];
+
+        this._categories = [];
+        this._defaultCategory = null;
     }
 
     shouldSetMarkMenuReady() { return msgEvent.isSetMarkReadyEvent(this._msg); }
@@ -21,11 +24,34 @@ export class MessageSender {
 
     static startSaving() { return msgEvent.createSaveEvent(); }
 
+    shouldAddCategories() {
+        const isAddingCategories = msgEvent.isAddCategoriesEvent(this._msg);
+
+        if (isAddingCategories) {
+            this._setCategories();
+            this._setDefaultCategory();
+        }
+
+        return isAddingCategories;
+    }
+
+    _setCategories() { this._categories = msgEvent.getCategories(this._msg); }
+
+    get categories() { return this._categories; }
+
+    _setDefaultCategory() { this._defaultCategory = msgEvent.getDefaultCategory(this._msg); }
+    
+    get defaultCategory() { return this._defaultCategory; }
+
+    static startSavingToCategory(categoryTitle) { 
+        return msgEvent.createSaveToCategoryEvent(categoryTitle);
+    }
+
     shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
 
     static startLoading() { return msgEvent.createLoadEvent(); }
 
-    shouldReturnPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
+    shouldLoadPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
 
     static startLoadingTabState() { return msgEvent.createLoadTabStateEvent(this._msg); }
     

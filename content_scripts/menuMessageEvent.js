@@ -10,6 +10,9 @@ class MenuMessageEvent {
         this._saveReadyEvent = 'setSaveReady';
         this._saveEvent = 'save';
 
+        this._addCategoriesEvent = 'addCategories';
+        this._saveToCategoryEvent = 'saveTo';
+
         this._loadReadyEvent = 'setLoadReady';
         this._loadEvent = 'load';
 
@@ -29,18 +32,17 @@ class MenuMessageEvent {
     createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
 
     _createEventWithColour(eventName, colourClass) {
-        return this._createEventWithArgs(eventName, colourClass, this._COLOUR_CLASS_FIELD);
+        return this._createEventWithArgs(eventName, {
+            [this._COLOUR_CLASS_FIELD]: colourClass
+        });
     }
 
     get _COLOUR_CLASS_FIELD() {
         return 'colourClass';
     }
 
-    _createEventWithArgs(eventName, args, propName) {
-        const event = this._createEvent(eventName);
-        event[propName] = args;
-
-        return event; 
+    _createEventWithArgs(eventName, options) {
+        return Object.assign(this._createEvent(eventName), options);
     }
 
     _createEvent(eventName) { return { event: [eventName] }; }
@@ -62,6 +64,8 @@ class MenuMessageEvent {
 
             this._combineProps(p, c, this._COLOUR_CLASS_FIELD);
             this._combineProps(p, c, this._NOTE_LINK_FIELD);
+            this._combineProps(p, c, this._CATEGORY_FIELD);
+            this._combineProps(p, c, this._DEFAULT_CATEGORY_FIELD);
             
             return p;
         }, { event: [] });
@@ -69,6 +73,14 @@ class MenuMessageEvent {
 
     get _NOTE_LINK_FIELD() {
         return 'noteLink';
+    }
+    
+    get _CATEGORY_FIELD() {
+        return 'category';
+    }
+
+    get _DEFAULT_CATEGORY_FIELD() {
+        return 'defaultCategory';
     }
 
     _combineProps(targetObj, sourceObj, propName) {
@@ -102,6 +114,29 @@ class MenuMessageEvent {
     createSaveEvent() { return this._createEvent(this._saveEvent); }
     isSaveEvent(msg) { return this._isEvent(msg, this._saveEvent); }   
 
+    createAddCategoriesEvent(categoryTitles, defaultCategoryTitle) { 
+        return this._createEventWithCategories(this._addCategoriesEvent, categoryTitles,
+            defaultCategoryTitle); 
+    }
+
+    _createEventWithCategories(eventName, categoryTitles, defaultCategoryTitle = null) {
+        return this._createEventWithArgs(eventName, { 
+            [this._CATEGORY_FIELD]: categoryTitles,
+            [this._DEFAULT_CATEGORY_FIELD]: defaultCategoryTitle
+        });
+    }
+
+    isAddCategoriesEvent(msg) { return this._isEvent(msg, this._addCategoriesEvent); }
+
+    getCategories(msg) { return msg ? msg[this._CATEGORY_FIELD]: []; }
+    
+    getDefaultCategory(msg) { return msg ? msg[this._DEFAULT_CATEGORY_FIELD]: null; }
+
+    createSaveToCategoryEvent(categoryTitle) {
+        return this._createEventWithCategories(this._saveToCategoryEvent, [categoryTitle]); 
+    }
+    isSaveToCategoryEvent(msg) { return this._isEvent(msg, this._saveToCategoryEvent); }
+
     createLoadReadyEvent() { return this._createEvent(this._loadReadyEvent); }
     isSetLoadReadyEvent(msg) { return this._isEvent(msg, this._loadReadyEvent); }
 
@@ -131,7 +166,7 @@ class MenuMessageEvent {
     }
     
     _createEventWithNoteLink(eventName, noteLinks) {
-        return this._createEventWithArgs(eventName, noteLinks, this._NOTE_LINK_FIELD);
+        return this._createEventWithArgs(eventName, { [this._NOTE_LINK_FIELD]: noteLinks });
     }
 
     isAddNoteLinksEvent(msg) { return this._isEvent(msg, this._addNoteLinksEvent); }

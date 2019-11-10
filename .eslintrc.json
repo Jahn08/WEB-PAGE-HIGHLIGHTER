@@ -23,7 +23,8 @@
         "PageInfo": "readonly",
         "ArrayExtension": "readonly",
         "BrowserAPI": "readonly",
-        "LZWCompressor": "readonly"
+        "LZWCompressor": "readonly",
+        "CategoryView": "readonly"
     },
     "rules": {
         "indent": [

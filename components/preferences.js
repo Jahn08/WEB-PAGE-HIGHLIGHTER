@@ -46,56 +46,79 @@ class PagePackageError extends Error {
 }
 
 class BaseTable {
-    constructor(tableSectionId, tableData) {
-        const tableId = tableSectionId + '--table';
+    constructor(tableSectionName, tableData) {
+        this._tableSectionId = 'form--section-' + tableSectionName;
+        const tableId = this._tableSectionId + '--table';
 
-        this._tableBody = document.getElementById(tableId).tBodies[0];
+        const table = document.getElementById(tableId);
+        this._tableBody = table.tBodies[0];
+        
         this._tableData = tableData;  
 
         if (this._isRendered())
             throw new RepeatInitError();
 
-        this._sortPagesInfo();
+        this._sortTableData();
         
-        this._CHECK_CLASS_NAME = tableId + '--check';
+        this._checkClassName = tableId + '--check';
         this._CHECKED_MODIFIER = ':checked';
 
-        this._CHECK_TICKED_SELECTOR = `.${this._CHECK_CLASS_NAME}${this._CHECKED_MODIFIER}`;
+        this._checkTickedSelector = `.${this._checkClassName}${this._CHECKED_MODIFIER}`;
         
-        this._checkAllBtn = document.getElementById(this._CHECK_CLASS_NAME + '-all');
-        this._checkAllBtn.onchange = this._bindToThis(this._onCheckAllClick);
+        this._checkAllBtn = document.getElementById(this._checkClassName + '-all');
+        this._checkAllBtn.onchange = this.bindToThis(this._onCheckAllClick);
 
         this._TABLE_CELL_NAME = 'td';
 
-        this._locale = new BrowserAPI().locale;
+        this._BTN_PREFIX = 'btn-';
 
+        this._locale = new BrowserAPI().locale;
+        this._NONE_CATEGORY_NAME = this._locale.getString('preferences-none-category');
+
+        this._isDirty = false; 
+
+        this._statusLabel = null;
+
+        this._HEADER_CELL_CLASS = 'form--table--cell-header';
         this._sortHeader = null;
-        ArrayExtension.runForEach([...document.getElementsByClassName('form--table--cell-header')], 
+        ArrayExtension.runForEach([...table.tHead.getElementsByClassName(this._HEADER_CELL_CLASS)], 
             ch => {
                 if (!this._sortHeader)
                     this._sortHeader = ch;
 
-                ch.onclick = this._bindToThis(this._onHeaderCellClick);
+                ch.onclick = this.bindToThis(this._onHeaderCellClick);
             });
             
         const hiddenClassName = 'form--table--row-hidden';
-        this.searchField = document.getElementById(tableSectionId + '--txt-search');
-        this.searchField.onchange = this._bindToThis(this._onSearching, [hiddenClassName]);
+        this._searchField = document.getElementById(this._tableSectionId + '--txt-search');
+        this._searchField.onchange = this.bindToThis(this._onSearching, [hiddenClassName]);
 
-        document.onkeydown = this._bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]);
+        document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]));
+        
+        this._render();  
     }
 
     _isRendered() {
         return this._tableBody.rows.length > 0;
     }
     
-    _sortPagesInfo(sortField = 'title', isAscending = true) {
-        this._tableData = isAscending ? 
-            this._tableData.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0)) : 
-            this._tableData.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0));
+    _sortTableData() {
+        const defaultSortField = 'title';
+        const sortField = this._sortHeader ? (this._sortHeader.dataset.sortField || defaultSortField): defaultSortField;
+
+        const items = this._tableData.map(i => {
+            if (i[sortField] === undefined)
+                i[sortField] = null;
+
+            return i;
+        });
+
+        this._tableData = this._isSortDescending() ? 
+            items.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0)):
+            items.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0));
     }
 
-    _bindToThis(fn, args = []) {
+    bindToThis(fn, args = []) {
         return fn.bind(this, ...args);
     }
 
@@ -104,7 +127,7 @@ class BaseTable {
         const modifier = shouldCheck ? `:not(${this._CHECKED_MODIFIER})` : 
             this._CHECKED_MODIFIER;
         
-        document.querySelectorAll('.' + this._CHECK_CLASS_NAME + modifier)
+        document.querySelectorAll('.' + this._checkClassName + modifier)
             .forEach(el => { 
                 if (el.checked === shouldCheck)
                     return;
@@ -112,17 +135,16 @@ class BaseTable {
                 el.checked = shouldCheck;
             });
 
-        this._updatePageButtonsAvailability();
+        this._updateButtonsAvailability();
     }
 
-    _updatePageButtonsAvailability() { }
+    _updateButtonsAvailability() { }
 
     _onHeaderCellClick(_event) {
         const cell = _event.target;
 
-        const headerCellClass = cell.classList[0];
-        const descSortClass = headerCellClass + '-desc';
-        const ascSortClass = headerCellClass + '-asc';
+        const descSortClass = this._getDescSortClassName();
+        const ascSortClass = this._HEADER_CELL_CLASS + '-asc';
 
         let shouldBeAscending;
 
@@ -140,7 +162,7 @@ class BaseTable {
             shouldBeAscending = true;
         }
         else {
-            shouldBeAscending = cell.classList.contains(descSortClass);
+            shouldBeAscending = this._isSortDescending();
 
             if (shouldBeAscending)
                 cell.classList.replace(descSortClass, ascSortClass);
@@ -148,17 +170,48 @@ class BaseTable {
                 cell.classList.replace(ascSortClass, descSortClass);
         }
         
-        this._sortPagesInfo(cell.dataset.sortField, shouldBeAscending);
+        this._sortTableData();
 
+        this._rerender();
+    }
+
+    _getDescSortClassName() {
+        return this._HEADER_CELL_CLASS + '-desc';
+    }
+
+    _isSortDescending() {
+        return this._sortHeader ? this._sortHeader.classList.contains(this._getDescSortClassName()): false;
+    }
+   
+    _rerender() {
         this._clearTableRows();
         this._render();
     }
 
     _clearTableRows() {
-        this._tableBody.innerHTML = '';
+        this._clearElement(this._tableBody);
+    }
+
+    _clearElement(elem) {
+        if (elem.innerHTML)
+            elem.innerHTML = '';
     }
 
     _render() { }
+
+    _createLabelCell(text, title = null) {
+        const label = document.createElement('label');
+
+        if (title)
+            text += ` <br><i class='form--table--cell-title'>(${title})</i>`;
+
+        label.innerHTML = text;
+
+        const labelCell = document.createElement(this._TABLE_CELL_NAME);
+        labelCell.append(label);
+
+        return labelCell;
+    }
 
     _onSearching(hiddenClassName, _event) {
         const searchText = (_event.target.value || '').toUpperCase();
@@ -176,55 +229,430 @@ class BaseTable {
         if (event.key !== 'Enter')
             return true;
 
-        if (event.target === this.searchField)
+        if (event.target === this._searchField)
             this._onSearching(hiddenClassName, event);
 
         event.preventDefault();
         return false;
     }
+
+    _getControlByName(ctrlName) {
+        return document.getElementById(this._getControlFullName(ctrlName));       
+    }
+    
+    _getControlFullName(ctrlName) {
+        return `${this._tableSectionId}--${ctrlName}`;
+    }
+
+    _getControlsByName(ctrlName) {
+        return document.getElementsByClassName(this._getControlFullName(ctrlName));       
+    }
+
+    _removeRows() {
+        const removedKeys = [];
+
+        document.querySelectorAll(this._checkTickedSelector).forEach(el => {
+            removedKeys.push(this._getRowKey(el));
+
+            el.parentElement.parentElement.remove();
+        });
+
+        return removedKeys;
+    }
+
+    _getRowKey() { }
+
+    _showStatus(text, isWarning = true) {
+        const statusSectionId = this._tableSectionId + '--status';
+
+        if (!this._statusLabel)
+            this._statusLabel = document.getElementById(statusSectionId);        
+
+        const labelEl = document.createElement('label');
+        labelEl.innerText = text;
+
+        const statusLabelClass = 'form-section-status--label';
+        labelEl.className = statusLabelClass;
+
+        if (isWarning)
+            labelEl.classList.add(statusLabelClass + '-warning');
+            
+        this._statusLabel.append(labelEl);
+    }
+
+    _hideStatus() {
+        if (this._statusLabel && this._statusLabel.innerHTML)
+            this._statusLabel.innerHTML = null;
+    }
+    
+    _makeDirty() { 
+        this._isDirty = true; 
+    }
+
+    _emitEvent(callback, arg) {
+        if (!callback)
+            return;
+
+        callback(arg);
+    }
+}
+
+class CategoryTable extends BaseTable {
+    constructor(categories = []) {
+        super('category', categories);
+
+        this._removeBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
+        this._removeBtn.onclick = this.bindToThis(this._removeCategory);
+
+        this._categoryTitleTxt = this._getControlByName('txt-title');
+        this._addBtn = this._getControlByName(this._BTN_PREFIX + 'add');
+        this._addBtn.onclick = this.bindToThis(this._addCategory);
+
+        this._makeDefaultBtn = this._getControlByName(this._BTN_PREFIX + 'default');
+        this._makeDefaultBtn.onclick = this.bindToThis(this._makeCategoryDefault);
+
+        const defaultCategory = categories.find(c => c.default);
+        this._defaultCategoryTitle = defaultCategory ? defaultCategory.title: null;
+
+        this.onRemoved = null;
+        this.onAdded = null;
+    }
+
+    get _DEFAULT_CATEGORY_CLASS_NAME() { return 'form--table-category--row-default'; }
+
+    _removeCategory() {
+        this._hideStatus();
+
+        if (!this._tableData.length)
+            return;
+
+        const _removedCatTitles = this._removeRows();
+
+        this._tableData = this._tableData.filter(pi => 
+            !ArrayExtension.contains(_removedCatTitles, pi.title));
+            
+        this._makeDefaultBtn.disabled = true;
+        this._removeBtn.disabled = true;
+
+        this._makeDirty();
+
+        this._emitEvent(this.onRemoved, _removedCatTitles);
+    }
+
+    _getRowKey(el) { return el.dataset.title; }
+
+    _addCategory() {
+        this._hideStatus();
+
+        const name = this._categoryTitleTxt.value;
+
+        const nameMaxLength = 25;
+
+        if (!name) {
+            this._showStatus(this._locale.getString('preferences-unnamed-category-warning'));
+            return;
+        }
+        else if (name.length > nameMaxLength) {
+            this._showStatus(this._locale.getStringWithArgs(
+                'preferences-long-category-name-warning', nameMaxLength));
+            return;
+        }
+        else if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
+            this._showStatus(this._locale.getString('preferences-none-category-warning'));
+            return;
+        }
+        else if (this._tableData.find(i => i.title === name)) {
+            this._showStatus(
+                this._locale.getStringWithArgs('preferences-duplicated-category-warning', name));
+            return;
+        }
+
+        this._tableData.push(this._createNewCategory(name));
+
+        this._sortTableData();
+
+        this._rerender();
+
+        this._makeDirty();
+
+        this._categoryTitleTxt.value = null;
+
+        this._emitEvent(this.onAdded, name);
+    }
+
+    _createNewCategory(name) {
+        return { title: name };
+    }
+
+    _makeCategoryDefault() {
+        this._hideStatus();
+
+        if (!this._tableData.length)
+            return;
+
+        const markedCheckBox = document.querySelector(this._checkTickedSelector);
+        
+        if (!markedCheckBox)
+            return;
+
+        const rowClassList = markedCheckBox.parentElement.parentElement.classList;
+
+        const defaultCategoryClassName = this._DEFAULT_CATEGORY_CLASS_NAME;
+        const shouldGetDefault = !rowClassList.contains(defaultCategoryClassName);
+
+        ArrayExtension.runForEach(document.getElementsByClassName(defaultCategoryClassName), 
+            r => r.classList.remove(defaultCategoryClassName));
+
+        ArrayExtension.runForEach(this._tableData.filter(c => c.default), 
+            c => c.default = false);
+
+        if (shouldGetDefault) {
+            rowClassList.add(defaultCategoryClassName);
+
+            this._defaultCategoryTitle = markedCheckBox.dataset.title;
+            this._tableData.find(c => c.title === this._defaultCategoryTitle).default = true;
+        }
+        else
+            this._defaultCategoryTitle = null;
+        
+        this._makeDirty();
+    }
+
+    _render() {
+        const renderingRowFn = this.bindToThis(this._renderCategoryInfoRow);
+        this._tableBody.append(...this._tableData.map(renderingRowFn));
+    }
+
+    _renderCategoryInfoRow(categoryInfo) {
+        const row = document.createElement('tr');
+
+        const check = document.createElement('input');
+        check.dataset.title = categoryInfo.title;
+        check.className = this._checkClassName;
+        check.type = 'checkbox';
+        check.onchange = this.bindToThis(this._updateButtonsAvailability);
+
+        const checkCell = document.createElement(this._TABLE_CELL_NAME);
+        checkCell.append(check);
+
+        if (categoryInfo.default && !this._defaultCategoryTitle) {
+            this._defaultCategoryTitle = categoryInfo.title;
+            row.classList.add(this._DEFAULT_CATEGORY_CLASS_NAME);
+        }
+
+        row.append(checkCell, this._createLabelCell(categoryInfo.title), 
+            this._createLabelCell(''));
+        return row;
+    }
+
+    _updateButtonsAvailability(isFromRowCheckedEvent = false) {
+        const checkedNumber = 
+            document.querySelectorAll(this._checkTickedSelector).length;
+        
+        this._makeDefaultBtn.disabled = checkedNumber !== 1;
+        this._removeBtn.disabled = checkedNumber === 0;
+
+        if (isFromRowCheckedEvent)
+            this._checkAllBtn.checked = checkedNumber === this._tableData.length;
+    }
+    
+    get categories() {
+        return this._isDirty ? this._tableData: null;
+    }
+
+    _clearTableRows() {
+        this._defaultCategoryTitle = null;
+        
+        super._clearTableRows();
+    }
+
+    refreshCategories(categories) {
+        if (!categories || !categories.length)
+            return;
+
+        this._tableData = categories;
+
+        this._sortTableData();
+
+        this._rerender();
+    }
 }
 
 class PageTable extends BaseTable {
-    constructor(pagesInfo = []) {
-        const tableSectionId = 'form--section-page';
-        super(tableSectionId, pagesInfo);
+    constructor(pagesInfo = [], pageCategories = {}, categoryView = {}) {
+        super('page', pagesInfo);
+
+        this.onImported = null;
 
         this._removedPageUris = [];
 
-        this._render();
+        this._showPageBtn = this._getControlByName(this._BTN_PREFIX + 'show');
+        this._showPageBtn.onclick = this.bindToThis(this._onShowPageBtnClick);
 
-        this._PAGE_SECTION_PREFIX = 'form--section-page--';
-
-        const pageSectionBtnPrefix = this._PAGE_SECTION_PREFIX + 'btn-';
-        this._showPageBtn = document.getElementById(pageSectionBtnPrefix + 'show');
-        this._showPageBtn.onclick = this._bindToThis(this._onShowPageBtnClick);
-
-        this._removePageBtn = document.getElementById(pageSectionBtnPrefix + 'remove');
-        this._removePageBtn.onclick = this._bindToThis(this._onRemovePageBtnClick);
+        this._removePageBtn = this._getControlByName(this._BTN_PREFIX + 'remove');
+        this._removePageBtn.onclick = this.bindToThis(this._onRemovePageBtnClick);
 
         this._exportPageLink = null;
-        this._exportPageBtn = document.getElementById(pageSectionBtnPrefix + 'export');
-        this._exportPageBtn.onclick = this._bindToThis(this._onExportPageBtnClick);
+        this._exportPageBtn =  this._getControlByName(this._BTN_PREFIX + 'export');
+        this._exportPageBtn.onclick = this.bindToThis(this._onExportPageBtnClick);
 
-        this._filePageBtn = document.getElementById(pageSectionBtnPrefix + 'file');
-        this._filePageBtn.onchange = this._bindToThis(this._onChoosePackageFileBtnClick);
+        this._filePageBtn =  this._getControlByName(this._BTN_PREFIX + 'file');
+        this._filePageBtn.onchange = this.bindToThis(this._onChoosePackageFileBtnClick);
 
-        this._importPageBtns = [...document.getElementsByClassName(pageSectionBtnPrefix + 'import')];
+        this._importPageBtns = [...this._getControlsByName(this._BTN_PREFIX + 'import')];
         ArrayExtension.runForEach(this._importPageBtns, 
-            btn => btn.onclick = this._bindToThis(this._onImportPageBtnClick));
+            btn => btn.onclick = this.bindToThis(this._onImportPageBtnClick));
         this._importIsUpsertable = false;
 
         this._updateImportBtnsAvailability(true);
-        
-        this._statusLabel = null;
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
         this._pagesArchive = null;
 
+        this._pageCategories = pageCategories;
+
+        this._categoryTitles = categoryView.categoryTitles;
+        this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
+
+        this._categoryFilter = this._getControlByName('filter-category');
+        this._categoryFilter.onchange = this.bindToThis(this._showCategoryPages);
+
+        this._categorySelector = this._getControlByName('select-category');
+
+        this._moveToCategoryBtn =  this._getControlByName(this._BTN_PREFIX + 'move');
+        this._moveToCategoryBtn.onclick = this.bindToThis(this._movePagesToCategory);
+        
+        this._originalData = Array.from(this._tableData);
+
+        this._renderCategoryControls();
+    }
+
+    addPageCategory(categoryTitle) {
+        this._categoryTitles.push(categoryTitle);
+
+        this._renderCategoryControls();
+        this._makeDirty();
+    }
+
+    removePageCategories(categoryTitles = []) {
+        this._categoryTitles = this._categoryTitles.filter(ct => !categoryTitles.includes(ct));
+
+        this._renderCategoryControls();
+
+        this._tableData = this._getCategoryPages();
+        this._rerender();
+        
+        this._makeDirty();
+    }
+
+    _showCategoryPages() {
+        this._clearElement(this._categorySelector);
+        this._appendOptionsToCategorySelector(
+            this._createCategoryOptions(this._getCurrentCategory()));
+
+        this._tableData = this._getCategoryPages();
+        this._rerender();
+    }
+
+    _appendOptionsToCategorySelector(options = []) {
+        this._categorySelector.append(...options.filter(c => !c.selected));
+    }
+
+    _getCurrentCategory() {
+        return this._getSelectedOption(this._categoryFilter) || this._NONE_CATEGORY_NAME;
+    }
+
+    _getSelectedOption(selectCtrl) {
+        const value = selectCtrl.value;
+        
+        if (value)
+            return value;
+        
+        const options = selectCtrl.options;
+
+        for (let i = 0; i < options.length; ++i) {
+            const option = options.item(i);
+
+            if (option.selected)
+                return option.value || option.innerText;
+        }
+
+        return null;
+    }
+
+    _movePagesToCategory() {
+        this._hideStatus();
+
+        const newCategoryName = this._getSelectedOption(this._categorySelector);
+
+        const moveToNone = newCategoryName === this._NONE_CATEGORY_NAME;
+        
+        if (!moveToNone && !this._categoryTitles.includes(newCategoryName)) {
+            this._showStatus(this._locale.getStringWithArgs('preferences-no-category-warning', 
+                newCategoryName));
+            return;
+        }
+
+        const movedPageUris = this._removeRows();
+        this._makeDirty();
+
+        ArrayExtension.runForEach(movedPageUris, 
+            uri => moveToNone ? delete this._pageCategories[uri]: 
+                this._pageCategories[uri] = newCategoryName);
+    }
+
+    _getCategoryPages() {
+        const curCategoryName = this._getCurrentCategory();
+
+        if (curCategoryName === this._NONE_CATEGORY_NAME)
+            return this._originalData.filter(d => !this._pageCategories[d.uri]);
+
+        const curCategoryPages = Object.entries(this._pageCategories)
+            .filter(pc => pc[1] === curCategoryName)
+            .map(pc => pc[0]);
+        return this._originalData.filter(d => curCategoryPages.includes(d.uri)) ;
+    }
+
+    _renderCategoryControls() {
+        const selectedValue = this._getSelectedOption(this._categoryFilter) || 
+            this._defaultCategoryTitle;
+
+        this._clearElement(this._categoryFilter);
+        this._categoryFilter.append(...this._createCategoryOptions(selectedValue));
+
+        this._showCategoryPages();
+    }
+
+    _createCategoryOptions(selectedCategory) {
+        let hasSelectedValue;
+
+        const options = this._categoryTitles.sort().map(catTitle => {
+            const selected = catTitle === selectedCategory;
+            
+            if (selected)
+                hasSelectedValue = true;
+
+            return this._createSelectOption(catTitle, selected);
+        });
+        options.unshift(this._createSelectOption(this._NONE_CATEGORY_NAME, !hasSelectedValue));
+
+        return options;
+    }
+
+    _createSelectOption(value, selected = false) {
+        const option = document.createElement('option');
+        option.innerText = value;
+        option.selected = selected;
+
+        return option;
+    }
+
+    get pageCategories() {
+        return this._isDirty ? this._pageCategories: null;
     }
 
     _render() {
-        const renderingRowFn = this._bindToThis(this._renderPageInfoRow);
+        const renderingRowFn = this.bindToThis(this._renderPageInfoRow);
         this._tableBody.append(...this._tableData.map(renderingRowFn));
     }
 
@@ -233,9 +661,9 @@ class PageTable extends BaseTable {
 
         const check = document.createElement('input');
         check.dataset.uri = pageInfo.uri;
-        check.className = this._CHECK_CLASS_NAME;
+        check.className = this._checkClassName;
         check.type = 'checkbox';
-        check.onchange = this._bindToThis(this._updatePageButtonsAvailability);
+        check.onchange = this.bindToThis(this._updateButtonsAvailability);
 
         const checkCell = document.createElement(this._TABLE_CELL_NAME);
         checkCell.append(check);
@@ -245,29 +673,20 @@ class PageTable extends BaseTable {
         return row;
     }
 
-    _updatePageButtonsAvailability(isFromRowCheckedEvent = false) {
+    _updateButtonsAvailability(isFromRowCheckedEvent = false) {
         const checkedNumber = 
-            document.querySelectorAll(this._CHECK_TICKED_SELECTOR).length;
+            document.querySelectorAll(this._checkTickedSelector).length;
         
         this._showPageBtn.disabled = checkedNumber !== 1;
-        this._removePageBtn.disabled = checkedNumber === 0;
+
+        const noneChecked = checkedNumber === 0;
+        this._removePageBtn.disabled = noneChecked;
+
+        this._moveToCategoryBtn.disabled = noneChecked || 
+            !this._getSelectedOption(this._categorySelector);
 
         if (isFromRowCheckedEvent)
             this._checkAllBtn.checked = checkedNumber === this._tableData.length;
-    }
-
-    _createLabelCell(text, title = null) {
-        const label = document.createElement('label');
-
-        if (title)
-            text += ` <br><i class='form--table--cell-title'>(${title})</i>`;
-
-        label.innerHTML = text;
-
-        const labelCell = document.createElement(this._TABLE_CELL_NAME);
-        labelCell.append(label);
-
-        return labelCell;
     }
 
     _formatDate(ticks) {
@@ -276,28 +695,21 @@ class PageTable extends BaseTable {
     }
 
     _onShowPageBtnClick() {
-        const uri = this._getCheckboxUri(document.querySelector(this._CHECK_TICKED_SELECTOR));
+        const uri = this._getRowKey(document.querySelector(this._checkTickedSelector));
         
         if (uri)
             window.open(PageInfo.generateLoadingUrl(uri), '_blank');
     }
 
-    _getCheckboxUri(checkbox) {
-        return checkbox.dataset.uri;
-    }
+    _getRowKey(checkbox) { return checkbox.dataset.uri; }
 
     _onRemovePageBtnClick() {
         if (!this._tableData.length)
             return;
 
-        document.querySelectorAll(this._CHECK_TICKED_SELECTOR)
-            .forEach(el => {
-                this._removedPageUris.push(this._getCheckboxUri(el));
-
-                el.parentElement.parentElement.remove();
-            });
-
-        this._tableData = this._tableData.filter(pi => 
+        const removedPageUris = this._removeRows();
+        this._removedPageUris.push(...removedPageUris);
+        this._originalData = this._originalData.filter(pi => 
             !ArrayExtension.contains(this._removedPageUris, pi.uri));
             
         this._showPageBtn.disabled = true;
@@ -307,6 +719,15 @@ class PageTable extends BaseTable {
             this._updateImportBtnsAvailability(true);
             this._exportPageBtn.disabled = true;
         }
+    }
+
+    _removeRows() {
+        const removedPageUris = super._removeRows();
+
+        this._tableData = this._tableData.filter(pi => 
+            !ArrayExtension.contains(removedPageUris, pi.uri));
+
+        return removedPageUris;
     }
 
     _onChoosePackageFileBtnClick() {
@@ -321,7 +742,7 @@ class PageTable extends BaseTable {
         }
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async event => {
             try {
                 this._updateImportBtnsAvailability(false);
 
@@ -332,27 +753,39 @@ class PageTable extends BaseTable {
                 if (!result || !(pagesToImport = JSON.parse(result)) || !pagesToImport.length)
                     throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
-                if (this._tableData.length)
+                if (this._originalData.length)
                 {
                     if (this._importIsUpsertable)
-                        this._tableData = this._tableData.filter(imp => 
+                        this._originalData = this._originalData.filter(imp => 
                             !pagesToImport.find(pi => pi.uri === imp.uri));
                     else
                         pagesToImport = pagesToImport.filter(imp => 
-                            !this._tableData.find(pi => pi.uri === imp.uri));
+                            !this._originalData.find(pi => pi.uri === imp.uri));
                 }
                 
-                const importedPages = PageInfo.savePages(pagesToImport);
-                this._tableData = this._tableData.concat(importedPages);
+                const importedData = await PageInfo.savePages(pagesToImport);
+                
+                this._emitEvent(this.onImported, importedData);
 
-                const presentPageUris = this._tableData.map(p => p.uri);
+                const importedPages = importedData.importedPages;
+                this._originalData = this._originalData.concat(importedPages);
+
+                const presentPageUris = this._originalData.map(p => p.uri);
                 this._removedPageUris = this._removedPageUris.filter(
                     removedUri => !presentPageUris.includes(removedUri));
 
-                this._sortPagesInfo();
+                if (importedData.pageCategories) {
+                    this._pageCategories = importedData.pageCategories;
+                    this._categoryTitles = new CategoryView(importedData.categories)
+                        .categoryTitles;
 
-                this._clearTableRows();
-                this._render();
+                    this._renderCategoryControls();
+                }
+
+                this._tableData = this._getCategoryPages();
+                this._sortTableData();
+
+                this._rerender();
 
                 if (importedPages.length)
                     this.initialiseExport();
@@ -372,24 +805,6 @@ class PageTable extends BaseTable {
         };
 
         reader.readAsText(new Blob([importPackage]));
-    }
-
-    _showStatus(text, isWarning = true) {
-        const statusSectionId = 'form-section-status';
-
-        if (!this._statusLabel)
-            this._statusLabel = document.getElementById(statusSectionId);        
-
-        const labelEl = document.createElement('label');
-        labelEl.innerText = text;
-
-        const statusLabelClass = statusSectionId + '--label';
-        labelEl.className = statusLabelClass;
-
-        if (isWarning)
-            labelEl.classList.add(statusLabelClass + '-warning');
-            
-        this._statusLabel.append(labelEl);
     }
 
     _updateImportBtnsAvailability(isAvailable) {
@@ -414,17 +829,12 @@ class PageTable extends BaseTable {
         this._filePageBtn.click();
     }
 
-    _hideStatus() {
-        if (this._statusLabel && this._statusLabel.innerHTML)
-            this._statusLabel.innerHTML = null;
-    }
-
     _onExportPageBtnClick() {
-        if (!this._tableData.length)
+        if (!this._originalData.length)
             return;
 
         if (!this._exportPageLink) {
-            this._exportPageLink = document.getElementById(this._PAGE_SECTION_PREFIX + 'link-export');
+            this._exportPageLink =  this._getControlByName('link-export');
             this._exportPageLink.download = 'highlighterStorage' + this._PAGES_ARCHIVE_EXTENSION;
         }
 
@@ -481,8 +891,13 @@ class PageTable extends BaseTable {
 class Preferences {
     constructor() {
         this._initColourList();
-        
+
         this._pageTable = null;
+        this._categories = null;
+        this._defaultCategoryTitle = null;
+
+        this._categoryTable = null;
+
         this._loadedPreferences = null;
 
         this._warningCheck = this._getCheckbox('warning');
@@ -539,7 +954,7 @@ class Preferences {
                 this._shouldLoad = loadedForm.shouldLoad;
                 this._defaultColourToken = loadedForm.defaultColourToken;
             }
-        }), this._initPageTable()]);
+        }), this._initCategoryTable().then(() => this._initPageTable())]);
     }
 	
     static loadFromStorage() {
@@ -547,9 +962,27 @@ class Preferences {
     }
 
     _initPageTable() {
-        return PageInfo.getAllSavedPagesInfo().then(pagesInfo =>
-            this._pageTable = new PageTable(pagesInfo)
-        );
+        return PageInfo.getAllSavedPagesWithCategories().then(info => {
+            this._pageTable = new PageTable(info.pagesInfo, info.pageCategories, 
+                new CategoryView(this._categories, this._defaultCategoryTitle));
+
+            if (this._categoryTable) {
+                this._categoryTable.onAdded = 
+                    this._pageTable.bindToThis(this._pageTable.addPageCategory);
+                this._categoryTable.onRemoved = 
+                    this._pageTable.bindToThis(this._pageTable.removePageCategories);
+
+                this._pageTable.onImported = importedData =>
+                    this._categoryTable.refreshCategories(importedData.categories);
+            }
+        });
+    }
+
+    _initCategoryTable() {
+        return PageInfo.getAllSavedCategories().then(categories => {
+            this._categoryTable = new CategoryTable(categories);
+            this._categories = categories;
+        });
     }
 
     initialiseExport() {
@@ -561,7 +994,8 @@ class Preferences {
 
     save() {
         return Promise.all([this._savePreferencesIntoStorage(),
-            this._removePageInfoFromStorage()]);
+            this._removePageInfoFromStorage(), this._updatePageCategories(),
+            this._updateCategoriesInStorage()]);
     }
     
     _savePreferencesIntoStorage() {
@@ -584,6 +1018,20 @@ class Preferences {
         return this._pageTable && this._pageTable.removedPageUris.length ? 
             PageInfo.remove(this._pageTable.removedPageUris) : 
             Promise.resolve();
+    }
+
+    _updatePageCategories() {
+        let changedData;
+
+        return this._pageTable && (changedData = this._pageTable.pageCategories) ? 
+            PageInfo.savePageCategories(changedData) : Promise.resolve();
+    }
+
+    _updateCategoriesInStorage() {
+        let changedData;
+
+        return this._categoryTable && (changedData = this._categoryTable.categories) ? 
+            PageInfo.saveCategories(changedData) : Promise.resolve();
     }
 
     get _shouldWarn() {

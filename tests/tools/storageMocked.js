@@ -4,14 +4,23 @@ export class StorageMocked {
     }
 
     get(key) {
-        return new Promise(resolve => resolve(key ? { [key] : this._items[key] }: 
-            Object.assign({}, this._items)));
+        return new Promise(resolve =>
+            resolve(key ? { [key] : this._copyObject(this._items[key]) }: 
+                this._copyObject(this._items))
+        );
+    }
+
+    _copyObject(content) {
+        if (!content)
+            return content;
+        
+        return JSON.parse(JSON.stringify(content));
     }
 
     set(keys) {
         return new Promise(resolve => {
             for (const key in keys)
-                this._items[key] = keys[key];
+                this._items[key] = this._copyObject(keys[key]);
             
             resolve(); 
         });

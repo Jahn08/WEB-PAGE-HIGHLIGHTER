@@ -11,35 +11,43 @@ void function() {
             this._browserApi.runtime.onMessage(this._processMessage.bind(this));
 
             this._pageInfo = new PageInfo();
+            this._defaultCategoryTitle;
             this._initUnloadEvent();
 
             document.addEventListener('mousedown', this._setUpContextMenu.bind(this));
         }
 
-        _initUnloadEvent() {
+        async _initUnloadEvent() {
             const beforeUnloadEvent = 'beforeunload';
 
             const eventCallback = this._warnIfDomIsDirty.bind(this);
             window.addEventListener(beforeUnloadEvent, eventCallback);
 
-            this._browserApi.runtime.sendMessage(MessageReceiver.loadPreferences())
-                .then(async settings => {
-                    try {
-                        const preferences = Object.assign({}, settings);
-            
-                        if (preferences.shouldWarn === false)
-                            window.removeEventListener(beforeUnloadEvent, eventCallback);
-            
-                        this._canLoad = await this._pageInfo.canLoad();
-            
-                        if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
-                            await this._performStorageAction(this._load);
-                    }
-                    catch (ex) {
-                        console.error('An error occurred while trying to apply the extension preferences: ' + 
-                            ex.toString());
-                    }
-                }).catch(error => console.error('An error while trying to get preferences: ' + error.toString()));
+            const categories = await PageInfo.getAllSavedCategories();
+            const categoryView = new CategoryView(categories);
+
+            this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
+            const msg = MessageReceiver.addCategories(categoryView.categoryTitles, 
+                this._defaultCategoryTitle);
+
+            this._browserApi.runtime.sendMessage(MessageReceiver.combineEvents(msg, 
+                MessageReceiver.loadPreferences())).then(async settings => {
+                try {
+                    const preferences = Object.assign({}, settings);
+
+                    if (preferences.shouldWarn === false)
+                        window.removeEventListener(beforeUnloadEvent, eventCallback);
+        
+                    this._canLoad = await this._pageInfo.canLoad();
+        
+                    if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
+                        await this._performStorageAction(this._load);
+                }
+                catch (ex) {
+                    console.error('An error occurred while trying to apply the extension preferences: ' + 
+                        ex.toString());
+                }
+            }).catch(error => console.error('An error while trying to get preferences: ' + error.toString()));
         }
 
         _warnIfDomIsDirty(event) {
@@ -47,9 +55,9 @@ void function() {
                 return event.returnValue = this._browserApi.locale.getString('page-unload-warn');
         }
     
-        async _performStorageAction(callback) {
+        async _performStorageAction(callback, arg) {
             try {
-                await callback.bind(this)();
+                await callback.bind(this, arg)();
     
                 this._canLoad = await this._pageInfo.canLoad();
     
@@ -61,10 +69,15 @@ void function() {
         }
 
         async _load() {
-            MessageControl.show(this._browserApi.locale.getString('load-msg'));
-            await this._pageInfo.load();
-            
-            MessageControl.show(this._browserApi.locale.getString('load-success-msg'));
+            try {
+                MessageControl.show(this._browserApi.locale.getString('load-msg'));
+                await this._pageInfo.load();
+                
+                MessageControl.show(this._browserApi.locale.getString('load-success-msg'));
+            }
+            catch (err) {
+                alert(this._browserApi.locale.getStringWithArgs('load-error', err.toString()));
+            }
         }
 
         _setUpContextMenu(event) {
@@ -165,6 +178,8 @@ void function() {
                 }
                 else if (receiver.shouldSave())
                     await this._performStorageAction(this._save);
+                else if (receiver.shouldSaveToCategory())
+                    await this._performStorageAction(this._saveToCategory, receiver.category);
                 else if (receiver.shouldLoad())
                     await this._performStorageAction(this._load);
                 else if (receiver.shouldReturnTabState())
@@ -191,14 +206,27 @@ void function() {
             return !RangeMarker.domContainsMarkers() && !RangeNote.getNoteLinks().length;
         }
 
-        async _save() {
+        _save() {
+            return this._processSaving(this._pageInfo.save.bind(this._pageInfo),
+                this._defaultCategoryTitle);
+        }
+
+        async _processSaving(savingFn, arg = null) {
             try {
-                await this._pageInfo.save();
-                MessageControl.show(this._browserApi.locale.getString('save-success-msg'));
+                const category = await savingFn(arg);
+                MessageControl.show(category ? 
+                    this._browserApi.locale.getStringWithArgs(
+                        'save-to-category-success-msg', category):
+                    this._browserApi.locale.getString('save-success-msg'));
             }
             catch (err) {
                 alert(this._browserApi.locale.getStringWithArgs('save-error', err.toString()));
             }
+        }
+
+        _saveToCategory(categoryTitle) {
+            return this._processSaving(this._pageInfo.saveToCategory.bind(this._pageInfo), 
+                categoryTitle);
         }
     }
 

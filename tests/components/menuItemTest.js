@@ -84,52 +84,56 @@ describe('components/RadioSubMenuItem', () => {
 });
 
 describe('components/ButtonMenuItem', () => {
-    const addingBtnItemMenu = (addingToMenuMethodName) => {
-        const browserMocked = initMockedBrowser();
 
-        const buildRandomBtnOptions = () => {
+    describe('#addToMenu', () => {
+        
+        const buildRandomBtnOptions = (withParent = true, onclickFn = null) => {
             return { 
                 id: Randomiser.getRandomNumberUpToMax(), 
                 title: Randomiser.getRandomNumberUpToMax(),
-                onclick: () => {},
+                onclick: (onclickFn ? onclickFn: () => {}),
                 icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()), 
-                parentId: Randomiser.getRandomNumberUpToMax()
+                parentId: (withParent ? Randomiser.getRandomNumberUpToMax(): null)
             };
         };
 
-        const buttons = [];
-
-        const getCreatedBtnOptions = (withParent = true) => {
-            const btnOptions = buildRandomBtnOptions();
-
-            if (!withParent)
-                btnOptions.parentId = null;
-
+        const buildBtnWithOptions = btnOptions => {
             const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.parentId, btnOptions.title);
-            buttons.push(newBtn);
-            newBtn[addingToMenuMethodName](btnOptions.onclick, btnOptions.icon);
+            newBtn.addToMenu(btnOptions.onclick, btnOptions.icon);
 
-            return btnOptions;
+            return newBtn;
         };
-        
-        const testOptions = [getCreatedBtnOptions(), getCreatedBtnOptions(false)];
 
-        const newBtnOptions = browserMocked.menuOptions;
+        it('should add button items with options to a menu', () => {
+            const browserMocked = initMockedBrowser();
 
-        const btnType = ButtonMenuItem.TYPE;
-        assert(newBtnOptions.every(o => o.type === btnType));
+            const testOptions = [buildRandomBtnOptions(), buildRandomBtnOptions(false)];
+            testOptions.forEach(ops => buildBtnWithOptions(ops));
 
-        assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
-            tr.parentId === r.parentId && tr.title === r.title && 
-            tr.onclick === r.onclick &&
-            JSON.stringify(tr.icon.getSettings()) === JSON.stringify(r.icons))));
+            const newBtnOptions = browserMocked.menuOptions;
 
-        return newBtnOptions;
-    };
+            const btnType = ButtonMenuItem.TYPE;
+            assert(newBtnOptions.every(o => o.type === btnType));
 
-    const ADD_TO_MENU_METHOD_NAME = 'addToMenu';
-    describe('#' + ADD_TO_MENU_METHOD_NAME, () => {
-        it('should add button items with options to a menu', () => addingBtnItemMenu(ADD_TO_MENU_METHOD_NAME));
+            assert(testOptions.every(tr => newBtnOptions.some(r => tr.id === r.id && 
+                tr.parentId === r.parentId && tr.title === r.title && 
+                JSON.stringify(tr.icon.getSettings()) === JSON.stringify(r.icons))));
+        });
+
+        it('should add a button menu with a callback returning its title', () => {
+            const browserMocked = initMockedBrowser();
+
+            let title;
+            const testOptions = buildRandomBtnOptions(false, 
+                info => {
+                    title = info.title;
+                });
+
+            const btn = buildBtnWithOptions(testOptions);
+            browserMocked.dispatchMenuClick(btn.id);
+
+            assert.strictEqual(title, testOptions.title);
+        });
     });
 
     const buildRandomBtn = () => { 
@@ -140,7 +144,8 @@ describe('components/ButtonMenuItem', () => {
         return btn;
     };
 
-    const buildRandomBtnArray = () => [buildRandomBtn(), buildRandomBtn(), buildRandomBtn(), buildRandomBtn()];
+    const buildRandomBtnArray = () => [buildRandomBtn(), buildRandomBtn(), 
+        buildRandomBtn(), buildRandomBtn()];
 
     describe('#updateVisibility', () => {
         it('should update button items visibility in a menu', () => {

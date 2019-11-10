@@ -74,6 +74,11 @@
         "description": "Title for a context menu item saving marks and notes on a page"
     },
 
+    "save_to": {
+        "message": "Сохранить в категорию",
+        "description": "Title for a context menu item to choose a category to save marks and notes on a page"
+    },
+
     "save_error": {
         "message": "Ошибка сохранения страницы: $details$",
         "placeholders": {
@@ -88,6 +93,16 @@
         "description": "What user sees after a page has been saved to storage"
     },
 
+    "save_to_category_success_msg": {
+        "message": "Страница сохранена в категорию '$category$'",
+        "description": "What user sees after a page with a category has been saved to storage",
+        "placeholders": {
+            "category" : {
+                "content" : "$1"
+            }
+        }
+    },
+
     "load": {
         "message": "Загрузить страницу",
         "description": "Title for a context menu item loading marks and notes on a page"
@@ -96,6 +111,15 @@
     "load_msg": {
         "message": "Страница загружается",
         "description": "What user sees when a page is being loaded from storage"
+    },
+
+    "load_error": {
+        "message": "Ошибка загрузки страницы: $details$",
+        "placeholders": {
+            "details" : {
+                "content" : "$1"
+            }
+        }
     },
 
     "load_success_msg": {
@@ -124,16 +148,86 @@
     },
 
     "page_unload_warn": {
-        "message": "You will discard all unsaved changes on this page when leaving",
+        "message": "Все несохранённые изменения на странице будут потеряны",
         "description": "Warning when there is a try to leave a page with unsaved changes"
-    }, 
+    },
+
+    "preferences_new_category": {
+        "message": "Имя новой категории",
+        "description": "Placeholder for a field with a title for a new page category in the preferences"
+    },
+
+    "preferences_none_category": {
+        "message": "Нет",
+        "description": "Name for categorising pages without a category"
+    },
+
+    "preferences_no_category_warning": {
+        "message": "Категории с именем '$title$' не существует",
+        "placeholders": {
+            "title" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "preferences_long_category_name_warning": {
+        "message": "Имя категории не может быть длиннее $number$ символов",
+        "placeholders": {
+            "number" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "preferences_unnamed_category_warning": {
+        "message": "Пожалуйста, введите имя новой категории"
+    },
+
+    "preferences_none_category_warning": {
+        "message": "Категория 'Нет' уже используется для страниц без категории"
+    },
+
+    "preferences_duplicated_category_warning": {
+        "message": "Категория с именем '$title$' уже существует",
+        "placeholders": {
+            "title" : {
+                "content" : "$1"
+            }
+        }
+    },
+
+    "preferences_category_default_btn": {
+        "message": "Сделать умолчательной",
+        "description": "Label for a button making a page category default"
+    },
+
+    "preferences_category_add_btn": {
+        "message": "Добавить",
+        "description": "Label for a button adding a new page category"
+    },
+
+    "preferences_category_table": {
+        "message": "Категории страниц:",
+        "description": "Label for a table listing all categories for saved pages in the preferences"
+    },
+
+    "preferences_category_table_title_header": {
+        "message": "Имя",
+        "description": "Label for a category table column header featuring a category title"
+    },
+
+    "preferences_category_table_default_header": {
+        "message": "По умолчанию",
+        "description": "Label for a category table column header featuring a category default mark"
+    },
 
     "preferences_page_table": {
         "message": "Сохранённые страницы:",
         "description": "Label for a table listing all saved pages in the preferences"
     },
     
-    "preferences_page_table_page_header": {
+    "preferences_page_table_title_header": {
         "message": "Страница",
         "description": "Label for a page table column header featuring a page name"
     },
@@ -148,6 +242,11 @@
         "description": "Placeholder for a field filtering saved pages"
     },
 
+    "preferences_category_filter": {
+        "message": "Категории:",
+        "description": "Label for a filtering list with page categories"
+    },
+
     "preferences_page_show_btn": {
         "message": "Открыть",
         "description": "Label for a button showing a saved page in a new tab"
@@ -157,9 +256,18 @@
         "message": "Открыть в новой вкладке"
     },
 
-    "preferences_page_remove_btn": {
+    "preferences_move_btn": {
+        "message": "Переместить в",
+        "description": "Label for a button moving a page to another category"
+    },
+
+    "preferences_move_btn_title": {
+        "message": "Переместить в другую категорию"
+    },
+
+    "preferences_remove_btn": {
         "message": "Удалить",
-        "description": "Label for a button removing a saved page"
+        "description": "Label for a removing button"
     },
 
     "preferences_page_insert_btn": {

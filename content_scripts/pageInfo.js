@@ -1,8 +1,149 @@
+class Category {
+    static async upsert(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const newCategories = new Set(Object.values(categorisedUris));
+        const categoryStorage = this._createStorage();
+        const storedCategories = (await categoryStorage.get()) || [];
+
+        let newCategoryWasAdded = false;
+        newCategories.forEach(val => {
+            if (!storedCategories.find(c => c.title === val)) {
+                storedCategories.push(this._createCategory(val));
+                newCategoryWasAdded = true;
+            }
+        });
+
+        if (newCategoryWasAdded)
+            await categoryStorage.set(storedCategories);
+
+        return storedCategories;
+    }
+
+    static _createCategory(title, isDefault = false) {
+        return  {
+            default: isDefault,
+            title
+        };
+    }
+
+    static _createStorage() {
+        return new BrowserStorage('categories');
+    }
+
+    static get() {
+        return this._createStorage().get();
+    }
+
+    static save(data) {
+        return this._createStorage().set(data);
+    }
+}
+
+class CategoryView {
+    constructor(categories = []) {
+        this.categoryTitles = [];
+        this._defaultCategoryTitle = null;
+
+        ArrayExtension.runForEach(categories, cat => {
+            const title = cat.title;
+
+            if (cat.default)
+                this._defaultCategoryTitle = title;
+
+            this.categoryTitles.push(title);
+        });
+    }
+
+    get defaultCategoryTitle() { return this._defaultCategoryTitle; }
+}
+
+class PageCategory {
+    constructor(uri) {
+        this._uri = uri;
+        this._storage = null;
+
+        this._category = null;
+    }
+
+    get category() { return this._category; }
+
+    async load() {
+        this._category = await this._getPageCategory();
+    }
+
+    async _getPageCategory() {
+        const pageCategories = await PageCategory._getPageCategories(this._browserStorage);
+        return pageCategories[this._uri];
+    }
+
+    static async _getPageCategories(storage) {
+        return (await storage.get()) || {};
+    }
+
+    get _browserStorage() {
+        if (!this._storage)
+            this._storage = PageCategory._createStorage();
+
+        return this._storage;
+    }
+
+    static _createStorage() {
+        return new BrowserStorage('pageCategories');
+    }
+
+    async update(categoryTitle) {
+        if (this._category == categoryTitle)
+            return;
+
+        const pageCategories = await PageCategory._getPageCategories(this._browserStorage);
+
+        if (categoryTitle)
+            pageCategories[this._uri] = categoryTitle;
+        else
+            delete pageCategories[this._uri];
+        
+        await this._browserStorage.set(pageCategories);
+
+        this._category = categoryTitle;
+    }
+
+    static async upsert(categorisedUris = {}) {
+        if (!Object.getOwnPropertyNames(categorisedUris).length)
+            return;
+
+        const pageCategoryStorage = this._createStorage();
+        const storedPageCategories = await this._getPageCategories(pageCategoryStorage);
+            
+        for (const uri in categorisedUris)
+            storedPageCategories[uri] = categorisedUris[uri];
+        
+        await pageCategoryStorage.set(storedPageCategories);
+
+        return storedPageCategories;
+    }
+    
+    static save(data) {
+        return this._createStorage().set(data);
+    }
+
+    static get() {
+        return this._createStorage().get();
+    }
+}
+
 class PageInfo {
     constructor () {
         this._uri = this._computeUri();
         this._storage = null;
+
+        this._pageIsStored = false;
+
+        this._pageCategory = new PageCategory(this._uri);
     }
+
+    get uri() { return this._uri; }
 
     _computeUri() {
         const location = document.location;
@@ -13,8 +154,22 @@ class PageInfo {
         return 'htmlBase64'; 
     }
 
-    save() {
-        return this._browserStorage.set(this._serialise());
+    async saveToCategory(categoryTitle) {
+        await this._pageCategory.update(categoryTitle);
+
+        return this._saveInternally();
+    }
+
+    async _saveInternally() {
+        await this._browserStorage.set(this._serialise());
+        return this._pageCategory.category;
+    }
+
+    async save(defaultCategoryTitle = null) {
+        if (!this._pageIsStored && defaultCategoryTitle)
+            await this._pageCategory.update(defaultCategoryTitle);
+
+        return this._saveInternally();
     }
 
     get _browserStorage() {
@@ -37,7 +192,7 @@ class PageInfo {
     }
 
     async canLoad() {
-        return await this._browserStorage.contains();
+        return (this._pageIsStored = await this._browserStorage.contains());
     }
 
     async load() {
@@ -49,6 +204,8 @@ class PageInfo {
             this._throwNoContentError();
 
         this._renderHtml(this._deserialiseHtml(serialisedHtml));
+
+        this._pageCategory.load();
     }
 
     _throwNoContentError() {
@@ -87,42 +244,57 @@ class PageInfo {
         return '#highlighterPageLoading';
     }
 
-    static getAllSavedPagesInfo() {
+    static getAllSavedPagesWithCategories() {
         return this._getAllSavedPagesInfo();
     }
 
-    static _getAllSavedPagesInfo(includeHtml = false) {
-        return BrowserStorage.getAll().then(objs => {
-            const props = Object.getOwnPropertyNames(objs);
+    static async _getAllSavedPagesInfo(includeHtml = false) {
+        const objs = await BrowserStorage.getAll();
+    
+        const props = Object.getOwnPropertyNames(objs);
 
-            const pagesInfo = [];
+        const pagesInfo = [];
 
-            const htmlPropName = this.HTML_PROP_NAME;
+        const htmlPropName = this.HTML_PROP_NAME;
 
-            ArrayExtension.runForEach(props, prop => {
-                if (!this._isUriValid(prop))
-                    return;
+        ArrayExtension.runForEach(props, prop => {
+            if (!this._isUriValid(prop))
+                return;
 
-                const obj = objs[prop];
+            const obj = objs[prop];
 
-                const pageInfo = {
-                    uri: prop, 
-                    title: obj.title,
-                    date: obj.date
-                };
+            const pageInfo = {
+                uri: prop, 
+                title: obj.title,
+                date: obj.date
+            };
 
-                if (includeHtml)
-                    pageInfo[htmlPropName] = obj[htmlPropName];
-                
-                pagesInfo.push(pageInfo);
-            });
-
-            return pagesInfo;
+            if (includeHtml)
+                pageInfo[htmlPropName] = obj[htmlPropName];
+            
+            pagesInfo.push(pageInfo);
         });
+
+        return {
+            pageCategories: (await PageCategory.get()) || {},
+            pagesInfo
+        };
     }
 
     static getAllSavedPagesFullInfo() {
-        return this._getAllSavedPagesInfo(true);
+        return this._getAllSavedPagesInfo(true).then(info => {
+            if (!info.pagesInfo.length)
+                return info.pagesInfo;
+            
+            ArrayExtension.runForEach(info.pagesInfo, pi => {
+                const categoryTitle = info.pageCategories[pi.uri];
+                
+                if (categoryTitle)
+                    pi.category = categoryTitle;
+            });
+
+            return info.pagesInfo;
+        });
     }
 
     static generateLoadingUrl(url) {
@@ -133,10 +305,11 @@ class PageInfo {
         return BrowserStorage.remove(pageUris);
     }
 
-    static savePages(pagesInfo) {
+    static async savePages(pagesInfo) {
         const htmlPropName = this.HTML_PROP_NAME;
 
         const importedFiles = [];
+        const pageCategories = {};
 
         ArrayExtension.runForEach(pagesInfo, pi => {
             if (!this._isUriValid(pi.uri))
@@ -147,6 +320,11 @@ class PageInfo {
             if (!pi.title)
                 pi.title = this._fetchTitleFromUri(pi.uri);
 
+            if (pi.category) {
+                pageCategories[pi.uri] = pi.category;
+                delete pi.category;
+            }
+
             new BrowserStorage(pi.uri).set({
                 [htmlPropName]: pi[htmlPropName],
                 date: pi.date,
@@ -156,7 +334,14 @@ class PageInfo {
             importedFiles.push(this._excludeHtml(pi));
         });
 
-        return importedFiles;
+        const responses = await Promise.all([PageCategory.upsert(pageCategories),
+            Category.upsert(pageCategories)]);
+            
+        return {
+            importedPages: importedFiles,
+            pageCategories: responses[0] || {},
+            categories: responses[1] || []
+        };
     }
 
     static _getValidTicks(ticks) {
@@ -176,5 +361,17 @@ class PageInfo {
     static _excludeHtml(pageInfo) {
         delete pageInfo[this.HTML_PROP_NAME];
         return pageInfo;
+    }
+    
+    static getAllSavedCategories() {
+        return Category.get();
+    }
+
+    static saveCategories(data) {
+        return Category.save(data);
+    }
+
+    static savePageCategories(data) {
+        return PageCategory.save(data);
     }
 }

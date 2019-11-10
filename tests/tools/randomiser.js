@@ -8,6 +8,8 @@ class Randomiser {
     }
 
     static getRandomBoolean() { return Randomiser.getRandomNumber(100) % 2 === 0; }
+
+    static getRandomString() { return '' + Randomiser.getRandomNumberUpToMax(); }
 }
 
 export { Randomiser };
