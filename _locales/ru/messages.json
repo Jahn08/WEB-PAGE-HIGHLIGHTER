@@ -227,7 +227,7 @@
         "description": "Label for a table listing all saved pages in the preferences"
     },
     
-    "preferences-page-table-title-header": {
+    "preferences_page_table_title_header": {
         "message": "Страница",
         "description": "Label for a page table column header featuring a page name"
     },
