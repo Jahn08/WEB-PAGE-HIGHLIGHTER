@@ -330,6 +330,11 @@
         }
     },
 
+    "package_init_error": {
+        "message": "Загрузка настроек должна быть выполнена до инициализации экспорта",
+        "description": "Error message when export initialisation has failed"
+    },
+
     "package_empty_info_error": {
         "message": "Отсутствует информация для импорта",
         "description": "Error message when an imported package is empty"
