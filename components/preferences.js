@@ -89,11 +89,10 @@ class BaseTable {
                 ch.onclick = this.bindToThis(this._onHeaderCellClick);
             });
             
-        const hiddenClassName = 'form--table--row-hidden';
         this._searchField = document.getElementById(this._tableSectionId + '--txt-search');
-        this._searchField.onchange = this.bindToThis(this._onSearching, [hiddenClassName]);
+        this._searchField.onchange = this.bindToThis(this._onSearching);
 
-        document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch, [hiddenClassName]));
+        document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch));
         
         this._render();  
     }
@@ -186,6 +185,9 @@ class BaseTable {
     _rerender() {
         this._clearTableRows();
         this._render();
+
+        if (this._getSearchText())
+            this._onSearching();
     }
 
     _clearTableRows() {
@@ -213,24 +215,31 @@ class BaseTable {
         return labelCell;
     }
 
-    _onSearching(hiddenClassName, _event) {
-        const searchText = (_event.target.value || '').toUpperCase();
+    _onSearching() {
+        const hiddenClassName = 'form--table--row-hidden';
+
+        const searchText = this._getSearchText();
 
         ArrayExtension.runForEach([...this._tableBody.rows], 
             r => {
-                if (searchText.length && (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
+                if (searchText.length && 
+                    (r.innerText || r.textContent).toUpperCase().indexOf(searchText) === -1)
                     r.classList.add(hiddenClassName);
                 else
                     r.classList.remove(hiddenClassName);
             });
     }
 
-    _stopEnterClickButForSearch(hiddenClassName, event) {
+    _getSearchText() {
+        return (this._searchField.value || '').toUpperCase();
+    }
+
+    _stopEnterClickButForSearch(event) {
         if (event.key !== 'Enter')
             return true;
 
         if (event.target === this._searchField)
-            this._onSearching(hiddenClassName, event);
+            this._onSearching();
 
         event.preventDefault();
         return false;

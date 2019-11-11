@@ -27,9 +27,14 @@ class PreferencesTestHelper {
 
         activateSearchFn(searchField);
         
+        this.assertSearchOutcome();
+    }
+
+    assertSearchOutcome() {
         const tableBody = this._tableDOM.getTableBody();
 
-        const targetText = textToSearch.toUpperCase();
+        const searchField = this._tableDOM.getSearchField();
+        const targetText = searchField.value.toUpperCase();
 
         assert([...tableBody.rows].filter(r => !r.textContent.toUpperCase().includes(targetText))
             .every(r => r.classList.contains('form--table--row-hidden')));
@@ -55,6 +60,30 @@ class PreferencesTestHelper {
         await preferences.save();
 
         return keysForRemoval;
+    }
+
+    sortByLastField(fieldHeader) {
+        return this._sort(fieldHeader, 'td:nth-last-child(1)');
+    }
+
+    _sort(fieldHeader, selector) {
+        const tableBody = this._tableDOM.getTableBody();
+        this._tableDOM.dispatchClickEvent(fieldHeader);
+        
+        return [...tableBody.rows].map(r => 
+            r.querySelector(selector).textContent);
+    }
+
+    sortBySecondField(fieldHeader) {
+        return this._sort(fieldHeader, 'td:nth-child(2)');
+    }
+
+    getFieldHeader(sortFieldName) {
+        const fieldHeader = this._tableDOM.getTableHeaders()
+            .filter(h => h.dataset.sortField === sortFieldName)[0];
+        assert(fieldHeader);
+
+        return fieldHeader;
     }
 }
 

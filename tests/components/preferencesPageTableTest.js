@@ -345,34 +345,38 @@ describe('components/preferences/pageTable', function () {
 
     describe('#sort', function () {
 
+        const DATE_FIELD_NAME = 'date';
+
         it('should sort pages by their dates', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(10),
                 pagesInfo => new Preferences().load()
                     .then(() => {
-                        const dateHeader = pageTableDOM.getTableHeaders().filter(h => h.dataset.sortField === 'date')[0];
-                        assert(dateHeader);
+                        const dateHeader = preferencesTester.getFieldHeader(DATE_FIELD_NAME);
 
-                        const tableBody = pageTableDOM.getTableBody();
-
-                        const sortDates = () => {
-                            pageTableDOM.dispatchClickEvent(dateHeader);
-                            
-                            return [...tableBody.rows].map(r => r.querySelector('td:nth-last-child(1)').textContent);
-                        };
-
-                        const sortField = 'date';
-                        assert.deepStrictEqual(sortDates(),
-                            ArrayExtension.sortAsc(pagesInfo, sortField)
-                                .map(pi => PagePreferencesDOM.formatDate(pi[sortField])));
+                        assert.deepStrictEqual(preferencesTester.sortByLastField(dateHeader),
+                            ArrayExtension.sortAsc(pagesInfo, DATE_FIELD_NAME)
+                                .map(pi => PagePreferencesDOM.formatDate(pi[DATE_FIELD_NAME])));
                         assert(pageTableDOM.isHeaderSortedAsc(dateHeader));
 
-                        assert.deepStrictEqual(sortDates(), 
-                            ArrayExtension.sortDesc(pagesInfo, sortField)
-                                .map(pi => PagePreferencesDOM.formatDate(pi[sortField])));
+                        assert.deepStrictEqual(preferencesTester.sortByLastField(dateHeader), 
+                            ArrayExtension.sortDesc(pagesInfo, DATE_FIELD_NAME)
+                                .map(pi => PagePreferencesDOM.formatDate(pi[DATE_FIELD_NAME])));
                         assert(pageTableDOM.isHeaderSortedDesc(dateHeader));
                     })
             );
         });
+
+        it('should sort filtered rows without changing the data', () => 
+            Expectation.expectResolution(StorageHelper.saveTestPageInfo(5),
+                async pagesInfo => {
+                    await preferencesTester.searchByInputting(pagesInfo);
+
+                    const dateHeader = preferencesTester.getFieldHeader(DATE_FIELD_NAME);
+                    preferencesTester.sortByLastField(dateHeader);
+
+                    preferencesTester.assertSearchOutcome();
+                })
+        );
     });
 
     describe('#initialiseExport', function () {

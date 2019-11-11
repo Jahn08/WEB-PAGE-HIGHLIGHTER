@@ -354,34 +354,37 @@ describe('components/preferences/categoryTable', function () {
 
     describe('#sort', function () {
 
+        const TITLE_FIELD_NAME = 'title';
+
         it('should sort categories by their titles', () => {
             return Expectation.expectResolution(StorageHelper.saveTestCategories(10),
                 categories => new Preferences().load()
                     .then(() => {
-                        const sortField = 'title';
+                        const titleHeader = preferencesTester.getFieldHeader(TITLE_FIELD_NAME);
 
-                        const titleHeader = categoryTableDOM.getTableHeaders()
-                            .filter(h => h.dataset.sortField === sortField)[0];
-                        assert(titleHeader);
-
-                        const tableBody = categoryTableDOM.getTableBody();
-
-                        const sortTitles = () => {
-                            categoryTableDOM.dispatchClickEvent(titleHeader);
-                            
-                            return [...tableBody.rows].map(r => 
-                                r.querySelector('td:nth-child(2)').textContent);
-                        };
-
-                        assert.deepStrictEqual(sortTitles(), 
-                            ArrayExtension.sortDesc(categories, sortField).map(c => c[sortField]));
+                        assert.deepStrictEqual(preferencesTester.sortBySecondField(titleHeader), 
+                            ArrayExtension.sortDesc(categories, TITLE_FIELD_NAME)
+                                .map(c => c[TITLE_FIELD_NAME]));
                         assert(categoryTableDOM.isHeaderSortedDesc(titleHeader));
 
-                        assert.deepStrictEqual(sortTitles(), 
-                            ArrayExtension.sortAsc(categories, sortField).map(c => c[sortField]));
+                        assert.deepStrictEqual(preferencesTester.sortBySecondField(titleHeader), 
+                            ArrayExtension.sortAsc(categories, TITLE_FIELD_NAME)
+                                .map(c => c[TITLE_FIELD_NAME]));
                         assert(categoryTableDOM.isHeaderSortedAsc(titleHeader));
                     })
             );
         });
+
+        it('should sort filtered rows without changing the data', () => 
+            Expectation.expectResolution(StorageHelper.saveTestCategories(5),
+                async categories => {
+                    await preferencesTester.searchByInputting(categories);
+
+                    const titleHeader = preferencesTester.getFieldHeader(TITLE_FIELD_NAME);
+                    preferencesTester.sortBySecondField(titleHeader);
+
+                    preferencesTester.assertSearchOutcome();
+                })
+        );
     });
 });
