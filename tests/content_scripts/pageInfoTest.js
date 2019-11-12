@@ -123,17 +123,14 @@ describe('content_script/pageInfo', function () {
         );
 
         it('should recognise a uri with a particular hash for loading a page automatically', () => {
-            const originalLocation = document.location;
-
-            try {
-                const loadableUri = PageInfo.generateLoadingUrl(location.href);
-                document.location = new URL(loadableUri);
-
-                assert(new PageInfo().shouldLoad());
-            }
-            finally {
-                document.location = originalLocation;
-            }            
+            const loadableUri = PageInfo.generateLoadingUrl(Randomiser.getRandomUri());
+            
+            global.location = new URL(loadableUri);
+            global.history = {
+                pushState: () => {}
+            };
+            
+            assert(new PageInfo().shouldLoad());
         });
     });
 

@@ -31,7 +31,7 @@ export class PageInfoHelper {
     static _createRandomPageInfo() {
         return {
             title: Randomiser.getRandomNumberUpToMax(),
-            uri: 'https://test/' + Randomiser.getRandomNumber(10000000),
+            uri: Randomiser.getRandomUri(),
             date: new Date().setMonth(Randomiser.getRandomNumber(1000)),
             [PageInfo.HTML_PROP_NAME]: `<body>${Randomiser.getRandomNumberUpToMax()}</body>`
         };

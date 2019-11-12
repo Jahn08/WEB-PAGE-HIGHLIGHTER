@@ -10,6 +10,10 @@ class Randomiser {
     static getRandomBoolean() { return Randomiser.getRandomNumber(100) % 2 === 0; }
 
     static getRandomString() { return '' + Randomiser.getRandomNumberUpToMax(); }
+
+    static getRandomUri() {
+        return 'https://test/' + Randomiser.getRandomNumber(10000000);
+    }
 }
 
 export { Randomiser };

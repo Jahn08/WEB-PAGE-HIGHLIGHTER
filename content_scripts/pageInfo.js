@@ -237,11 +237,20 @@ class PageInfo {
     }
 
     shouldLoad() {
-        return document.location.hash === PageInfo._LOADING_HASH;
+        const uriObj = new URL(location.href);
+
+        if (uriObj.searchParams.get(PageInfo._LOADING_PARAM)) {
+            uriObj.searchParams.delete(PageInfo._LOADING_PARAM);
+            history.pushState('', '', uriObj.toString());
+
+            return true;
+        }
+
+        return false;
     }
 
-    static get _LOADING_HASH() {
-        return '#highlighterPageLoading';
+    static get _LOADING_PARAM() {
+        return 'highlighterPageLoading';
     }
 
     static getAllSavedPagesWithCategories() {
@@ -297,8 +306,16 @@ class PageInfo {
         });
     }
 
-    static generateLoadingUrl(url) {
-        return url + this._LOADING_HASH;
+    static generateLoadingUrl(uri) {
+        try {
+            const uriObj = new URL(uri);
+            uriObj.searchParams.set(this._LOADING_PARAM, true);
+
+            return uriObj.toString();
+        }
+        catch (ex) {
+            return uri;       
+        }
     }
 
     static remove(pageUris = []) {
