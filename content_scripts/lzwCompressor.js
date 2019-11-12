@@ -1,12 +1,28 @@
 class LZWCompressor {
-    static compress(str) {
+    constructor(dictionarySize) {
+        this._initialCode = dictionarySize || LZWCompressor._X8_DICTIONARY_SIZE;
+    }
+
+    static get _X8_DICTIONARY_SIZE() {
+        return 256;
+    }
+
+    static get x14Dictionary() {
+        return new LZWCompressor(LZWCompressor.X14_DICTIONARY_SIZE);
+    }
+
+    static get X14_DICTIONARY_SIZE() {
+        return 16384;
+    }
+
+    compress(str) {
         const dict = {};
         const outcome = [];
 
         const data = this._prepareData(str);
         let phrase = data[0];
 
-        let code = this._INITIAL_CODE;
+        let code = this._initialCode;
 
         let currChar;
 
@@ -31,15 +47,11 @@ class LZWCompressor {
         return outcome.join('');
     }
 
-    static _prepareData(str) {
+    _prepareData(str) {
         return (str + '').split('');
     }
 
-    static get _INITIAL_CODE() {
-        return 4096;
-    }
-
-    static decompress(str) {
+    decompress(str) {
         const dict = {};
         
         const data = this._prepareData(str);
@@ -48,7 +60,7 @@ class LZWCompressor {
         
         const outcome = [currChar];
         
-        const initialCode = this._INITIAL_CODE;
+        const initialCode = this._initialCode;
         let code = initialCode;
         
         let phrase;

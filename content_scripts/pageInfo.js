@@ -154,6 +154,10 @@ class PageInfo {
         return 'htmlBase64'; 
     }
 
+    static get DIC_SIZE_PROP_NAME() { 
+        return 'dictionarySize'; 
+    }
+
     async saveToCategory(categoryTitle) {
         await this._pageCategory.update(categoryTitle);
 
@@ -183,12 +187,13 @@ class PageInfo {
         return { 
             date: Date.now(),
             title: document.title,
-            [PageInfo.HTML_PROP_NAME]: this._serialisedHtml
+            [PageInfo.HTML_PROP_NAME]: this._serialisedHtml,
+            [PageInfo.DIC_SIZE_PROP_NAME]: LZWCompressor.X14_DICTIONARY_SIZE
         };
     }
 
     get _serialisedHtml() {
-        return LZWCompressor.compress(document.body.innerHTML);
+        return LZWCompressor.x14Dictionary.compress(document.body.innerHTML);
     }
 
     async canLoad() {
@@ -203,7 +208,7 @@ class PageInfo {
         if (!pageData || !(serialisedHtml = pageData[PageInfo.HTML_PROP_NAME]))
             this._throwNoContentError();
 
-        this._renderHtml(this._deserialiseHtml(serialisedHtml));
+        this._renderHtml(this._deserialiseHtml(serialisedHtml, pageData[PageInfo.DIC_SIZE_PROP_NAME]));
 
         this._pageCategory.load();
     }
@@ -215,8 +220,8 @@ class PageInfo {
         throw error;
     }
 
-    _deserialiseHtml(serialisedHtml) {
-        return LZWCompressor.decompress(serialisedHtml);
+    _deserialiseHtml(serialisedHtml, dictionarySize) {
+        return new LZWCompressor(dictionarySize).decompress(serialisedHtml);
     }
 
     _renderHtml(html) {
@@ -265,6 +270,7 @@ class PageInfo {
         const pagesInfo = [];
 
         const htmlPropName = this.HTML_PROP_NAME;
+        const dicSizePropName = this.DIC_SIZE_PROP_NAME;
 
         ArrayExtension.runForEach(props, prop => {
             if (!this._isUriValid(prop))
@@ -275,7 +281,8 @@ class PageInfo {
             const pageInfo = {
                 uri: prop, 
                 title: obj.title,
-                date: obj.date
+                date: obj.date,
+                [dicSizePropName]: obj[dicSizePropName]
             };
 
             if (includeHtml)
@@ -324,6 +331,7 @@ class PageInfo {
 
     static async savePages(pagesInfo) {
         const htmlPropName = this.HTML_PROP_NAME;
+        const dicSizePropName = this.DIC_SIZE_PROP_NAME;
 
         const importedFiles = [];
         const pageCategories = {};
@@ -344,6 +352,7 @@ class PageInfo {
 
             new BrowserStorage(pi.uri).set({
                 [htmlPropName]: pi[htmlPropName],
+                [dicSizePropName]: pi[dicSizePropName],
                 date: pi.date,
                 title: pi.title
             });

@@ -33,7 +33,8 @@ export class PageInfoHelper {
             title: Randomiser.getRandomNumberUpToMax(),
             uri: Randomiser.getRandomUri(),
             date: new Date().setMonth(Randomiser.getRandomNumber(1000)),
-            [PageInfo.HTML_PROP_NAME]: `<body>${Randomiser.getRandomNumberUpToMax()}</body>`
+            [PageInfo.HTML_PROP_NAME]: `<body>${Randomiser.getRandomNumberUpToMax()}</body>`,
+            [PageInfo.DIC_SIZE_PROP_NAME]: undefined
         };
     }
 

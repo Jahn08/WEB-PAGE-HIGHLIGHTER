@@ -537,6 +537,9 @@ describe('components/preferences/pageTable', function () {
             pageTableDOM.assertTableValues(uncategorisedPages);
 
             const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
+            assert.strictEqual(fullInfo.filter(
+                p => p[PageInfo.DIC_SIZE_PROP_NAME] === LZWCompressor.X14_DICTIONARY_SIZE).length, 1);
+            
             const importedPages = JSON.parse(IMPORTED_DATA_JSON);
 
             importedPages.forEach(imp => {
@@ -548,6 +551,9 @@ describe('components/preferences/pageTable', function () {
                 }
 
                 if (shouldUpdateExistentPages) {
+                    if (!imp[PageInfo.DIC_SIZE_PROP_NAME])
+                        delete savedPage[PageInfo.DIC_SIZE_PROP_NAME];
+
                     assert.deepStrictEqual(savedPage, imp);
                     assert.notDeepStrictEqual(imp, pageToUpdate);
                 }
@@ -563,12 +569,13 @@ describe('components/preferences/pageTable', function () {
         };
 
         it('should import all pages from a package file and update current ones', () =>
-            initPreferencesWithExport(TEST_URI).then(result => testImportingData(result.pages))
+            Expectation.expectResolution(initPreferencesWithExport(TEST_URI), async result =>
+                await testImportingData(result.pages))
         );
 
         it('should import all pages from a package file without updating current ones', () =>
-            initPreferencesWithExport(TEST_URI)
-                .then(result => testImportingData(result.pages, false))
+            Expectation.expectResolution(initPreferencesWithExport(TEST_URI), async result => 
+                await testImportingData(result.pages, false))
         );
         
         it('should reinitialise an export button after importing', () =>
