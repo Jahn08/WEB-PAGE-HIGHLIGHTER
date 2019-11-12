@@ -36,7 +36,7 @@ class LZWCompressor {
     }
 
     static get _INITIAL_CODE() {
-        return 256;
+        return 4096;
     }
 
     static decompress(str) {

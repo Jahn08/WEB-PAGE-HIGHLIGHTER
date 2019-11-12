@@ -60,8 +60,8 @@ describe('content_script/pageInfo', function () {
             parentDiv.id = Randomiser.getRandomNumberUpToMax();
 
             const childLabel = parentDiv.appendChild(document.createElement('label'));
-            childLabel.innerHTML = Randomiser.getRandomNumberUpToMax();
-
+            childLabel.innerHTML = `Test ${Randomiser.getRandomString()} тест`;
+            
             document.body.appendChild(parentDiv);
 
             const pageInfo = new PageInfo();
