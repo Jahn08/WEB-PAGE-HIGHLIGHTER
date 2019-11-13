@@ -3,7 +3,7 @@ class Category {
         if (!Object.getOwnPropertyNames(categorisedUris).length)
             return;
 
-        const newCategories = new Set(Object.values(categorisedUris));
+        const newCategories = new Set(Object.values(categorisedUris).filter(v => v));
         const categoryStorage = this._createStorage();
         const storedCategories = (await categoryStorage.get()) || [];
 
@@ -116,9 +116,13 @@ class PageCategory {
         const pageCategoryStorage = this._createStorage();
         const storedPageCategories = await this._getPageCategories(pageCategoryStorage);
             
-        for (const uri in categorisedUris)
-            storedPageCategories[uri] = categorisedUris[uri];
-        
+        for (const uri in categorisedUris) {
+            if (categorisedUris[uri])
+                storedPageCategories[uri] = categorisedUris[uri];
+            else
+                delete storedPageCategories[uri];
+        }
+            
         await pageCategoryStorage.set(storedPageCategories);
 
         return storedPageCategories;
@@ -345,10 +349,10 @@ class PageInfo {
             if (!pi.title)
                 pi.title = this._fetchTitleFromUri(pi.uri);
 
-            if (pi.category) {
-                pageCategories[pi.uri] = pi.category;
+            pageCategories[pi.uri] = pi.category;
+            
+            if (pi.category)
                 delete pi.category;
-            }
 
             new BrowserStorage(pi.uri).set({
                 [htmlPropName]: pi[htmlPropName],
@@ -365,8 +369,8 @@ class PageInfo {
             
         return {
             importedPages: importedFiles,
-            pageCategories: responses[0] || {},
-            categories: responses[1] || []
+            pageCategories: responses[0],
+            categories: responses[1]
         };
     }
 

@@ -530,8 +530,8 @@ describe('components/preferences/pageTable', function () {
             return fakePromise();
         };
 
-        const testImportingData = async (pagesInfo, shouldUpdateExistentPages = true) => {
-            const pageToUpdate = pagesInfo.find(pi => pi.uri === TEST_URI);
+        const testImportingData = async (pagesInfo, shouldUpdateExistentPages, testUri) => {
+            const pageToUpdate = pagesInfo.find(pi => pi.uri === testUri);
             assert(pageToUpdate);
 
             const importBtn = getImportBtn(shouldUpdateExistentPages);
@@ -555,23 +555,30 @@ describe('components/preferences/pageTable', function () {
             pageTableDOM.assertTableValues(uncategorisedPages);
 
             const fullInfo = await PageInfo.getAllSavedPagesFullInfo();
-            assert.strictEqual(fullInfo.filter(
-                p => p[PageInfo.DIC_SIZE_PROP_NAME] === LZWCompressor.X14_DICTIONARY_SIZE).length, 1);
-            
+
+            if (shouldUpdateExistentPages)
+                assert.strictEqual(fullInfo.filter(
+                    p => p[PageInfo.DIC_SIZE_PROP_NAME] === LZWCompressor.X14_DICTIONARY_SIZE).length, 1);
+                
             const importedPages = JSON.parse(IMPORTED_DATA_JSON);
 
             importedPages.forEach(imp => {
                 const savedPage = fullInfo.find(pi => pi.uri === imp.uri);
+
+                const hasDicSizeImported = imp[PageInfo.DIC_SIZE_PROP_NAME] !== undefined;
+
+                if (!hasDicSizeImported)
+                    delete savedPage[PageInfo.DIC_SIZE_PROP_NAME];
 
                 if (imp.uri !== pageToUpdate.uri) {
                     assert.deepStrictEqual(savedPage, imp);
                     return;
                 }
 
-                if (shouldUpdateExistentPages) {
-                    if (!imp[PageInfo.DIC_SIZE_PROP_NAME])
-                        delete savedPage[PageInfo.DIC_SIZE_PROP_NAME];
+                if (!hasDicSizeImported)
+                    delete pageToUpdate[PageInfo.DIC_SIZE_PROP_NAME];
 
+                if (shouldUpdateExistentPages) {
                     assert.deepStrictEqual(savedPage, imp);
                     assert.notDeepStrictEqual(imp, pageToUpdate);
                 }
@@ -587,13 +594,32 @@ describe('components/preferences/pageTable', function () {
         };
 
         it('should import all pages from a package file and update current ones', () =>
-            Expectation.expectResolution(initExportPreferencesWithPageInfo(TEST_URI), async result =>
-                await testImportingData(result.pages))
+            Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, TEST_URI),
+                async result => {
+                    await initExportPreferences();
+
+                    PageInfoHelper.fillPageCategories(result.pagesInfo, result.pageCategories);
+
+                    await testImportingData(result.pagesInfo, true, TEST_URI);
+                })
+        );
+
+        const CATEGORISED_PAGE_URI = 'https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%B8%D0%B7';
+        it('should import all pages from a package file and move a page to the NONE category', () =>
+            Expectation.expectResolution(
+                StorageHelper.saveTestPageEnvironment(5, false, CATEGORISED_PAGE_URI),
+                async result => {
+                    await initExportPreferences();
+
+                    PageInfoHelper.fillPageCategories(result.pagesInfo, result.pageCategories);
+
+                    await testImportingData(result.pagesInfo, true, CATEGORISED_PAGE_URI);
+                })
         );
 
         it('should import all pages from a package file without updating current ones', () =>
-            Expectation.expectResolution(initExportPreferencesWithPageInfo(TEST_URI), async result => 
-                await testImportingData(result.pages, false))
+            Expectation.expectResolution(initExportPreferencesWithPageInfo(CATEGORISED_PAGE_URI), 
+                async result => await testImportingData(result.pages, false, CATEGORISED_PAGE_URI))
         );
         
         it('should reinitialise an export button after importing', () =>
