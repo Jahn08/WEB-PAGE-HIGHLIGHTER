@@ -432,8 +432,26 @@ describe('components/preferences/pageTable', function () {
                 }))
         );
 
+        const initExportPreferences = async () => {
+            const preferences = new Preferences();
+
+            await preferences.load();
+
+            await preferences.initialiseExport();
+
+            return preferences;
+        };
+
+        const initExportPreferencesWithPageInfo = async (predeterminedUri = null, storedPagesNumber = 5) =>
+            Expectation.expectResolution(
+                StorageHelper.saveTestPageInfo(storedPagesNumber, predeterminedUri), 
+                async pages => {
+                    const preferences = await initExportPreferences();
+                    return { pages, preferences };
+                });
+
         it('should import nothing if no import file is chosen', () =>
-            initPreferencesWithExport().then(() => {
+            initExportPreferencesWithPageInfo().then(() => {
                 const fileBtn = getFileImportBtn();
     
                 let errorWasThrown = false;
@@ -449,7 +467,7 @@ describe('components/preferences/pageTable', function () {
         );
 
         it('should alert if an imported package file has a wrong file extension', () =>
-            initPreferencesWithExport().then(result => {
+            initExportPreferencesWithPageInfo().then(result => {
                 const fileBtn = FileTransfer.addFileToInput(getFileImportBtn(), result.pages,
                     Randomiser.getRandomNumberUpToMax() + '.json');
     
@@ -475,11 +493,11 @@ describe('components/preferences/pageTable', function () {
         };
 
         it('should throw an exception if an imported package file is empty', () =>
-            initPreferencesWithExport().then(result => testImportingWithEmptyPackage(result.pages))
+            initExportPreferencesWithPageInfo().then(result => testImportingWithEmptyPackage(result.pages))
         );
 
         it('should throw an exception if an imported package file contains no pages', () =>
-            initPreferencesWithExport().then(result => 
+            initExportPreferencesWithPageInfo().then(result => 
                 testImportingWithEmptyPackage(result.pages, []))
         );
 
@@ -569,17 +587,17 @@ describe('components/preferences/pageTable', function () {
         };
 
         it('should import all pages from a package file and update current ones', () =>
-            Expectation.expectResolution(initPreferencesWithExport(TEST_URI), async result =>
+            Expectation.expectResolution(initExportPreferencesWithPageInfo(TEST_URI), async result =>
                 await testImportingData(result.pages))
         );
 
         it('should import all pages from a package file without updating current ones', () =>
-            Expectation.expectResolution(initPreferencesWithExport(TEST_URI), async result => 
+            Expectation.expectResolution(initExportPreferencesWithPageInfo(TEST_URI), async result => 
                 await testImportingData(result.pages, false))
         );
         
         it('should reinitialise an export button after importing', () =>
-            Expectation.expectResolution(initPreferencesWithExport(null, 0), async () =>  {
+            Expectation.expectResolution(initExportPreferencesWithPageInfo(null, 0), async () =>  {
                 await startImporting();
                 const exportBtn = getExportBtn();
 
@@ -588,7 +606,7 @@ describe('components/preferences/pageTable', function () {
         );
 
         it('should disable export and upsertable import buttons after removing all pages', () =>
-            initPreferencesWithExport().then(() => {
+            initExportPreferencesWithPageInfo().then(() => {
                 pageTableDOM.tickAllRowChecks();
 
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
@@ -600,7 +618,7 @@ describe('components/preferences/pageTable', function () {
         );
 
         it('should import a removed page and let it be saved again', () =>
-            initPreferencesWithExport(TEST_URI).then(async result => {
+            initExportPreferencesWithPageInfo(TEST_URI).then(async result => {
                 pageTableDOM.tickAllRowChecks();
 
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
@@ -615,34 +633,38 @@ describe('components/preferences/pageTable', function () {
             })
         );
 
-        const initPreferencesWithExport = async (predeterminedUri = null, storedPagesNumber = 5) =>
-            Expectation.expectResolution(
-                StorageHelper.saveTestPageInfo(storedPagesNumber, predeterminedUri), 
-                async pages => {
-                    const preferences = new Preferences();
-
-                    await preferences.load();
-
-                    await preferences.initialiseExport();
-
-                    return { pages, preferences };
-                });
-
         const getExportBtn = () => document.getElementById(pageTableDOM.sectionId + '--btn-export');
 
         it('should initialise export enabling the respective button', () =>
-            initPreferencesWithExport().then(() => {
+            initExportPreferencesWithPageInfo().then(() => {
                 const exportBtn = getExportBtn();
                 assert.strictEqual(exportBtn.disabled, false);
             })
         );
         
         it('should leave the export button disabled if there are no pages being stored', () =>
-            initPreferencesWithExport(null, 0).then(() => {
+            initExportPreferencesWithPageInfo(null, 0).then(() => {
                 const exportBtn = getExportBtn();
                 assert.strictEqual(exportBtn.disabled, true);
             })
         );
+
+        it('should enable the Import/Export buttons after removing all pages of a current category', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10),
+                async () => {
+                    await initExportPreferences();
+
+                    const pageTableBody = pageTableDOM.getTableBody();
+                    pageTableDOM.tickRowCheck(pageTableBody.rows.length);
+
+                    pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
+                    assert(!pageTableBody.rows.length);
+
+                    assert(!getExportBtn().disabled);
+                    assert(!getImportBtn(true).disabled);
+                    assert(!getImportBtn().disabled);
+                });
+        });
 
         it('should reject if the page table is not initialised', () =>
             Expectation.expectRejection(new Preferences().initialiseExport(), 
@@ -650,7 +672,7 @@ describe('components/preferences/pageTable', function () {
         );
 
         it('should set up an export link when clicking on the export button', () =>
-            initPreferencesWithExport().then(() => { 
+            initExportPreferencesWithPageInfo().then(() => { 
                 const exportLink = document.getElementById(pageTableDOM.sectionId + '--link-export');
                 assert(exportLink);
 

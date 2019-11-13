@@ -513,6 +513,7 @@ class PageTable extends BaseTable {
             btn => btn.onclick = this.bindToThis(this._onImportPageBtnClick));
         this._importIsUpsertable = false;
 
+        this._originalData = Array.from(this._tableData);
         this._updateImportBtnsAvailability(true);
 
         this._PAGES_ARCHIVE_EXTENSION = '.hltr';
@@ -531,8 +532,6 @@ class PageTable extends BaseTable {
         this._moveToCategoryBtn =  this._getControlByName(this._BTN_PREFIX + 'move');
         this._moveToCategoryBtn.onclick = this.bindToThis(this._movePagesToCategory);
         
-        this._originalData = Array.from(this._tableData);
-
         this._renderCategoryControls();
     }
 
@@ -724,7 +723,7 @@ class PageTable extends BaseTable {
         this._showPageBtn.disabled = true;
         this._removePageBtn.disabled = true;
 
-        if (!this._tableData.length) {
+        if (!this._originalData.length) {
             this._updateImportBtnsAvailability(true);
             this._exportPageBtn.disabled = true;
         }
@@ -820,7 +819,7 @@ class PageTable extends BaseTable {
         ArrayExtension.runForEach(this._importPageBtns, 
             btn => { 
                 if (isAvailable)
-                    isAvailable = !this._isUpsertableBtn(btn) || this._tableData.length > 0;
+                    isAvailable = !this._isUpsertableBtn(btn) || this._originalData.length > 0;
 
                 btn.disabled = !isAvailable;
             });
