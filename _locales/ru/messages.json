@@ -292,6 +292,11 @@
         "message": "Экспорт",
         "description": "Label for a button exporting saved pages as a page package"
     },
+
+    "preferences_page_export_btn_title": {
+        "message": "Экспортировать сохранённые страницы",
+        "description": "Title for a button exporting saved pages as a page package"
+    },
     
     "preferences_save_btn": {
         "message": "Сохранить",

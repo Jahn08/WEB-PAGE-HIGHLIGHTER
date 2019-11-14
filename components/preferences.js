@@ -723,10 +723,8 @@ class PageTable extends BaseTable {
         this._showPageBtn.disabled = true;
         this._removePageBtn.disabled = true;
 
-        if (!this._originalData.length) {
+        if (!this._originalData.length)
             this._updateImportBtnsAvailability(true);
-            this._exportPageBtn.disabled = true;
-        }
     }
 
     _removeRows() {

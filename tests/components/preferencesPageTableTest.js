@@ -631,13 +631,13 @@ describe('components/preferences/pageTable', function () {
             })
         );
 
-        it('should disable export and upsertable import buttons after removing all pages', () =>
+        it('should disable the upsertable import button after removing all pages', () =>
             initExportPreferencesWithPageInfo().then(() => {
                 pageTableDOM.tickAllRowChecks();
 
                 pageTableDOM.dispatchClickEvent(pageTableDOM.getRemovingBtn());
 
-                assert.strictEqual(getExportBtn().disabled, true);
+                assert.strictEqual(getExportBtn().disabled, false);
                 assert.strictEqual(getImportBtn(true).disabled, true);
                 assert.strictEqual(getImportBtn().disabled, false);
             })
