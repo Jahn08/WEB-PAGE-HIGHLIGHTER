@@ -61,6 +61,7 @@
     word-wrap: break-word;
 	font-size: xx-large;
     color: white;
+    line-height: inherit;
 }
 
 .marker--note {
