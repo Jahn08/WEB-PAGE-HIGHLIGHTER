@@ -7,6 +7,7 @@ A Mozilla Firefox and Google Chrome extension that marks text on a web page. The
 * Marking text with several colours through a context menu on a page
 * Saving the marked text and loading it later when accessing the same page
 * Preferences for changing the default colour for marking and autoloading a page, provided it is available in the storage ([more about configuring](#headConfiguration))
+* Categorising pages when saving or in the preferences
 * Adding notes on a page and navigating them through quick scrolling by means of clicking the respective links in the context menu
 * Importing and exporting stored pages between different devices and browsers (it is available for [installing](#headInstalling) in Mozilla and Chrome) through the preferences page
 
@@ -44,4 +45,5 @@ The plugin has a configuration page with the next preferences:
 * *Warning about unsaved changes* - the flag determines whether there will be a warning dialog when the user is leaving the page while having marked or unmarked some text on the page. It is turned on by default
 * *Loading a page automatically from the storage* - if there is a copy of the current page previously saved in the storage, then it will be loaded automatically, otherwise the user can manually load it clicking the respective option in the context menu or in the popup menu on the upper browser panel. It is off by default
 * *Default colour* - the flag is responsible for setting a default colour in the colour palette for marking when opening a page. The default colour is green
+* A table with categories to put or save pages into
 * A table featuring all saved pages in the browser storage and available for editing.
