@@ -83,18 +83,20 @@ class RadioSubMenuItem extends BaseMenuItem {
 
     get isChecked() { return this._isChecked; }
 
-    check() {
-        this._updateCheckedState(true);
-    }
+    check() { return this._updateCheckedState(true); }
 
     _updateCheckedState(checked) {
         if (checked === this._isChecked)
-            return;
+            return false;
 
         this.updateItem({
             checked: this._isChecked = checked
         });
+
+        return true;
     }
+
+    uncheck() { return this._updateCheckedState(false); }
 }
 
 class ButtonMenuItem extends BaseMenuItem {

@@ -10,8 +10,8 @@ export class ContextMenu {
         this._addNoteBtn = new ButtonMenuItem('note-add');
         this._removeNoteBtn = new ButtonMenuItem('note-remove');
 
-        const defaultColourClass = 'marker-green';
-        this._curColourClass = defaultColourClass;
+        this._defaultColourClass = 'marker-green';
+        this._curColourClass = this._defaultColourClass;
 
         this.onMarking = null;
         this._markBtn.addToMenu(async () => {
@@ -38,6 +38,7 @@ export class ContextMenu {
         const changeColour = async (info) => {
             try {
                 this._curColourClass = info.menuItemId;
+                this.checkColourRadio(this._curColourClass);
 
                 await this._passTabInfoToCallback(this.onChangingColour, 
                     { colourClass: this._curColourClass });
@@ -176,18 +177,18 @@ export class ContextMenu {
     
     enableLoadBtn() { this._storageMenu.enableLoadBtn(); }
 
-    checkColourRadio(colourClass) {
-        const colourRadio = this._getColourRadio(colourClass);
+    checkColourRadio(colourClass = this._defaultColourClass) {
+        const colourRadio = this._colourRadios.find(r => r.id === colourClass);
 
         if (!colourRadio)
             return;
 
         this._curColourClass = colourClass;
-        colourRadio.check();
-    }
-
-    _getColourRadio(colourClass) {
-        return this._colourRadios.find(r => r.id === colourClass);
+        
+        if (colourRadio.check())
+            ArrayExtension.runForEach(
+                this._colourRadios.filter(r => r.id !== colourClass && r.isChecked), 
+                c => c.uncheck());
     }
 
     renderNoteLinks(noteLinks) { this._noteNavigation.render(noteLinks); }

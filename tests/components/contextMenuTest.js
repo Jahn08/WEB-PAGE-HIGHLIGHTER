@@ -136,6 +136,22 @@ describe('components/ContextMenu', () => {
             assert.deepStrictEqual(actualColourRadio.checked, true);
         });
 
+        it('should check only one radio item in a context menu leaving the rest unchecked', () => {
+            const browserMocked = mockBrowser();
+            const contextMenu = new ContextMenu();
+
+            const colourInfos = ColourList.colours;
+            contextMenu.checkColourRadio(colourInfos[0].token);
+
+            const anotherColour = colourInfos[colourInfos.length - 1];
+            contextMenu.checkColourRadio(anotherColour.token);
+
+            const checkedItems = browserMocked.menuOptions
+                .filter(i => i.type === RADIO_TYPE && i.checked);
+            assert.strictEqual(checkedItems.length, 1);
+            assert.strictEqual(checkedItems[0].id, anotherColour.token);
+        });
+
         it('should do nothing while checking a non-existent radio item in a context menu', () => {
             const browserMocked = mockBrowser();
             const contextMenu = new ContextMenu();
