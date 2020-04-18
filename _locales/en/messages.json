@@ -45,7 +45,7 @@
     },
 
     "note_add": {
-        "message": "Add a Note",
+        "message": "Add Note",
         "description": "Title for a context menu item adding a note"
     },
 
@@ -55,7 +55,7 @@
     },
 
     "note_remove": {
-        "message": "Remove a Note",
+        "message": "Remove Note",
         "description": "Title for a context menu item removing a note"
     },
 

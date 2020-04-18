@@ -84,3 +84,7 @@
 .form--table-category--row-default td:last-child > label::after {
     content: '✓';
 }
+
+.form--section-header {
+    font-weight: bold;
+}
