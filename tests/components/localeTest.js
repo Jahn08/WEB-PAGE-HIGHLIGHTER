@@ -32,7 +32,7 @@ describe('components/locale', function () {
     });
 
     const testLocaleSymbols = (locale, wrongSymbolsExp) => {
-        const paramSubstitutionExp = /\$\w*\$|Highbrighter/gm;
+        const paramSubstitutionExp = /\$\w*\$|highbrighter|shift|ctrl|printscreen/gmi;
 
         Object.getOwnPropertyNames(locale).map(prop => {
             const msg = locale[prop].message;
@@ -42,11 +42,11 @@ describe('components/locale', function () {
     };
 
     it('should assure that the English locale has messages only in English', () =>
-        testLocaleSymbols(EN_LOCALE, /[^A-Za-z0-9\s:.,'$/]/gm)
+        testLocaleSymbols(EN_LOCALE, /[^a-z0-9-\s:.,'$/]/gmi)
     );
 
     it('should assure that the Russian locale has messages only in Russian', () =>
-        testLocaleSymbols(RU_LOCALE, /[^А-Яа-яёЁ0-9\s:.,'$/]/gm)
+        testLocaleSymbols(RU_LOCALE, /[^а-яё0-9-\s:.,'$/]/gmi)
     );
 
     const testViewLocalisation = viewName => 
