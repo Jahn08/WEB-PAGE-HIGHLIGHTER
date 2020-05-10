@@ -303,6 +303,41 @@
         "description": "Label for a button saving all the preferences"
     },
     
+    "preferences_shortcuts_input": {
+        "message": "Нажмите комбинацию клавиш",
+        "description": "Placeholder for a text control for entering a shortcut"
+    },
+
+    "preferences_option_shortcuts": {
+        "message": "Горячие клавиши:",
+        "description": "Label for a section for setting up shortcuts"
+    },
+
+    "preferences_shortcut_group_marking": {
+        "message": "Отметка",
+        "description": "Label for an option group featuring shortcuts for marking"
+    },
+    
+    "preferences_shortcut_group_notes": {
+        "message": "Заметки",
+        "description": "Label for an option group featuring shortcuts for notes"
+    },
+
+    "preferences_shortcut_group_storage": {
+        "message": "Хранилище",
+        "description": "Label for an option group featuring shortcuts for the stoarge commands"
+    },
+
+    "preferences_shortcut_group_other": {
+        "message": "Другое",
+        "description": "Label for an option group featuring shortcuts for other commands"
+    },
+
+    "preferences_section_shortcuts_tooltip": {
+        "message": "Используйте 2-3 клавиши, исключая Shift, Ctrl и PrintScreen",
+        "description": "Title expanding on what key combinations can be used as shortcuts"
+    },
+
     "import_inserted_page_count": {
         "message": "Количество успешно импортированных страниц: $count$",
         "description": "Status featuring a number of successfully imported pages",

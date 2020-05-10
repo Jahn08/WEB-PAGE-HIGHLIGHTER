@@ -302,7 +302,42 @@
         "message": "Save",
         "description": "Label for a button saving all the preferences"
     },
+
+    "preferences_shortcuts_input": {
+        "message": "Press Key Combination",
+        "description": "Placeholder for a text control for entering a shortcut"
+    },
+
+    "preferences_option_shortcuts": {
+        "message": "Shortcuts:",
+        "description": "Label for a section for setting up shortcuts"
+    },
+
+    "preferences_shortcut_group_marking": {
+        "message": "Marking",
+        "description": "Label for an option group featuring shortcuts for marking"
+    },
     
+    "preferences_shortcut_group_notes": {
+        "message": "Notes",
+        "description": "Label for an option group featuring shortcuts for notes"
+    },
+
+    "preferences_shortcut_group_storage": {
+        "message": "Storage",
+        "description": "Label for an option group featuring shortcuts for the stoarge commands"
+    },
+
+    "preferences_shortcut_group_other": {
+        "message": "Other",
+        "description": "Label for an option group featuring shortcuts for other commands"
+    },
+
+    "preferences_section_shortcuts_tooltip": {
+        "message": "Use 2-3 keys as combinations, excluding Shift, Ctrl and PrintScreen",
+        "description": "Title expanding on what key combinations can be used as shortcuts"
+    },
+
     "import_inserted_page_count": {
         "message": "A number of sucessfully imported pages is $count$",
         "description": "Status featuring a number of successfully imported pages",

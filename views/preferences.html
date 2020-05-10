@@ -18,27 +18,52 @@
             </div>
             <hr />
             <div>
-                <label class="locale form--section-header" id="preferences-option-default-colour">Default colour:</label>
+                <label class="locale form--section-header" id="preferences-option-default-colour">
+                    Default colour:
+                </label>
                 <div id="form--section-colours"></div>
             </div>
             <hr />
             
+            <div id="form--section-shortcuts">
+                <label class="locale form--section-header" id="preferences-option-shortcuts">
+                    Shortcuts:
+                </label>
+                <div>
+                    <select id="form--section-shortcuts--select"></select>
+                    <input type="text" class="locale" id="form--section-shortcuts--txt-input"
+                        name="preferences-shortcuts-input" data-locale-attr="placeholder" 
+                        placeholder="Press Key Combination" />
+                    <span id="preferences-section-shortcuts-tooltip" data-locale-attr="title" 
+                        class="locale info-color">🛈</span>
+                </div>
+            </div>
+            <hr />
+
             <div id="form--section-category">
-                <label class="locale form--section-header" id="preferences-category-table">Page categories:</label>
+                <label class="locale form--section-header" id="preferences-category-table">
+                    Page categories:
+                </label>
 
                 <div>
                     <span>🔍</span>
-                    <input type="text" class="locale form--txt-search" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-category--txt-search" />
+                    <input type="text" class="locale form--txt-search" name="preferences-search" 
+                        data-locale-attr="placeholder" placeholder="Search" 
+                        id="form--section-category--txt-search" />
                 </div>
 
                 <table class="form--table" id="form--section-category--table">
                     <thead>
                         <tr>
-                            <th><input id="form--section-category--table--check-all" type="checkbox" /></th>
-                            <th class="form--table--cell-header form--table--cell-header-asc locale" data-sort-field="title" id="preferences-category-table-title-header">
+                            <th>
+                                <input id="form--section-category--table--check-all" type="checkbox" />
+                            </th>
+                            <th class="form--table--cell-header form--table--cell-header-asc locale" 
+                                data-sort-field="title" id="preferences-category-table-title-header">
                                 Category
                             </th>
-                            <th class="form--table--cell-header locale" data-sort-field="default" id="preferences-category-table-default-header">
+                            <th class="form--table--cell-header locale" data-sort-field="default" 
+                                id="preferences-category-table-default-header">
                                 Default
                             </th>
                         </tr>
@@ -49,17 +74,25 @@
                 <div id="form--section-category--status" class="form-section-separated"></div>
 
                 <div class="form-section-separated">
-                    <button class="locale" name="preferences-category-add-btn" id="form--section-category--btn-add" type="button" data-locale-add-attr="title" title="Add">
+                    <button class="locale" name="preferences-category-add-btn" 
+                        id="form--section-category--btn-add" type="button" 
+                        data-locale-add-attr="title" title="Add">
                         Add
                     </button>
-                    <input type="text" class="locale" name="preferences-new-category" id="form--section-category--txt-title" data-locale-add-attr="placeholder" placeholder="New Category Title"  />
+                    <input type="text" class="locale" name="preferences-new-category" 
+                        id="form--section-category--txt-title" data-locale-add-attr="placeholder" 
+                        placeholder="New Category Title"  />
                 </div>
 
                 <div class="form-section-separated">
-                    <button class="locale" name="preferences-remove-btn" disabled id="form--section-category--btn-remove" type="button" data-locale-add-attr="title" title="Remove">
+                    <button class="locale" name="preferences-remove-btn" 
+                        disabled id="form--section-category--btn-remove" type="button" 
+                        data-locale-add-attr="title" title="Remove">
                         Remove
                     </button>
-                    <button class="locale" name="preferences-category-default-btn" disabled id="form--section-category--btn-default" type="button" data-locale-add-attr="title" title="Make Default">
+                    <button class="locale" name="preferences-category-default-btn" disabled 
+                        id="form--section-category--btn-default" type="button" 
+                        data-locale-add-attr="title" title="Make Default">
                         Make Default
                     </button>
                 </div>
@@ -71,7 +104,9 @@
                 
                 <div>
                     <span>🔍</span>
-                    <input type="text" class="locale form--txt-search" name="preferences-search" data-locale-attr="placeholder" placeholder="Search" id="form--section-page--txt-search" />
+                    <input type="text" class="locale form--txt-search" name="preferences-search" 
+                        data-locale-attr="placeholder" placeholder="Search" 
+                        id="form--section-page--txt-search" />
                 
                     <label class="locale" id="preferences-category-filter">Category:</label>
                     <select id="form--section-page--filter-category"></select>
@@ -81,10 +116,12 @@
                     <thead>
                         <tr>
                             <th><input id="form--section-page--table--check-all" type="checkbox" /></th>
-                            <th class="form--table--cell-header form--table--cell-header-asc locale" data-sort-field="title" id="preferences-page-table-title-header">
+                            <th class="form--table--cell-header form--table--cell-header-asc locale" 
+                                data-sort-field="title" id="preferences-page-table-title-header">
                                 Page
                             </th>
-                            <th class="form--table--cell-header locale" data-sort-field="date" id="preferences-page-table-date-header">
+                            <th class="form--table--cell-header locale" data-sort-field="date" 
+                                id="preferences-page-table-date-header">
                                 Date
                             </th>
                         </tr>
@@ -95,13 +132,19 @@
                 <div id="form--section-page--status" class="form-section-separated"></div>
 
                 <div class="form-section-separated">
-                    <button class="locale" name="preferences-page-show-btn" disabled id="form--section-page--btn-show" type="button" data-locale-add-attr="title" title="Open in a New Tab">
+                    <button class="locale" name="preferences-page-show-btn" disabled 
+                        id="form--section-page--btn-show" type="button" data-locale-add-attr="title" 
+                        title="Open in a New Tab">
                         Open
                     </button>
-                    <button class="locale" name="preferences-remove-btn" disabled id="form--section-page--btn-remove" type="button" data-locale-add-attr="title" title="Remove">
+                    <button class="locale" name="preferences-remove-btn" disabled 
+                        id="form--section-page--btn-remove" type="button" 
+                        data-locale-add-attr="title" title="Remove">
                         Remove
                     </button>
-                    <button class="locale" name="preferences-move-btn" disabled id="form--section-page--btn-move" type="button" data-locale-add-attr="title" title="Move to Another Category">
+                    <button class="locale" name="preferences-move-btn" disabled 
+                        id="form--section-page--btn-move" type="button" 
+                        data-locale-add-attr="title" title="Move to Another Category">
                         Move To
                     </button>
                     <select id="form--section-page--select-category"></select>
@@ -109,20 +152,28 @@
 
                 <div class="form-section-separated">
                     <input id="form--section-page--btn-file" style="display: none" type="file" accept=".hltr" />
-                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-insert-btn" type="button" data-locale-add-attr="title" title="Import and add only new pages">
+                    <button disabled class="form--section-page--btn-import locale" 
+                        name="preferences-page-insert-btn" type="button" 
+                        data-locale-add-attr="title" title="Import and add only new pages">
                         Import / Insert
                     </button>
-                    <button disabled class="form--section-page--btn-import locale" name="preferences-page-unpsert-btn" data-upsertable="true" type="button" data-locale-add-attr="title" title="Import and update existent pages">
+                    <button disabled class="form--section-page--btn-import locale" 
+                        name="preferences-page-unpsert-btn" data-upsertable="true" 
+                        type="button" data-locale-add-attr="title" title="Import and update existent pages">
                         Import / Update
                     </button>
                     
                     <a id="form--section-page--link-export" style="display: none"></a>
-                    <button disabled id="form--section-page--btn-export" class="locale" name="preferences-page-export-btn" data-locale-add-attr="title" type="button" title="Export saved pages">Export</button>
+                    <button disabled id="form--section-page--btn-export" class="locale" 
+                        name="preferences-page-export-btn" data-locale-add-attr="title" 
+                        type="button" title="Export saved pages">Export</button>
                 </div>
             </div>
             <hr />
 
-            <button class="locale" name="preferences-save-btn" type="submit" id="form--btn-submit" disabled>Save</button>
+            <button class="locale" name="preferences-save-btn" type="submit" id="form--btn-submit" disabled>
+                Save
+            </button>
         </form>
 
 		<script src="../content_scripts/lzwCompressor.js"></script>
@@ -130,6 +181,7 @@
 		<script src="../content_scripts/arrayExtension.js"></script>
         <script src="../content_scripts/browserStorage.js"></script>
         <script src="../content_scripts/pageInfo.js"></script>
+        <script src="../content_scripts/keyboardUnifier.js"></script>
         <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
     </body>
 </html>
