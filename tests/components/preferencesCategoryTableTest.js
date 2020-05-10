@@ -314,6 +314,26 @@ describe('components/preferences/categoryTable', function () {
                 }))
         );
 
+        it('should uncategorise pages of a removed category', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(10, false)
+                .then(async savedInfo => {
+                    const removedTitles = await preferencesTester.removeFirstTwoRows();
+
+                    const removedPageUris = removedTitles.reduce((pages, catTitle) => {
+                        pages.push(...PageInfoHelper.getCategoryPages(
+                            savedInfo.pageCategories, catTitle));
+                        return pages;
+                    }, []);
+                    assert(removedPageUris.length);
+
+                    const removedPages = savedInfo.pagesInfo.filter(
+                        p => removedPageUris.includes(p.uri));
+                    assert(removedPages.length);
+
+                    pageTableDOM.assertTableValues(removedPages);
+                }));
+        });
+
         it('should choose a default category in the page category filter rather than a removed one', () => {
             const defaultCategoryIndex = 1;
 

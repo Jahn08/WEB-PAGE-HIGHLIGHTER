@@ -3,7 +3,7 @@ import { EnvLoader } from '../tools/envLoader.js';
 import { Randomiser } from '../tools/randomiser.js';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
-import { Preferences, RepeatInitError } from '../../components/preferences.js';
+import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PagePreferencesDOM, CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
@@ -59,38 +59,25 @@ describe('components/preferences', function () {
     const pageTableDOM = new PagePreferencesDOM();
     const categoryTableDOM = new CategoryPreferencesDOM();
 
+    const assertSuccessfulLoading = () => {
+        assertFormValues();
+
+        pageTableDOM.assertTableValues();
+        categoryTableDOM.assertTableValues();
+    };
+
     describe('#constructor', function () { 
      
         it('should create a form with default values', () => {
             new Preferences();
 
-            assertFormValues();
-
-            pageTableDOM.assertTableValues();
-            categoryTableDOM.assertTableValues();
-        });
-
-        it('should throw an error when trying to render the page twice', () => {
-            new Preferences();
-            Expectation.expectError(() => new Preferences(), new RepeatInitError());
+            assertSuccessfulLoading();
         });
     });
 
     describe('#load', function () { 
-
         it('should create the preferences form with default values when there is nothing in the storage', () =>
-            Expectation.expectResolution(new Preferences().load(), 
-                () => {
-                    assertFormValues();
-
-                    pageTableDOM.assertTableValues();
-                    categoryTableDOM.assertTableValues();
-                })
-        );
-
-        it('should throw an error when trying to load the page twice', () =>
-            Expectation.expectRejection(new Preferences().load().then(() => new Preferences().load()),
-                new RepeatInitError())
+            Expectation.expectResolution(new Preferences().load(), assertSuccessfulLoading)
         );
 
         it('should load preferences from the storage and update the form', () => {

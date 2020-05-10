@@ -175,9 +175,8 @@ describe('components/preferences/pageTable', function () {
 
                     const pageUrisToMove = pageTableDOM.tickRowCheck(2);
 
-                    pageTableDOM.getCategorySelectorList().value = 
+                    pageTableDOM.getCategorySelectorList().selectedOptions.item(0).innerText = 
                         '' + Randomiser.getRandomNumberUpToMax();
-
                     pageTableDOM.dispatchClickEvent(pageTableDOM.getRelocatingBtn());
 
                     assert(pageTableDOM.assertStatusIsWarning());

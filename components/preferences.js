@@ -1,18 +1,6 @@
 import { ColourList } from './colourList.js';
 import { PageLocalisation } from './pageLocalisation.js';
 
-class RepeatInitError extends Error {
-    constructor() {
-        super('The page has already been initialised');
-        
-        this.name = RepeatInitError.NAME;
-    }
-
-    static get NAME() {
-        return 'RepeatInitError';
-    }
-}
-
 class PagePackageError extends Error {
     constructor(type) {
         let msg;
@@ -20,15 +8,15 @@ class PagePackageError extends Error {
         const locale = new BrowserAPI().locale;
 
         switch(type) {
-        case PagePackageError.WRONG_INITIALISATION_TYPE:
-            msg = locale.getString('package-init-error');
-            break;
-        case PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE:
-            msg = locale.getString('package-empty-info-error');
-            break;
-        default:
-            msg = locale.getString('package-unknown-error');
-            break;
+            case PagePackageError.WRONG_INITIALISATION_TYPE:
+                msg = locale.getString('package-init-error');
+                break;
+            case PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE:
+                msg = locale.getString('package-empty-info-error');
+                break;
+            default:
+                msg = locale.getString('package-unknown-error');
+                break;
         }
 
         super(msg);
@@ -54,9 +42,6 @@ class BaseTable {
         this._tableBody = table.tBodies[0];
         
         this._tableData = tableData;  
-
-        if (this._isRendered())
-            throw new RepeatInitError();
 
         this._sortTableData();
         
@@ -95,10 +80,6 @@ class BaseTable {
         document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch));
         
         this._render();  
-    }
-
-    _isRendered() {
-        return this._tableBody.rows.length > 0;
     }
     
     _sortTableData() {
@@ -198,7 +179,7 @@ class BaseTable {
         if (elem.innerHTML)
             elem.innerHTML = '';
     }
-
+    
     _render() { }
 
     _createLabelCell(text, title = null) {
@@ -244,7 +225,7 @@ class BaseTable {
         event.preventDefault();
         return false;
     }
-
+    
     _getControlByName(ctrlName) {
         return document.getElementById(this._getControlFullName(ctrlName));       
     }
@@ -293,7 +274,7 @@ class BaseTable {
         if (this._statusLabel && this._statusLabel.innerHTML)
             this._statusLabel.innerHTML = null;
     }
-    
+
     _makeDirty() { 
         this._isDirty = true; 
     }
@@ -544,6 +525,10 @@ class PageTable extends BaseTable {
 
     removePageCategories(categoryTitles = []) {
         this._categoryTitles = this._categoryTitles.filter(ct => !categoryTitles.includes(ct));
+        
+        for (const uri in this._pageCategories)
+            if (categoryTitles.includes(this._pageCategories[uri]))
+                delete this._pageCategories[uri];
 
         this._renderCategoryControls();
 
@@ -575,17 +560,9 @@ class PageTable extends BaseTable {
         
         if (value)
             return value;
-        
-        const options = selectCtrl.options;
 
-        for (let i = 0; i < options.length; ++i) {
-            const option = options.item(i);
-
-            if (option.selected)
-                return option.value || option.innerText;
-        }
-
-        return null;
+        const selectedOption = selectCtrl.selectedOptions.item(0);
+        return selectedOption ? selectedOption.value || selectedOption.innerText : null;
     }
 
     _movePagesToCategory() {
@@ -922,7 +899,7 @@ class Preferences {
         const colourListEl = document.getElementById('form--section-colours');
         
         if (colourListEl.childElementCount)
-            throw new RepeatInitError();
+            return;
 
         colourListEl.append(...ColourList.colours.map((c, index) => {
             const groupEl = document.createElement('div');
@@ -1073,4 +1050,4 @@ class Preferences {
     }
 }
 
-export { RepeatInitError, PagePackageError, Preferences };
+export { PagePackageError, Preferences };
