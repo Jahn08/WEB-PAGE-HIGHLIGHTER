@@ -101,15 +101,13 @@ class Control {
 
 
 class ShortcutSelector extends Control {
-    constructor(shortcuts) { 
+    constructor() { 
         super('shortcuts');
 
         this._selector = document.getElementById(this._getControlFullName('select'));
         this._selector.onchange = this.bindToThis(this._updateShortcutStatus);
 
-        //document.createElement('select').selectedOptions;
-
-        this._shortcuts = Object.assign({}, shortcuts);
+        this._shortcuts = {};
 
         this._keyTempCombination = {};
         this._shortcut = {};
@@ -132,6 +130,12 @@ class ShortcutSelector extends Control {
         // };
 
         this._render();
+    }
+
+    setShortcuts(shortcuts) {
+        this._shortcuts = Object.assign({}, shortcuts);
+    
+        this._updateShortcutStatus();
     }
 
     _registerKeyCombination(event) {
@@ -180,8 +184,6 @@ class ShortcutSelector extends Control {
     }
 
     _applyKeyCombination() {
-        this._hideStatus();
-        
         const selectedOperation = this._getSelectedOption(this._selector);       
 
         if (!selectedOperation) {
@@ -200,10 +202,14 @@ class ShortcutSelector extends Control {
             this._shortcuts[commandId] = null;
         }
 
+        this._hideStatus();
+
         this._shortcuts[selectedOperation] = this._shortcut;
         this._updateButtonsAvailability();
         
         this._shortcut = null;
+
+        this._makeDirty();
     }
 
     _updateButtonsAvailability() {
@@ -1060,8 +1066,7 @@ class Preferences {
     constructor() {
         this._initColourList();
 
-        // TODO: pass data from storage later on
-        const selector = new ShortcutSelector();
+        this._shortcutSelector = new ShortcutSelector();
 
         this._pageTable = null;
         this._categories = null;
@@ -1124,6 +1129,7 @@ class Preferences {
                 this._shouldWarn = loadedForm.shouldWarn;
                 this._shouldLoad = loadedForm.shouldLoad;
                 this._defaultColourToken = loadedForm.defaultColourToken;
+                this._shortcutSelector.setShortcuts(loadedForm.shortcuts); 
             }
         }), this._initCategoryTable().then(() => this._initPageTable())]);
     }
@@ -1166,14 +1172,15 @@ class Preferences {
     save() {
         return Promise.all([this._savePreferencesIntoStorage(),
             this._removePageInfoFromStorage(), this._updatePageCategories(),
-            this._updateCategoriesInStorage(), this._updateShortcutsInStorage()]);
+            this._updateCategoriesInStorage()]);
     }
     
     _savePreferencesIntoStorage() {
         return this._preferencesHaveChanged() ? this._storage.set({
             shouldWarn: this._shouldWarn,
             shouldLoad: this._shouldLoad,
-            defaultColourToken: this._defaultColourToken
+            defaultColourToken: this._defaultColourToken,
+            shortcuts: this._shortcutSelector.shortcuts
         }) : Promise.resolve();
     }
 
@@ -1182,7 +1189,8 @@ class Preferences {
 
         return !pureValues || pureValues.shouldWarn !== this._shouldWarn || 
             pureValues.shouldLoad !== this._shouldLoad || 
-            pureValues.defaultColourToken !== this._defaultColourToken;
+            pureValues.defaultColourToken !== this._defaultColourToken ||
+            this._shortcutSelector.shortcuts;
     }
 
     _removePageInfoFromStorage() {
@@ -1203,10 +1211,6 @@ class Preferences {
 
         return this._categoryTable && (changedData = this._categoryTable.categories) ? 
             PageInfo.saveCategories(changedData) : Promise.resolve();
-    }
-
-    _updateShortcutsInStorage() {
-        return Promise.resolve();
     }
 
     get _shouldWarn() {
