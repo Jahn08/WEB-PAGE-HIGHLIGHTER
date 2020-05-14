@@ -1,5 +1,6 @@
 import { ColourList } from './colourList.js';
 import { PageLocalisation } from './pageLocalisation.js';
+import { OptionList } from './optionList.js';
 
 class PagePackageError extends Error {
     constructor(type) {
@@ -33,15 +34,257 @@ class PagePackageError extends Error {
     static get EMPTY_IMPORT_PACKAGE_TYPE() { return 2; }
 }
 
-class BaseTable {
+class Control {
+    constructor(sectionName) {
+        this._sectionId = 'form--section-' + sectionName;
+
+        this._isDirty = false; 
+
+        this._locale = new BrowserAPI().locale;
+    }
+
+    _getControlByName(ctrlName) {
+        return document.getElementById(this._getControlFullName(ctrlName));       
+    }
+    
+    _getControlFullName(ctrlName) {
+        return `${this._sectionId}--${ctrlName}`;
+    }
+
+    _getControlsByName(ctrlName) {
+        return document.getElementsByClassName(this._getControlFullName(ctrlName));       
+    }
+    
+    _makeDirty() { 
+        this._isDirty = true; 
+    }
+
+    bindToThis(fn, args = []) {
+        return fn.bind(this, ...args);
+    }
+
+    _render() { }
+
+    _getSelectedOption(selectCtrl) {
+        const value = selectCtrl.value;
+        
+        if (value)
+            return value;
+
+        const selectedOption = selectCtrl.selectedOptions.item(0);
+        return selectedOption ? selectedOption.value || selectedOption.innerText : null;
+    }
+    
+    _showStatus(text, isWarning = true) {
+        const statusSectionId = this._sectionId + '--status';
+
+        if (!this._statusLabel)
+            this._statusLabel = document.getElementById(statusSectionId);        
+
+        const labelEl = document.createElement('label');
+        labelEl.innerText = text;
+
+        const statusLabelClass = 'form-section-status--label';
+        labelEl.className = statusLabelClass;
+
+        if (isWarning)
+            labelEl.classList.add(statusLabelClass + '-warning');
+            
+        this._statusLabel.append(labelEl);
+    }
+
+    _hideStatus() {
+        if (this._statusLabel && this._statusLabel.innerHTML)
+            this._statusLabel.innerHTML = null;
+    }
+}
+
+
+class ShortcutSelector extends Control {
+    constructor(shortcuts) { 
+        super('shortcuts');
+
+        this._selector = document.getElementById(this._getControlFullName('select'));
+        this._selector.onchange = this.bindToThis(this._updateShortcutStatus);
+
+        //document.createElement('select').selectedOptions;
+
+        this._shortcuts = Object.assign({}, shortcuts);
+
+        this._keyTempCombination = {};
+        this._shortcut = {};
+
+        this._input = document.getElementById(this._getControlFullName('txt-input'));
+        this._input.onkeydown = this.bindToThis(this._registerKeyCombination);
+        this._input.onkeyup = this.bindToThis(this._registerKeyCombination);
+
+        this._applyBtn = document.getElementById(this._getControlFullName('btn-apply'));
+        this._applyBtn.onclick = this.bindToThis(this._applyKeyCombination);
+
+        this._clearBtn = document.getElementById(this._getControlFullName('btn-clear'));
+        this._clearBtn.onclick = this.bindToThis(this._clearKeyCombination);
+
+        // window.onkeydown = (event) => {
+        //     if (event.ctrlKey && event.code === 'KeyS') {
+        //         event.preventDefault();
+        //         return false;
+        //     }
+        // };
+
+        this._render();
+    }
+
+    _registerKeyCombination(event) {
+        if (event.type === 'keydown') {
+            const unifiedKey = Shortcut.extractKeyInfo(event);
+
+            if (!unifiedKey.code)
+                return false;
+
+            this._keyTempCombination[unifiedKey.code] = unifiedKey.name;
+            this._input.value = '';
+        }
+        else {
+            const shortcut = new Shortcut(this._keyTempCombination);
+
+            if (shortcut.name) {
+                this._input.value = shortcut.name;
+                this._shortcut = shortcut;
+
+                const commandId = this._getCommandInUse(this._shortcut.name);
+                if (commandId)
+                    this._showStatus(this._locale.getStringWithArgs(
+                        'preferences-duplicated-shortcut-warning', shortcut.name, 
+                        this._locale.getString(commandId)));
+                else
+                    this._hideStatus();
+
+                this._updateButtonsAvailability();
+            }
+
+            this._keyTempCombination = {};
+        }
+
+        return false;
+    }
+
+    _getCommandInUse(combinationName) {
+        for (const key in this._shortcuts) {
+            const combination = this._shortcuts[key];
+
+            if (combination && combination.name === combinationName)
+                return key;
+        }
+
+        return null; 
+    }
+
+    _applyKeyCombination() {
+        this._hideStatus();
+        
+        const selectedOperation = this._getSelectedOption(this._selector);       
+
+        if (!selectedOperation) {
+            this._showStatus(this._locale.getString('preferences-empty-shortcut-warning'));
+            return;
+        }
+
+        if (this._shortcut) {
+            const commandId = this._getCommandInUse(this._shortcut.name);
+        
+            if (commandId && !confirm(this._locale.getStringWithArgs(
+                'preferences-duplicated-shortcut-confirmation', this._shortcut.name, 
+                this._locale.getString(commandId))))
+                return;
+
+            this._shortcuts[commandId] = null;
+        }
+
+        this._shortcuts[selectedOperation] = this._shortcut;
+        this._updateButtonsAvailability();
+        
+        this._shortcut = null;
+    }
+
+    _updateButtonsAvailability() {
+        this._clearBtn.disabled = !this._input.value;
+
+        const selectedValue = this._getSelectedOption(this._selector);  
+        
+        const storedShortcutName = (this._shortcuts[selectedValue] || {}).name;
+        const shortcutName = (this._shortcut || {}).name;
+        this._applyBtn.disabled = storedShortcutName == shortcutName;
+    }
+
+    _clearKeyCombination() {
+        this._hideStatus();
+
+        this._input.value = null;
+        this._shortcut = null;
+
+        this._updateButtonsAvailability();
+    }
+
+    _updateShortcutStatus() {
+        this._shortcut = this._shortcuts[this._getSelectedOption(this._selector)];
+        this._input.value = (this._shortcut || {}).name || null;
+
+        this._hideStatus();
+        this._updateButtonsAvailability();
+    }
+
+    _render() {
+        const optionGroups = [];
+        
+        const markingOptions = OptionList.marking;
+        optionGroups.push(this._createOptionGroup('marking', markingOptions.mark, 
+            markingOptions.unmark));
+
+        const noteOptions = OptionList.noting;
+        optionGroups.push(this._createOptionGroup('notes', noteOptions.add, 
+            noteOptions.remove, noteOptions.navigation));
+            
+        const storageOptions = OptionList.storage;
+        optionGroups.push(this._createOptionGroup('storage', storageOptions.save, 
+            storageOptions.load));
+            
+        const otherOptions = OptionList.other;
+        optionGroups.push(this._createOptionGroup('other', otherOptions.preferences));
+
+        this._selector.append(...optionGroups);
+    
+        this._updateButtonsAvailability();
+    }
+
+    _createOptionGroup(groupToken, ...optionIds) {
+        const group = PageLocalisation.prepareLabelLocale(document.createElement('optgroup'), 
+            'preferences-shortcuts-group-' + groupToken);
+
+        group.append(...optionIds.map(id => {
+            const option = document.createElement('option');
+            option.value = id;
+
+            return PageLocalisation.prepareElemLocale(option, id);
+        }));
+        
+        return group;
+    }
+
+    get shortcuts() {
+        return this._isDirty ? this._shortcuts : null;
+    }
+}
+
+class BaseTable extends Control {
     constructor(tableSectionName, tableData) {
-        this._tableSectionId = 'form--section-' + tableSectionName;
-        const tableId = this._tableSectionId + '--table';
+        super(tableSectionName);
+
+        const tableId = this._sectionId + '--table';
 
         const table = document.getElementById(tableId);
         this._tableBody = table.tBodies[0];
         
-        this._tableData = tableData;  
+        this._tableData = tableData;
 
         this._sortTableData();
         
@@ -57,10 +300,7 @@ class BaseTable {
 
         this._BTN_PREFIX = 'btn-';
 
-        this._locale = new BrowserAPI().locale;
-        this._NONE_CATEGORY_NAME = this._locale.getString('preferences-none-category');
-
-        this._isDirty = false; 
+        this._NONE_CATEGORY_NAME = this._locale.getString(OptionList.storage.noneCategory);
 
         this._statusLabel = null;
 
@@ -74,7 +314,7 @@ class BaseTable {
                 ch.onclick = this.bindToThis(this._onHeaderCellClick);
             });
             
-        this._searchField = document.getElementById(this._tableSectionId + '--txt-search');
+        this._searchField = document.getElementById(this._sectionId + '--txt-search');
         this._searchField.onchange = this.bindToThis(this._onSearching);
 
         document.addEventListener('keydown', this.bindToThis(this._stopEnterClickButForSearch));
@@ -96,10 +336,6 @@ class BaseTable {
         this._tableData = this._isSortDescending() ? 
             items.sort((a, b) => b[sortField] > a[sortField] ? 1 : (b[sortField] < a[sortField] ? -1: 0)):
             items.sort((a, b) => a[sortField] > b[sortField] ? 1 : (a[sortField] < b[sortField] ? -1: 0));
-    }
-
-    bindToThis(fn, args = []) {
-        return fn.bind(this, ...args);
     }
 
     _onCheckAllClick(_event) {
@@ -179,8 +415,6 @@ class BaseTable {
         if (elem.innerHTML)
             elem.innerHTML = '';
     }
-    
-    _render() { }
 
     _createLabelCell(text, title = null) {
         const label = document.createElement('label');
@@ -225,18 +459,6 @@ class BaseTable {
         event.preventDefault();
         return false;
     }
-    
-    _getControlByName(ctrlName) {
-        return document.getElementById(this._getControlFullName(ctrlName));       
-    }
-    
-    _getControlFullName(ctrlName) {
-        return `${this._tableSectionId}--${ctrlName}`;
-    }
-
-    _getControlsByName(ctrlName) {
-        return document.getElementsByClassName(this._getControlFullName(ctrlName));       
-    }
 
     _removeRows() {
         const removedKeys = [];
@@ -251,33 +473,6 @@ class BaseTable {
     }
 
     _getRowKey() { }
-
-    _showStatus(text, isWarning = true) {
-        const statusSectionId = this._tableSectionId + '--status';
-
-        if (!this._statusLabel)
-            this._statusLabel = document.getElementById(statusSectionId);        
-
-        const labelEl = document.createElement('label');
-        labelEl.innerText = text;
-
-        const statusLabelClass = 'form-section-status--label';
-        labelEl.className = statusLabelClass;
-
-        if (isWarning)
-            labelEl.classList.add(statusLabelClass + '-warning');
-            
-        this._statusLabel.append(labelEl);
-    }
-
-    _hideStatus() {
-        if (this._statusLabel && this._statusLabel.innerHTML)
-            this._statusLabel.innerHTML = null;
-    }
-
-    _makeDirty() { 
-        this._isDirty = true; 
-    }
 
     _emitEvent(callback, arg) {
         if (!callback)
@@ -553,16 +748,6 @@ class PageTable extends BaseTable {
 
     _getCurrentCategory() {
         return this._getSelectedOption(this._categoryFilter) || this._NONE_CATEGORY_NAME;
-    }
-
-    _getSelectedOption(selectCtrl) {
-        const value = selectCtrl.value;
-        
-        if (value)
-            return value;
-
-        const selectedOption = selectCtrl.selectedOptions.item(0);
-        return selectedOption ? selectedOption.value || selectedOption.innerText : null;
     }
 
     _movePagesToCategory() {
@@ -875,6 +1060,9 @@ class Preferences {
     constructor() {
         this._initColourList();
 
+        // TODO: pass data from storage later on
+        const selector = new ShortcutSelector();
+
         this._pageTable = null;
         this._categories = null;
         this._defaultCategoryTitle = null;
@@ -978,7 +1166,7 @@ class Preferences {
     save() {
         return Promise.all([this._savePreferencesIntoStorage(),
             this._removePageInfoFromStorage(), this._updatePageCategories(),
-            this._updateCategoriesInStorage()]);
+            this._updateCategoriesInStorage(), this._updateShortcutsInStorage()]);
     }
     
     _savePreferencesIntoStorage() {
@@ -1015,6 +1203,10 @@ class Preferences {
 
         return this._categoryTable && (changedData = this._categoryTable.categories) ? 
             PageInfo.saveCategories(changedData) : Promise.resolve();
+    }
+
+    _updateShortcutsInStorage() {
+        return Promise.resolve();
     }
 
     get _shouldWarn() {

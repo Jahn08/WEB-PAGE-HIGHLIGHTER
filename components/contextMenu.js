@@ -1,16 +1,21 @@
 import { ButtonMenuItem, SeparatorMenuItem, RadioSubMenuItem } from './menuItem.js';
 import { MenuIcon } from './menuIcon.js';
 import { ColourList } from './colourList.js';
+import { OptionList } from './optionList.js';
 
 export class ContextMenu {
     constructor() {
-        this._markBtn = new ButtonMenuItem('mark');
-        this._unmarkBtn = new ButtonMenuItem('unmark');
+        const markingOptions = OptionList.marking;
+        this._markBtn = new ButtonMenuItem(markingOptions.mark);
+        this._unmarkBtn = new ButtonMenuItem(markingOptions.unmark);
 
-        this._addNoteBtn = new ButtonMenuItem('note-add');
-        this._removeNoteBtn = new ButtonMenuItem('note-remove');
+        const notingOptions = OptionList.noting;
+        this._addNoteBtn = new ButtonMenuItem(notingOptions.add);
+        this._removeNoteBtn = new ButtonMenuItem(notingOptions.remove);
 
-        this._defaultColourClass = 'marker-green';
+        const colours = ColourList.colours;
+
+        this._defaultColourClass = colours[0].token;
         this._curColourClass = this._defaultColourClass;
 
         this.onMarking = null;
@@ -48,13 +53,12 @@ export class ContextMenu {
             }
         };
 
-        const paletteMenuItemId = 'palette';
-        const setColourBtn = new ButtonMenuItem(paletteMenuItemId);
+        const setColourBtn = new ButtonMenuItem(markingOptions.setColour);
         setColourBtn.addToMenu(null, null, true);
 
-        this._colourRadios = new Array(ColourList.colours.length);
+        this._colourRadios = new Array(colours.length);
 
-        ArrayExtension.runForEach(ColourList.colours, (v, index) => {
+        ArrayExtension.runForEach(colours, (v, index) => {
             const radio = new RadioSubMenuItem(v.token, setColourBtn.id);
             this._colourRadios[index] = radio;
             
@@ -147,7 +151,7 @@ export class ContextMenu {
             }
         };
 
-        const noneCategoryName = this._browser.locale.getString('preferences-none-category');
+        const noneCategoryName = this._browser.locale.getString(OptionList.storage.noneCategory);
         this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn, noneCategoryName);
     }
 
@@ -295,7 +299,7 @@ class LinkMenu {
 
 class NoteNavigation extends LinkMenu {
     constructor(onGoingToNoteFn) {
-        super('note-navigation', onGoingToNoteFn);
+        super(OptionList.noting.navigation, onGoingToNoteFn);
 
         this._appendLinkMenuBtn();
     }
@@ -303,7 +307,7 @@ class NoteNavigation extends LinkMenu {
 
 class PageStorageMenu extends LinkMenu {
     constructor(onSavingFn, onLoadingFn, noneCategoryName) {
-        super('save-to', async (info) => {
+        super(OptionList.storage.saveTo, async (info) => {
             const title = (this._defaultCategory || {})[info.menuItemId] || info.title;
             await onSavingFn(title === this._noneCategoryName ? null: title);
         }, PageStorageMenu._PARENT_MENU_ID);
@@ -323,7 +327,7 @@ class PageStorageMenu extends LinkMenu {
         return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable();
     }
 
-    static get _PARENT_MENU_ID() { return 'storage'; }
+    static get _PARENT_MENU_ID() { return OptionList.storage.section; }
 
     _init(onSavingFn, onLoadingFn) {
         if (this._storageBtn)
@@ -335,14 +339,15 @@ class PageStorageMenu extends LinkMenu {
         this._storageBtn = new ButtonMenuItem(storageOptionId);
         this._storageBtn.addToMenu();
 
-        const saveIcon = new MenuIcon('save');
-        this._saveBtn = new ButtonMenuItem('save', storageOptionId);
+        this._storageOptions = OptionList.storage;
+        const saveIcon = new MenuIcon(this._storageOptions.save);
+        this._saveBtn = new ButtonMenuItem(this._storageOptions.save, storageOptionId);
         this._saveBtn.addToMenu(async () => await onSavingFn(), saveIcon);
 
         this._appendLinkMenuBtn();
 
-        this._loadBtn = new ButtonMenuItem('load', storageOptionId);
-        this._loadBtn.addToMenu(onLoadingFn, new MenuIcon('load'));
+        this._loadBtn = new ButtonMenuItem(this._storageOptions.load, storageOptionId);
+        this._loadBtn.addToMenu(onLoadingFn, new MenuIcon(this._storageOptions.load));
     }
 
     render(categoryTitles, defaultCategoryTitle) {
@@ -363,7 +368,7 @@ class PageStorageMenu extends LinkMenu {
             .map((title, index) => {
                 const isDefaultOption = title === defaultCategoryTitle;
 
-                const optionId = 'category-' + index;
+                const optionId = this._storageOptions.getCategoryId(index);
 
                 if (isDefaultOption)
                     this._defaultCategory = { [optionId]: defaultCategoryTitle };

@@ -24,12 +24,14 @@
         "ArrayExtension": "readonly",
         "BrowserAPI": "readonly",
         "LZWCompressor": "readonly",
-        "CategoryView": "readonly"
+        "CategoryView": "readonly",
+        "Shortcut": "readonly"
     },
     "rules": {
         "indent": [
             "error",
-            4
+            4,
+            { "SwitchCase": 1 }
         ],
         "linebreak-style": 0,
         "quotes": [
