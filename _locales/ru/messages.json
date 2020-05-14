@@ -313,29 +313,67 @@
         "description": "Label for a section for setting up shortcuts"
     },
 
-    "preferences_shortcut_group_marking": {
+    "preferences_shortcuts_group_marking": {
         "message": "Отметка",
         "description": "Label for an option group featuring shortcuts for marking"
     },
     
-    "preferences_shortcut_group_notes": {
+    "preferences_shortcuts_group_notes": {
         "message": "Заметки",
         "description": "Label for an option group featuring shortcuts for notes"
     },
 
-    "preferences_shortcut_group_storage": {
+    "preferences_shortcuts_group_storage": {
         "message": "Хранилище",
         "description": "Label for an option group featuring shortcuts for the stoarge commands"
     },
 
-    "preferences_shortcut_group_other": {
+    "preferences_shortcuts_group_other": {
         "message": "Другое",
         "description": "Label for an option group featuring shortcuts for other commands"
     },
 
-    "preferences_section_shortcuts_tooltip": {
+    "preferences_shortcuts_tooltip": {
         "message": "Используйте 2-3 клавиши, исключая Shift, Ctrl и PrintScreen",
         "description": "Title expanding on what key combinations can be used as shortcuts"
+    },
+
+    "preferences_shortcuts_apply": {
+        "message": "Применить",
+        "description": "Label for a button to apply a shortcut to a command"
+    },
+
+    "preferences_shortcuts_clear": {
+        "message": "Очистить",
+        "description": "Label for a button to clear a shortcut to a command"
+    },
+
+    "preferences_empty_shortcut_warning": {
+        "message": "Выберите команду, чтобы применить комбинацию клавиш"
+    },
+
+    "preferences_duplicated_shortcut_warning": {
+        "message": "Комбинация клавиш $shortcut$ уже используется для команды $command$",
+        "placeholders": {
+            "shortcut" : {
+                "content" : "$1"
+            },
+            "command": {
+                "content" : "$2"
+            }
+        }
+    },
+    
+    "preferences_duplicated_shortcut_confirmation": {
+        "message": "Комбинация клавиш $shortcut$ будет удалена для команды $command$. Продолжить?",
+        "placeholders": {
+            "shortcut" : {
+                "content" : "$1"
+            },
+            "command": {
+                "content" : "$2"
+            }
+        }
     },
 
     "import_inserted_page_count": {

@@ -34,8 +34,17 @@
                     <input type="text" class="locale" id="form--section-shortcuts--txt-input"
                         name="preferences-shortcuts-input" data-locale-attr="placeholder" 
                         placeholder="Press Key Combination" />
-                    <span id="preferences-section-shortcuts-tooltip" data-locale-attr="title" 
+                    <span id="preferences-shortcuts-tooltip" data-locale-attr="title" 
                         class="locale info-color">🛈</span>
+                    
+                    <div id="form--section-shortcuts--status" class="form-section-separated"></div>
+
+                    <div class="form-section-separated">
+                        <button class="locale" id="form--section-shortcuts--btn-apply"
+                            name="preferences-shortcuts-apply" type="button">Apply</button>
+                        <button class="locale" id="form--section-shortcuts--btn-clear"
+                            name="preferences-shortcuts-clear" type="button">Clear</button>
+                    </div>
                 </div>
             </div>
             <hr />
@@ -181,7 +190,7 @@
 		<script src="../content_scripts/arrayExtension.js"></script>
         <script src="../content_scripts/browserStorage.js"></script>
         <script src="../content_scripts/pageInfo.js"></script>
-        <script src="../content_scripts/keyboardUnifier.js"></script>
+        <script src="../content_scripts/shortcut.js"></script>
         <script type="module" src="../background_scripts/preferencesInitialisation.js"></script>
     </body>
 </html>

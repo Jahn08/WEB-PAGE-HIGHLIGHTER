@@ -42,11 +42,11 @@ describe('components/locale', function () {
     };
 
     it('should assure that the English locale has messages only in English', () =>
-        testLocaleSymbols(EN_LOCALE, /[^a-z0-9-\s:.,'$/]/gmi)
+        testLocaleSymbols(EN_LOCALE, /[^a-z0-9-\s:.,'$/?]/gmi)
     );
 
     it('should assure that the Russian locale has messages only in Russian', () =>
-        testLocaleSymbols(RU_LOCALE, /[^а-яё0-9-\s:.,'$/]/gmi)
+        testLocaleSymbols(RU_LOCALE, /[^а-яё0-9-\s:.,'$/?]/gmi)
     );
 
     const testViewLocalisation = viewName => 
