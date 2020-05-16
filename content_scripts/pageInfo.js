@@ -41,6 +41,7 @@ class Category {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 class CategoryView {
     constructor(categories = []) {
         this.categoryTitles = [];
@@ -137,6 +138,7 @@ class PageCategory {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 class PageInfo {
     constructor () {
         this._uri = this._computeUri();

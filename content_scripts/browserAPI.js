@@ -160,6 +160,7 @@ class LocaleAPI {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 class BrowserAPI {
     constructor() {
         this._isFirefox = true;

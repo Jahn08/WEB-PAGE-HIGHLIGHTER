@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class MenuMessageEvent {
     constructor () {
         this._markEvent = 'mark';

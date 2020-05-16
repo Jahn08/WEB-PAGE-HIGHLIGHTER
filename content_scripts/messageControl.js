@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class MessageControl {
     static get BLANKET_PARAGRAPH_ELEM_ID() {
         return MessageControl.BLANKET_ELEM_ID + '--paragraph';
@@ -72,4 +73,3 @@ class MessageControl {
         });
     }
 }
-

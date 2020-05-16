@@ -69,19 +69,19 @@ class Popup {
 
         try {
             switch(actionId) {
-            case 'tabs-saving':
-                await Popup._callOnActiveTab(tab => 
-                    Popup._browser.tabs.sendMessage(tab.id, MessageSender.startSaving()));
-                break;
-            case 'tabs-loading':
-                await Popup._callOnActiveTab(tab => 
-                    Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoading()));
-                break;
-            case 'tabs-preferences':
-                await Popup._browser.runtime.openOptionsPage();
-                break;
-            default:
-                return;
+                case 'tabs-saving':
+                    await Popup._callOnActiveTab(tab => 
+                        Popup._browser.tabs.sendMessage(tab.id, MessageSender.startSaving()));
+                    break;
+                case 'tabs-loading':
+                    await Popup._callOnActiveTab(tab => 
+                        Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoading()));
+                    break;
+                case 'tabs-preferences':
+                    await Popup._browser.runtime.openOptionsPage();
+                    break;
+                default:
+                    return;
             }
             
             Popup._browser.runtime.logLastError(msgPrefix);

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class RangeNote extends RangeBase {
     static createNote(text, targetNode = null) {
         const ranges = this._getSelectionRanges();

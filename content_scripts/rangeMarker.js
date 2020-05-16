@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class RangeMarker extends RangeBase {    
     static isNodeMarked(node) {
         return node && node.classList.contains(this.MARKER_CLASS_NAME);

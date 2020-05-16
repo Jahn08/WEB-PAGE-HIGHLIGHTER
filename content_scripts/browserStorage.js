@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class BrowserStorage {
     constructor(key) {
         this._storage = BrowserStorage._syncStorage;

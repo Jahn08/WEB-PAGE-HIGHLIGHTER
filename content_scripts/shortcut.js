@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class Shortcut {
     constructor(keyCombination) {
         const keys = Object.keys(keyCombination);
