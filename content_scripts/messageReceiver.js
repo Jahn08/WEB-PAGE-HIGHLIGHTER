@@ -81,6 +81,10 @@ class MessageReceiver {
     }
 
     get noteLink() { return this._noteLink; }
+
+    static emitEvent(eventName) {
+        return MessageReceiver.msgEvent.createEmitEvent(eventName);
+    }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

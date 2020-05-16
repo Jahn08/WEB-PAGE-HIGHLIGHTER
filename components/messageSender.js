@@ -79,4 +79,8 @@ export class MessageSender {
     static startGoingToNote(noteId) { 
         return msgEvent.createGoToNoteEvent({ id: noteId });
     }
+
+    shouldEmitEvent() { return msgEvent.isEmitEvent(this._msg); }
+    
+    get eventName() { return msgEvent.getEventName(this._msg); }
 }

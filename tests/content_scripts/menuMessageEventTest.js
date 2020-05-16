@@ -33,6 +33,8 @@ describe('content_script/menuMessageEvent', function () {
     
     const IS_ADD_CATEGORIES_EVENT_METHOD_NAME = 'isAddCategoriesEvent';
     const IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME = 'isSaveToCategoryEvent';
+
+    const IS_EMIT_EVENT_METHOD_NAME = 'isEmitEvent';
     
     const checkEventMethodNames = [IS_MARK_EVENT_METHOD_NAME, IS_CHANGE_COLOUR_EVENT_METHOD_NAME, 
         IS_SET_MARK_READY_EVENT_METHOD_NAME, IS_SET_UNMARK_READY_EVENT_METHOD_NAME,
@@ -42,7 +44,8 @@ describe('content_script/menuMessageEvent', function () {
         IS_SET_ADD_NOTE_READY_EVENT_METHOD_NAME, IS_ADD_NOTE_EVENT_METHOD_NAME,
         IS_SET_REMOVE_NOTE_READY_EVENT_METHOD_NAME, IS_REMOVE_NOTE_EVENT_METHOD_NAME,
         IS_ADD_NOTE_LINKS_EVENT_METHOD_NAME, IS_GO_TO_NOTE_EVENT_METHOD_NAME,
-        IS_ADD_CATEGORIES_EVENT_METHOD_NAME, IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME
+        IS_ADD_CATEGORIES_EVENT_METHOD_NAME, IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME,
+        IS_EMIT_EVENT_METHOD_NAME
     ];
 
     const createEventWithArgAndCheckIt = function (createEventMethodName, checkEventMethodName, 
@@ -125,6 +128,17 @@ describe('content_script/menuMessageEvent', function () {
 
     createTestForCheckingEventWithCategories('createSaveToCategoryEvent', 
         IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME);
+    
+    const createTestForCheckingEventWithEventName = (createEventMethodName, checkEventMethodName) => {
+        describe('#' + createEventMethodName, () =>
+            it('should build a certain type of an event passing an event name', () => {
+                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
+                    'getEventName', Randomiser.getRandomNumberUpToMax());
+            })
+        );
+    };
+
+    createTestForCheckingEventWithEventName('createEmitEvent', IS_EMIT_EVENT_METHOD_NAME);
 
     const createEventAndCheckIt = (createEventMethodName, checkEventMethodName) => {
         const msgEvent = new MenuMessageEvent();
@@ -134,7 +148,7 @@ describe('content_script/menuMessageEvent', function () {
         checkEventMethodNames.forEach(m =>
             assert.strictEqual(msgEvent[m](event), m === checkEventMethodName));
     };
-    
+
     const createTestForCheckingEvent = (createEventMethodName, checkEventMethodName) => {
         describe('#' + createEventMethodName, () =>
             it('should build a certain type of an event', () => 
@@ -180,6 +194,9 @@ describe('content_script/menuMessageEvent', function () {
             const unmarkReadyEvent = msgEvent.createUnmarkReadyEvent(); 
             const unmarkEvent = msgEvent.createUnmarkEvent();
 
+            const eventName = Randomiser.getRandomNumberUpToMax();
+            const emitEvent = msgEvent.createEmitEvent(eventName);
+
             const saveReadyEvent = msgEvent.createSaveReadyEvent(); 
             const saveEvent = msgEvent.createSaveEvent();
 
@@ -197,7 +214,7 @@ describe('content_script/menuMessageEvent', function () {
 
             const _events = msgEvent.combineEvents([changeColourEvent, markEvent, 
                 unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
-                addNoteReadyEvent, addNoteEvent, addNoteLinksEvent, addCategoriesEvent]);
+                addNoteReadyEvent, addNoteEvent, addNoteLinksEvent, addCategoriesEvent, emitEvent]);
             
             assert(!msgEvent.isSetMarkReadyEvent(_events));
             assert(!msgEvent.isLoadEvent(_events));
@@ -219,13 +236,15 @@ describe('content_script/menuMessageEvent', function () {
             assert(msgEvent.isAddNoteEvent(_events));
             assert(msgEvent.isAddNoteLinksEvent(_events));
             assert(msgEvent.isAddCategoriesEvent(_events));
+            assert(msgEvent.isEmitEvent(_events));
 
+            assert.deepStrictEqual(msgEvent.getEventName(_events), eventName);
             assert.deepStrictEqual(msgEvent.getMarkColourClass(_events), markColourClass);
-            assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
-
-            assert.deepStrictEqual(msgEvent.getCategories(_events), expectedCategoryTitles);
             assert.strictEqual(msgEvent.getDefaultCategory(_events), 
                 expectedDefaultCategoryTitle);
+
+            assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
+            assert.deepStrictEqual(msgEvent.getCategories(_events), expectedCategoryTitles);
         });
     });
 });

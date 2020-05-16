@@ -1,45 +1,90 @@
 // eslint-disable-next-line no-unused-vars
+class OptionList {
+    static get storage() {
+        return {
+            section: 'storage',
+            load: 'load',
+            save: 'save',
+            saveTo: 'save-to',
+            noneCategory: 'preferences-none-category',
+            getCategoryId: (index) => 'category-' + index
+        };
+    }
+
+    static get marking() {
+        return {
+            mark: 'mark',
+            unmark: 'unmark',
+            setColour: 'palette'
+        };
+    }
+
+    static get noting() {
+        return {
+            add: 'note-add',
+            remove: 'note-remove',
+            navigation: 'note-navigation'
+        };
+    }
+
+    static get other() {
+        return {
+            preferences: 'preferences'
+        };
+    }
+}
+
+// eslint-disable-next-line no-unused-vars
 class MenuMessageEvent {
     constructor () {
-        this._markEvent = 'mark';
+        const markingOptions = OptionList.marking;
+        this._markEvent = markingOptions.mark;
         this._markReadyEvent = 'setMarkReady';
-        this._changeColourEvent = 'changeColour';
+        this._changeColourEvent = markingOptions.setColour;
 
         this._unmarkReadyEvent = 'setUnmarkReady';
-        this._unmarkEvent = 'unmark';
+        this._unmarkEvent = markingOptions.unmark;
 
+        const storageOptions = OptionList.storage;
         this._saveReadyEvent = 'setSaveReady';
-        this._saveEvent = 'save';
+        this._saveEvent = storageOptions.save;
 
         this._addCategoriesEvent = 'addCategories';
-        this._saveToCategoryEvent = 'saveTo';
+        this._saveToCategoryEvent = storageOptions.saveTo;
 
         this._loadReadyEvent = 'setLoadReady';
-        this._loadEvent = 'load';
+        this._loadEvent = storageOptions.load;
 
         this._loadPreferencesEvent = 'loadPreferences';
         this._loadTabStateEvent = 'loadTabState';
 
+        const noteOptions = OptionList.noting;
         this._addNoteReadyEvent = 'setAddNoteReady';
-        this._addNoteEvent = 'addNote';
+        this._addNoteEvent = noteOptions.add;
 
         this._removeNoteReadyEvent = 'setRemoveNoteReady';
-        this._removeNoteEvent = 'removeNote';
+        this._removeNoteEvent = noteOptions.remove;
 
         this._addNoteLinksEvent = 'addNoteLinks';
-        this._goToNoteEvent = 'goToNote';
+        this._goToNoteEvent = noteOptions.navigation;
+
+        this._emitEvent = 'emit';
+
+        this._props = {
+            noteLink: 'noteLink',
+            category: 'category',
+            defaultCategory: 'defaultCategory',
+            colourClass: 'colourClass',
+            eventName: 'eventName'
+        };
     }
 
     createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
 
     _createEventWithColour(eventName, colourClass) {
         return this._createEventWithArgs(eventName, {
-            [this._COLOUR_CLASS_FIELD]: colourClass
+            [this._props.colourClass]: colourClass
         });
-    }
-
-    get _COLOUR_CLASS_FIELD() {
-        return 'colourClass';
     }
 
     _createEventWithArgs(eventName, options) {
@@ -63,25 +108,14 @@ class MenuMessageEvent {
         return validMsgs.reduce((p, c) => {
             p.event.push(...c.event);
 
-            this._combineProps(p, c, this._COLOUR_CLASS_FIELD);
-            this._combineProps(p, c, this._NOTE_LINK_FIELD);
-            this._combineProps(p, c, this._CATEGORY_FIELD);
-            this._combineProps(p, c, this._DEFAULT_CATEGORY_FIELD);
+            this._combineProps(p, c, this._props.colourClass);
+            this._combineProps(p, c, this._props.noteLink);
+            this._combineProps(p, c, this._props.category);
+            this._combineProps(p, c, this._props.defaultCategory);
+            this._combineProps(p, c, this._props.eventName);
             
             return p;
         }, { event: [] });
-    }
-
-    get _NOTE_LINK_FIELD() {
-        return 'noteLink';
-    }
-    
-    get _CATEGORY_FIELD() {
-        return 'category';
-    }
-
-    get _DEFAULT_CATEGORY_FIELD() {
-        return 'defaultCategory';
     }
 
     _combineProps(targetObj, sourceObj, propName) {
@@ -93,7 +127,7 @@ class MenuMessageEvent {
 
     _isEvent(msg, eventName) { return msg && ArrayExtension.contains(msg.event, eventName); }
 
-    getMarkColourClass(msg) { return msg ? msg[this._COLOUR_CLASS_FIELD]: null; }
+    getMarkColourClass(msg) { return msg ? msg[this._props.colourClass]: null; }
 
     createMarkReadyEvent() { return this._createEvent(this._markReadyEvent); }
     isSetMarkReadyEvent(msg) { return this._isEvent(msg, this._markReadyEvent); }
@@ -122,16 +156,16 @@ class MenuMessageEvent {
 
     _createEventWithCategories(eventName, categoryTitles, defaultCategoryTitle = null) {
         return this._createEventWithArgs(eventName, { 
-            [this._CATEGORY_FIELD]: categoryTitles,
-            [this._DEFAULT_CATEGORY_FIELD]: defaultCategoryTitle
+            [this._props.category]: categoryTitles,
+            [this._props.defaultCategory]: defaultCategoryTitle
         });
     }
 
     isAddCategoriesEvent(msg) { return this._isEvent(msg, this._addCategoriesEvent); }
 
-    getCategories(msg) { return msg ? msg[this._CATEGORY_FIELD]: []; }
+    getCategories(msg) { return msg ? msg[this._props.category]: []; }
     
-    getDefaultCategory(msg) { return msg ? msg[this._DEFAULT_CATEGORY_FIELD]: null; }
+    getDefaultCategory(msg) { return msg ? msg[this._props.defaultCategory]: null; }
 
     createSaveToCategoryEvent(categoryTitle) {
         return this._createEventWithCategories(this._saveToCategoryEvent, [categoryTitle]); 
@@ -167,15 +201,21 @@ class MenuMessageEvent {
     }
     
     _createEventWithNoteLink(eventName, noteLinks) {
-        return this._createEventWithArgs(eventName, { [this._NOTE_LINK_FIELD]: noteLinks });
+        return this._createEventWithArgs(eventName, { [this._props.noteLink]: noteLinks });
     }
 
     isAddNoteLinksEvent(msg) { return this._isEvent(msg, this._addNoteLinksEvent); }
 
-    getNoteLinks(msg) { return msg ? msg[this._NOTE_LINK_FIELD]: []; }
+    getNoteLinks(msg) { return msg ? msg[this._props.noteLink]: []; }
 
     createGoToNoteEvent(noteLink) {
         return this._createEventWithNoteLink(this._goToNoteEvent, [noteLink]); 
     }
     isGoToNoteEvent(msg) { return this._isEvent(msg, this._goToNoteEvent); }
+
+    createEmitEvent(eventName) {
+        return this._createEventWithArgs(this._emitEvent, { [this._props.eventName]: eventName }); 
+    }
+    isEmitEvent(msg) { return this._isEvent(msg, this._emitEvent); }
+    getEventName(msg) { return msg ? msg[this._props.eventName]: null; }
 }
