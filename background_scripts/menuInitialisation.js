@@ -82,7 +82,12 @@ browserApi.runtime.onMessage(async msg => {
             menu.enableRemovingNoteBtn();
         else
             menu.disableRemovingNoteBtn();
-        
+            
+        if (sender.shouldEmitEvent()) {
+            menu.emitItemClick(sender.eventName);
+            return true;
+        }
+
         if (sender.shouldAddNoteLinks())
             menu.renderNoteLinks(sender.noteLinks);
 

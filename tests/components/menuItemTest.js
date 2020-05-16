@@ -85,24 +85,24 @@ describe('components/RadioSubMenuItem', () => {
 
 describe('components/ButtonMenuItem', () => {
 
+    const buildRandomBtnOptions = (withParent = true, onclickFn = null) => {
+        return { 
+            id: Randomiser.getRandomNumberUpToMax(), 
+            title: Randomiser.getRandomNumberUpToMax(),
+            onclick: (onclickFn ? onclickFn: () => {}),
+            icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()), 
+            parentId: (withParent ? Randomiser.getRandomNumberUpToMax(): null)
+        };
+    };
+
+    const buildBtnWithOptions = btnOptions => {
+        const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.parentId, btnOptions.title);
+        newBtn.addToMenu(btnOptions.onclick, btnOptions.icon);
+
+        return newBtn;
+    };
+
     describe('#addToMenu', () => {
-        
-        const buildRandomBtnOptions = (withParent = true, onclickFn = null) => {
-            return { 
-                id: Randomiser.getRandomNumberUpToMax(), 
-                title: Randomiser.getRandomNumberUpToMax(),
-                onclick: (onclickFn ? onclickFn: () => {}),
-                icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()), 
-                parentId: (withParent ? Randomiser.getRandomNumberUpToMax(): null)
-            };
-        };
-
-        const buildBtnWithOptions = btnOptions => {
-            const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.parentId, btnOptions.title);
-            newBtn.addToMenu(btnOptions.onclick, btnOptions.icon);
-
-            return newBtn;
-        };
 
         it('should add button items with options to a menu', () => {
             const browserMocked = initMockedBrowser();
@@ -177,6 +177,29 @@ describe('components/ButtonMenuItem', () => {
             
             assert.strictEqual(browserMocked.menuOptions.length, residualBtnIds.length);
             assert(browserMocked.menuOptions.every(b => residualBtnIds.includes(b.id)));
+        });
+    });
+
+    describe('#emitClick', () => {
+
+        it('should emit a click for an enabled button item', () => {
+            let isClicked = false;
+            const btn = buildBtnWithOptions(buildRandomBtnOptions(true, () => isClicked = true));
+            btn.enable();
+            assert(btn.isEnabled);
+
+            btn.emitClick();
+            assert(isClicked);
+        });
+        
+        it('should not emit a click for a disabled button item', () => {
+            let isClicked = false;
+            const btn = buildBtnWithOptions(buildRandomBtnOptions(true, () => isClicked = true));
+            btn.disable();
+            assert(!btn.isEnabled);
+
+            btn.emitClick();
+            assert(!isClicked);
         });
     });
 });

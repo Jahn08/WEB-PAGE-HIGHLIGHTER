@@ -18,6 +18,13 @@ describe('components/ContextMenu', () => {
     
     const RADIO_TYPE = RadioSubMenuItem.TYPE;
 
+    const mockBrowserWithTab = () => {
+        const browserMocked = mockBrowser();
+        browserMocked.setBrowserTab();
+
+        return browserMocked;
+    };
+
     describe('#constructor', () => {
         it('should create a proper number of items in a context menu', () => {
             const browserMocked = mockBrowser();
@@ -35,9 +42,7 @@ describe('components/ContextMenu', () => {
 
         const testClickingOnMenuItem = (menuCallbackNameToTest, filterMenuItemCallback, 
             onClickedCallback = null) => {
-            const browserMocked = mockBrowser();
-            browserMocked.setBrowserTab();
-            
+            const browserMocked = mockBrowserWithTab();
             const menu = new ContextMenu();
 
             menu[menuCallbackNameToTest] = 
@@ -323,8 +328,7 @@ describe('components/ContextMenu', () => {
             });
         
         it('should return an original title of a default category when clicking', () => {
-            const browserMocked = mockBrowser();
-            browserMocked.setBrowserTab();
+            const browserMocked = mockBrowserWithTab();
 
             const contextMenu = new ContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
@@ -419,6 +423,71 @@ describe('components/ContextMenu', () => {
             assert(!menuHasAvailableNoteLinks([noteLinkToRemove], browserMocked.menuOptions));
             assert(menuHasAvailableNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), 
                 browserMocked.menuOptions));
+        });
+    });
+
+    describe('#emitItemClick', () => {
+
+        it('should emit a click for some enabled button menu items', () => {
+            mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            contextMenu.enableAddingNoteBtn();
+            contextMenu.enableMarkingBtn();
+
+            return new Promise((resolve, reject) => {
+                let markingClicked = false;
+                contextMenu.onMarking = () => markingClicked = true;
+                contextMenu.emitItemClick(OptionList.marking.mark);
+
+                contextMenu.onAddingNote = () => {
+                    if (markingClicked)
+                        resolve();
+                    else
+                        reject(new Error('The marking event has not been emitted'));
+                };
+                contextMenu.emitItemClick(OptionList.noting.add);
+            });
+        });
+
+        it('should not emit a click for a disabled button menu item', () => {
+            mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            contextMenu.enableAddingNoteBtn();
+            contextMenu.disableMarkingBtn();
+
+            return new Promise((resolve, reject) => {
+                let markingClicked = false;
+                contextMenu.onMarking = () => markingClicked = true;
+                contextMenu.emitItemClick(OptionList.marking.mark);
+
+                contextMenu.onAddingNote = () => {
+                    if (markingClicked)
+                        reject(new Error('The marking event should\'t have been emitted'));
+                    else
+                        resolve();
+                };
+                contextMenu.emitItemClick(OptionList.noting.add);
+            });
+        });
+
+        it('should not emit a click for a non-emittable button menu item', () => {
+            mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            contextMenu.enableAddingNoteBtn();
+
+            return new Promise((resolve, reject) => {
+                let changeColourClicked = false;
+                contextMenu.onChangingColour = () => changeColourClicked = true;
+                contextMenu.emitItemClick(OptionList.marking.setColour);
+
+                contextMenu.onAddingNote = () => {
+                    if (changeColourClicked)
+                        reject(new Error('The marking event should\'t have been emitted'));
+                    else
+                        resolve();
+                };
+                contextMenu.emitItemClick(OptionList.noting.add);
+            });
         });
     });
 });

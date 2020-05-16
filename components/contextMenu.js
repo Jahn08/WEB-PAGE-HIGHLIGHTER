@@ -94,6 +94,8 @@ export class ContextMenu {
         this.onSaving = null;
         this.onLoading = null;
         this._initStorageOptions();
+
+        this._emittableButtons = null;
     }
 
     async _passTabInfoToCallback(callback, options = {}) {
@@ -206,6 +208,20 @@ export class ContextMenu {
 
     renderPageCategories(categoryTitles, defaultCategoryTitle) { 
         this._storageMenu.render(categoryTitles, defaultCategoryTitle); 
+    }
+
+    emitItemClick(itemId) {
+        if (!this._emittableButtons) {
+            this._emittableButtons = [this._markBtn, this._unmarkBtn, this._addNoteBtn, 
+                this._removeNoteBtn];
+
+            this._emittableButtons.push(...this._storageMenu.emittableButtons);
+        }
+            
+        const btn = this._emittableButtons.find(b => b.id === itemId && b.isEnabled);
+
+        if (btn)
+            btn.emitClick();
     }
 }
 
@@ -322,6 +338,8 @@ class PageStorageMenu extends LinkMenu {
         this._init(onSavingFn, onLoadingFn);
     }
 
+    get emittableButtons() { return [this._saveBtn, this._loadBtn]; }
+    
     _isMenuLinkBtnAvailable() {
         return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable();
     }

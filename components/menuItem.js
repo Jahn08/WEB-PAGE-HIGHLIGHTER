@@ -107,6 +107,8 @@ class ButtonMenuItem extends BaseMenuItem {
         this._enabled = false;
 
         this._parentId = parentId;
+
+        this._onclick = null;
     }
 
     static get TYPE() { return 'normal'; }
@@ -132,10 +134,12 @@ class ButtonMenuItem extends BaseMenuItem {
     }
 
     _addToMenu(onclick, icon) {
+        this._onclick = info => onclick(Object.assign(info, { title: this._title }));
+
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
-            onclick: info => onclick(Object.assign(info, { title: this._title })),
+            onclick: this._onclick,
             title: this._title,
             enabled: this._enabled
         });
@@ -151,6 +155,11 @@ class ButtonMenuItem extends BaseMenuItem {
         this._title = newTitile;
         
         return true;
+    }
+
+    emitClick() {
+        if (this.isEnabled && this._onclick)
+            this._onclick({});
     }
 }
 
