@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 class OptionList {
     static get storage() {
         return {
@@ -32,5 +33,3 @@ class OptionList {
         };
     }
 }
-
-export { OptionList };

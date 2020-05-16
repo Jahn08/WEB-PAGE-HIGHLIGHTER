@@ -1,6 +1,5 @@
 import { ColourList } from './colourList.js';
 import { PageLocalisation } from './pageLocalisation.js';
-import { OptionList } from './optionList.js';
 
 class PagePackageError extends Error {
     constructor(type) {
@@ -193,7 +192,7 @@ class ShortcutSelector extends Control {
 
         if (this._shortcut) {
             const commandId = this._getCommandInUse(this._shortcut.name);
-        
+
             if (commandId && !confirm(this._locale.getStringWithArgs(
                 'preferences-duplicated-shortcut-confirmation', this._shortcut.name, 
                 this._locale.getString(commandId))))
@@ -253,10 +252,10 @@ class ShortcutSelector extends Control {
         const storageOptions = OptionList.storage;
         optionGroups.push(this._createOptionGroup('storage', storageOptions.save, 
             storageOptions.load));
-            
+
         const otherOptions = OptionList.other;
         optionGroups.push(this._createOptionGroup('other', otherOptions.preferences));
-
+    
         this._selector.append(...optionGroups);
     
         this._updateButtonsAvailability();

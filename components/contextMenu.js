@@ -1,7 +1,6 @@
 import { ButtonMenuItem, SeparatorMenuItem, RadioSubMenuItem } from './menuItem.js';
 import { MenuIcon } from './menuIcon.js';
 import { ColourList } from './colourList.js';
-import { OptionList } from './optionList.js';
 
 export class ContextMenu {
     constructor() {

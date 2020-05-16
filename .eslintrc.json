@@ -25,7 +25,8 @@
         "BrowserAPI": "readonly",
         "LZWCompressor": "readonly",
         "CategoryView": "readonly",
-        "Shortcut": "readonly"
+        "Shortcut": "readonly",
+        "OptionList": "readonly"
     },
     "rules": {
         "indent": [
