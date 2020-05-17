@@ -1,5 +1,6 @@
 import { Randomiser } from './randomiser.js';
 import { PageInfoHelper } from './pageInfoHelper.js';
+import { Preferences } from '../../components/preferences.js';
 
 export class StorageHelper {
     static saveRandomObjects(numberOfItems = 3) {
@@ -72,5 +73,22 @@ export class StorageHelper {
             return new BrowserStorage('pageCategories').set(categoryInfo.pageCategories)
                 .then(() => { return categoryInfo.pageCategories; });
         });
+    }
+
+    static saveTestShortcuts(numberOfCombinations = 3) {
+        const markingOptions = OptionList.marking;
+        const noteOptions = OptionList.noting;
+        const storageOptions = OptionList.storage;
+        const shortcuts = [markingOptions.mark, markingOptions.unmark, noteOptions.add, 
+            noteOptions.remove, storageOptions.save, storageOptions.load].reduce((prev, cur, i) => {
+            if (i < numberOfCombinations)
+                prev[cur] = {
+                    key: Randomiser.getRandomString()
+                };
+            return prev;
+        }, {});
+
+        return new BrowserStorage(Preferences.STORAGE_KEY).set({ shortcuts })
+            .then(() => { return shortcuts; });
     }
 }

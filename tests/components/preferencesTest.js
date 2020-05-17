@@ -6,7 +6,8 @@ import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
 import { StorageHelper } from '../tools/storageHelper.js';
-import { PagePreferencesDOM, CategoryPreferencesDOM } from '../tools/preferencesDOM.js';
+import { PagePreferencesDOM, CategoryPreferencesDOM, ShortcutPreferencesDOM } 
+    from '../tools/preferencesDOM.js';
 
 describe('components/preferences', function () {
     this.timeout(0);
@@ -58,6 +59,7 @@ describe('components/preferences', function () {
 
     const pageTableDOM = new PagePreferencesDOM();
     const categoryTableDOM = new CategoryPreferencesDOM();
+    const shortcutDom = new ShortcutPreferencesDOM();
 
     const assertSuccessfulLoading = () => {
         assertFormValues();
@@ -96,12 +98,35 @@ describe('components/preferences', function () {
                     expectedValues.shouldLoad));
         });
 
+        it('should load saved shortcuts from the storage and update the form', () => {
+            return Expectation.expectResolution(StorageHelper.saveTestShortcuts(),
+                async expectedShortcuts => {
+                    await new Preferences().load();
+                    
+                    const commandSelector = shortcutDom.getCommandSelector();
+                    const renderedOptions = [...commandSelector.options];
+
+                    const commandInput = shortcutDom.getCommandInput();
+
+                    assert(Object.keys(expectedShortcuts).every(sk => 
+                        renderedOptions.find(op => op.value === sk) !== null));
+
+                    renderedOptions.forEach(op => {
+                        commandSelector.value = op.value;
+                        shortcutDom.dispatchChangeEvent(commandSelector);
+
+                        const shortcut = expectedShortcuts[op.value];
+                        assert.strictEqual(commandInput.value, shortcut ? shortcut.key : '');
+                    });
+                });
+        });
+
         it('should load saved page data from the storage and update the table', () => {
             return Expectation.expectResolution(StorageHelper.saveTestPageInfo(),
                 expectedPageData => new Preferences().load()
                     .then(() => pageTableDOM.assertTableValues(expectedPageData)));
         });
-        
+
         it('should load saved page categories from the storage and update the table', () => {
             return Expectation.expectResolution(StorageHelper.saveTestCategories(),
                 expectedCategoryData => new Preferences().load()
@@ -111,7 +136,7 @@ describe('components/preferences', function () {
 
     describe('#save', function () {
 
-        it('should save the preferences form values in the storage', () => {
+        it('should save the preferences form values to the storage', () => {
             const preferences = new Preferences();
             
             const colourRadios = getColourRadios();
@@ -134,6 +159,42 @@ describe('components/preferences', function () {
                         assert.strictEqual(loadedForm.shouldLoad, expectedLoadCheck);
                         assert.strictEqual(loadedForm.shouldWarn, expectedWarnCheck);
                         assert.strictEqual(loadedForm.defaultColourToken, expectedColourRadio.value);
+                    });
+                });
+        });
+
+        it('should save shortcuts to the storage', () => {
+            const preferences = new Preferences();
+            
+            const commandSelector = shortcutDom.getCommandSelector();
+            const commandOptions = commandSelector.options;
+            const firstCommand = commandSelector.item(0);
+            const secondCommand = commandSelector.item(commandOptions.length - 1);
+
+            const commandInput = shortcutDom.getCommandInput();
+            shortcutDom.dispatchAndApplyCombination(commandInput);
+            
+            const firstCombination = commandInput.value;
+
+            commandSelector.value = secondCommand.value;
+            shortcutDom.dispatchChangeEvent(commandSelector);
+            shortcutDom.dispatchAndApplyCombination(commandInput);
+
+            const secondCombination = commandInput.value;
+
+            return Expectation.expectResolution(preferences.save(), 
+                () => {
+                    return Preferences.loadFromStorage().then(loadedForm => {
+                        assert(loadedForm);
+                        assert(loadedForm.shortcuts);
+
+                        const firstShortcut = loadedForm.shortcuts[firstCommand.value];
+                        assert(firstShortcut);
+                        assert.strictEqual(firstShortcut.key, firstCombination);
+
+                        const secondShortcut = loadedForm.shortcuts[secondCommand.value];
+                        assert(secondShortcut);
+                        assert.strictEqual(secondShortcut.key, secondCombination);
                     });
                 });
         });

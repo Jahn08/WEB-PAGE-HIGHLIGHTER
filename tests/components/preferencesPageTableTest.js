@@ -194,7 +194,7 @@ describe('components/preferences/pageTable', function () {
 
                     const savedCategories = await PageInfo.getAllSavedCategories();
 
-                    const filterCategories = PagePreferencesDOM.getSelectTextOptions(
+                    const filterCategories = PagePreferencesDOM.getSelectOptionTexts(
                         pageTableDOM.getCategoryFilterList())
                         .filter(c => !CategoryPreferencesDOM.isNoneCategory(c));
                     assert.strictEqual(filterCategories.length, savedCategories.length);
@@ -544,7 +544,7 @@ describe('components/preferences/pageTable', function () {
             
             categoryTableDOM.assertTableValues(categories);
 
-            const categoryOptions = PagePreferencesDOM.getSelectTextOptions(
+            const categoryOptions = PagePreferencesDOM.getSelectOptionTexts(
                 pageTableDOM.getCategoryFilterList());
             assert(categories.every(c => categoryOptions.includes(c.title)));
 

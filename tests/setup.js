@@ -5,7 +5,8 @@ before(done => {
         .then(() => Promise.all([
             EnvLoader.loadClass('./content_scripts/browserStorage.js', 'BrowserStorage'), 
             EnvLoader.loadClass('./content_scripts/arrayExtension.js', 'ArrayExtension'),
-            EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'OptionList')])
+            EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'OptionList'),
+            EnvLoader.loadClass('./content_scripts/shortcut.js', 'Shortcut')])
             .then(() => done()))
         .catch(done);
 });

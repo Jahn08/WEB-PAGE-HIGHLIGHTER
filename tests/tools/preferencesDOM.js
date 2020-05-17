@@ -4,25 +4,17 @@ import { EnvLoader } from './envLoader.js';
 
 class PreferencesDOM {
     constructor(sectionName) {
-        this._sectionPage = 'form--section-' +  sectionName;
-
-        this._HEADER_CLASS_NAME = 'form--table--cell-header';
+        this._sectionId = 'form--section-' +  sectionName;
 
         this._STATUS_WARNING_CLASS = 'form-section-status--label-warning';
     }
 
     get sectionId() {
-        return this._sectionPage;
+        return this._sectionId;
     }
 
-    getTableBody() {
-        const table = document.getElementById(this._sectionPage + '--table');
-        assert(table);
-
-        assert(table.tHead);
-        assert.strictEqual(table.tBodies.length, 1);
-
-        return table.tBodies[0];
+    _getSectionControl(ctrlName) {
+        return document.getElementById(`${this._sectionId}--${ctrlName}`);
     }
 
     dispatchClickEvent(clickableCtrl) {
@@ -43,8 +35,114 @@ class PreferencesDOM {
             new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     }
 
+    _getButton(name) {
+        return this._getSectionControl(`btn-${name}`);
+    }
+
+    assertStatusIsEmpty() { this._getAssertedStatusLabel(0); }
+
+    assertStatusIsMessage(expectedSubstring) {
+        return this._assertStatus(false, expectedSubstring);
+    }
+
+    _assertStatus(isWarning, expectedSubstring) {
+        const statusLabel = this._getAssertedStatusLabel(1);
+
+        const msg = statusLabel.innerText;
+        assert(msg);
+        assert.strictEqual(statusLabel.classList.contains(this._STATUS_WARNING_CLASS), 
+            isWarning);
+
+        if (expectedSubstring)
+            assert(msg.toUpperCase().includes(expectedSubstring.toUpperCase()));
+
+        return msg;
+    }
+
+    assertStatusIsWarning(expectedSubstring = null) {
+        return this._assertStatus(true, expectedSubstring);
+    }
+
+    _getAssertedStatusLabel(expectedMsgNumber = 1) { 
+        const statusSection = this._getStatusSection();
+        assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
+
+        return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
+    }
+
+    _getStatusSection() {
+        return document.getElementById(this.sectionId + '--status');
+    }
+
+    hasStatusMessages() {
+        return this._getStatusSection().childNodes.length > 0;
+    }
+
+    static loadDomModel() {
+        return EnvLoader.loadDomModel('./views/preferences.html');
+    }
+
+    static getSelectOptionTexts(selectCtrl) {
+        return [...selectCtrl.options].map(op => op.innerText);
+    }
+
+    static getSelectOptionValues(selectCtrl) {
+        return [...selectCtrl.options].map(op => op.value);
+    }
+}
+
+class ShortcutPreferencesDOM extends PreferencesDOM {
+    constructor() {
+        super('shortcuts');
+    }
+
+    getCommandSelector() {
+        return this._getSectionControl('select');
+    }
+
+    getCommandInput() {
+        return this._getSectionControl('txt-input');
+    }
+
+    getApplyButton() {
+        return this._getButton('apply');
+    }
+
+    dispatchAndApplyCombination(control, ...eventOptions) {
+        const firstKeyOptions = eventOptions[0];
+        this.dispatchKeyDownEvent(control, firstKeyOptions);
+        this.dispatchKeyDownEvent(control, eventOptions[1]);
+
+        this.dispatchKeyUpEvent(control, firstKeyOptions);
+        this.dispatchClickEvent(this.getApplyButton());
+    }
+
+    dispatchKeyDownEvent(control, eventOptions = null) {
+        this._dispatchKeyboardEvent(control, 'keydown', eventOptions);
+    }
+
+    _dispatchKeyboardEvent(clickableCtrl, eventName, eventOptions = null) {
+        const event = new KeyboardEvent(eventName, eventOptions || { 
+            key: Randomiser.getRandomString(),
+            code: Randomiser.getRandomString()
+        });
+        this._dispatchEvent(clickableCtrl, event);
+    }
+
+    dispatchKeyUpEvent(control, eventOptions = null) {
+        this._dispatchKeyboardEvent(control, 'keyup', eventOptions);
+    }
+}
+
+class PreferencesTableDOM extends PreferencesDOM {
+    constructor(sectionName) {
+        super(sectionName);
+
+        this._HEADER_CLASS_NAME = 'form--table--cell-header';
+    }
+
     getTableHeaders() {
-        return [...document.getElementById(this._sectionPage)
+        return [...document.getElementById(this._sectionId)
             .getElementsByClassName(this._HEADER_CLASS_NAME)];
     }
 
@@ -60,8 +158,14 @@ class PreferencesDOM {
         return this._checkSortDirection(header, false);
     }
 
-    getSearchField() {
-        return document.getElementById(this._sectionPage + '--txt-search');
+    getTableBody() {
+        const table = this._getSectionControl('table');
+        assert(table);
+
+        assert(table.tHead);
+        assert.strictEqual(table.tBodies.length, 1);
+
+        return table.tBodies[0];
     }
 
     tickAllRowChecks() {
@@ -72,7 +176,7 @@ class PreferencesDOM {
     }
 
     _getAllRowsCheck() {
-        return document.getElementById(this._sectionPage + '--table--check-all');
+        return this._getSectionControl('table--check-all');
     }
 
     assertTableValues(expectedRowValues = []) {
@@ -125,65 +229,18 @@ class PreferencesDOM {
 
     _getRowKey() { }
 
+    getSearchField() {
+        return this._getSectionControl('txt-search');
+    }
+    
     getRemovingBtn() {
         return this._getButton('remove');
     }
-
-    _getButton(name) {
-        return document.getElementById(`${this._sectionPage}--btn-${name}`);
-    }
-
-    assertStatusIsEmpty() { this._getAssertedStatusLabel(0); }
-
-    assertStatusIsMessage(expectedSubstring) {
-        return this._assertStatus(false, expectedSubstring);
-    }
-
-    _assertStatus(isWarning, expectedSubstring) {
-        const statusLabel = this._getAssertedStatusLabel(1);
-
-        const msg = statusLabel.innerText;
-        assert(msg);
-        assert.strictEqual(statusLabel.classList.contains(this._STATUS_WARNING_CLASS), 
-            isWarning);
-
-        if (expectedSubstring)
-            assert(msg.toUpperCase().includes(expectedSubstring.toUpperCase()));
-
-        return msg;
-    }
-
-    assertStatusIsWarning(expectedSubstring = null) {
-        return this._assertStatus(true, expectedSubstring);
-    }
-
-    _getAssertedStatusLabel(expectedMsgNumber = 1) { 
-        const statusSection = this._getStatusSection();
-        assert.strictEqual(statusSection.childNodes.length, expectedMsgNumber);
-
-        return expectedMsgNumber ? statusSection.childNodes.item(0) : null;
-    }
-
-    _getStatusSection() {
-        return document.getElementById(this.sectionId + '--status');
-    }
-
-    hasStatusMessages() {
-        return this._getStatusSection().childNodes.length > 0;
-    }
-
-    static loadDomModel() {
-        return EnvLoader.loadDomModel('./views/preferences.html');
-    }
 }
 
-class PagePreferencesDOM extends PreferencesDOM {
+class PagePreferencesDOM extends PreferencesTableDOM {
     constructor() {
         super('page');
-    }
-
-    static getSelectTextOptions(selectCtrl) {
-        return [...selectCtrl.options].map(op => op.innerText);
     }
 
     _assertRowValues(rows, expectedRowValues) {
@@ -203,11 +260,11 @@ class PagePreferencesDOM extends PreferencesDOM {
     }
 
     getCategoryFilterList() {
-        return document.getElementById(this._sectionPage + '--filter-category');
+        return this._getSectionControl('filter-category');
     }
     
     getCategorySelectorList() {
-        return document.getElementById(this._sectionPage + '--select-category');
+        return this._getSectionControl('select-category');
     }
 
     getRelocatingBtn() {
@@ -215,7 +272,7 @@ class PagePreferencesDOM extends PreferencesDOM {
     }
 }
 
-class CategoryPreferencesDOM extends PreferencesDOM {
+class CategoryPreferencesDOM extends PreferencesTableDOM {
     constructor() {
         super('category');
     }
@@ -248,8 +305,8 @@ class CategoryPreferencesDOM extends PreferencesDOM {
     }
 
     getNewCategoryTitleTxt() {
-        return document.getElementById(this._sectionPage + '--txt-title');
+        return this._getSectionControl('txt-title');
     }
 }
 
-export { PagePreferencesDOM, CategoryPreferencesDOM };
+export { PagePreferencesDOM, CategoryPreferencesDOM, ShortcutPreferencesDOM };

@@ -177,7 +177,7 @@ describe('components/preferences/categoryTable', function () {
                     const newItems = addCategories(3);
 
                     const assertListContainsCategories = list => {
-                        const options = PagePreferencesDOM.getSelectTextOptions(list);
+                        const options = PagePreferencesDOM.getSelectOptionTexts(list);
 
                         assert(newItems.every(i => options.includes(i)));
                     };
@@ -304,7 +304,7 @@ describe('components/preferences/categoryTable', function () {
                     const removedTitles = await preferencesTester.removeFirstTwoRows();
 
                     const assertListHasNoCategories = list => {
-                        const options = PagePreferencesDOM.getSelectTextOptions(list);
+                        const options = PagePreferencesDOM.getSelectOptionTexts(list);
 
                         assert(removedTitles.every(i => !options.includes(i)));
                     };
