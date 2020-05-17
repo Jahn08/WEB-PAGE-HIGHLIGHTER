@@ -108,7 +108,7 @@ class ShortcutSelector extends Control {
 
         this._shortcuts = {};
 
-        this._keyTempCombination = {};
+        this._keyTempCombination = [];
         this._shortcut = {};
 
         this._input = document.getElementById(this._getControlFullName('txt-input'));
@@ -141,23 +141,25 @@ class ShortcutSelector extends Control {
         if (event.type === 'keydown') {
             const unifiedKey = Shortcut.extractKeyInfo(event);
 
-            if (!unifiedKey.code)
+            if (!unifiedKey)
                 return false;
 
-            this._keyTempCombination[unifiedKey.code] = unifiedKey.name;
+            this._keyTempCombination.push(unifiedKey);
             this._input.value = '';
         }
         else {
             const shortcut = new Shortcut(this._keyTempCombination);
 
-            if (shortcut.name) {
-                this._input.value = shortcut.name;
+            if (shortcut.key) {
+                this._input.value = shortcut.key;
                 this._shortcut = shortcut;
 
-                const commandId = this._getCommandInUse(this._shortcut.name);
+                const selectedCommandId = this._getSelectedOption(this._selector);
+                const commandId = shortcut.getCommandsInUse(this._shortcuts)
+                    .find(c => c !== selectedCommandId);
                 if (commandId)
                     this._showStatus(this._locale.getStringWithArgs(
-                        'preferences-duplicated-shortcut-warning', shortcut.name, 
+                        'preferences-duplicated-shortcut-warning', shortcut.key, 
                         this._locale.getString(commandId)));
                 else
                     this._hideStatus();
@@ -165,45 +167,37 @@ class ShortcutSelector extends Control {
                 this._updateButtonsAvailability();
             }
 
-            this._keyTempCombination = {};
+            this._keyTempCombination = [];
         }
 
         return false;
     }
 
-    _getCommandInUse(combinationName) {
-        for (const key in this._shortcuts) {
-            const combination = this._shortcuts[key];
-
-            if (combination && combination.name === combinationName)
-                return key;
-        }
-
-        return null; 
-    }
-
     _applyKeyCombination() {
-        const selectedOperation = this._getSelectedOption(this._selector);       
+        const selectedCommandId = this._getSelectedOption(this._selector);       
 
-        if (!selectedOperation) {
+        if (!selectedCommandId) {
             this._showStatus(this._locale.getString('preferences-empty-shortcut-warning'));
             return;
         }
 
         if (this._shortcut) {
-            const commandId = this._getCommandInUse(this._shortcut.name);
+            const commandId = Shortcut.getCommandsInUse(this._shortcuts, this._shortcut.key)
+                .find(c => c !== selectedCommandId);
 
-            if (commandId && !confirm(this._locale.getStringWithArgs(
-                'preferences-duplicated-shortcut-confirmation', this._shortcut.name, 
-                this._locale.getString(commandId))))
-                return;
+            if (commandId) {
+                if (!confirm(this._locale.getStringWithArgs(
+                    'preferences-duplicated-shortcut-confirmation', this._shortcut.key, 
+                    this._locale.getString(commandId))))
+                    return;
 
-            this._shortcuts[commandId] = null;
+                this._shortcuts[commandId] = null;
+            }
         }
 
         this._hideStatus();
 
-        this._shortcuts[selectedOperation] = this._shortcut;
+        this._shortcuts[selectedCommandId] = this._shortcut;
         this._updateButtonsAvailability();
         
         this._shortcut = null;
@@ -216,9 +210,9 @@ class ShortcutSelector extends Control {
 
         const selectedValue = this._getSelectedOption(this._selector);  
         
-        const storedShortcutName = (this._shortcuts[selectedValue] || {}).name;
-        const shortcutName = (this._shortcut || {}).name;
-        this._applyBtn.disabled = storedShortcutName == shortcutName;
+        const storedShortcutKey = (this._shortcuts[selectedValue] || {}).key;
+        const shortcutKey = (this._shortcut || {}).key;
+        this._applyBtn.disabled = storedShortcutKey == shortcutKey;
     }
 
     _clearKeyCombination() {
@@ -232,7 +226,7 @@ class ShortcutSelector extends Control {
 
     _updateShortcutStatus() {
         this._shortcut = this._shortcuts[this._getSelectedOption(this._selector)];
-        this._input.value = (this._shortcut || {}).name || null;
+        this._input.value = (this._shortcut || {}).key || null;
 
         this._hideStatus();
         this._updateButtonsAvailability();
@@ -247,15 +241,12 @@ class ShortcutSelector extends Control {
 
         const noteOptions = OptionList.noting;
         optionGroups.push(this._createOptionGroup('notes', noteOptions.add, 
-            noteOptions.remove, noteOptions.navigation));
+            noteOptions.remove));
             
         const storageOptions = OptionList.storage;
         optionGroups.push(this._createOptionGroup('storage', storageOptions.save, 
             storageOptions.load));
 
-        const otherOptions = OptionList.other;
-        optionGroups.push(this._createOptionGroup('other', otherOptions.preferences));
-    
         this._selector.append(...optionGroups);
     
         this._updateButtonsAvailability();

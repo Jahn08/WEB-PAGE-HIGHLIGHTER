@@ -14,8 +14,36 @@ void function() {
             this._defaultCategoryTitle;
             this._initUnloadEvent();
 
-            document.addEventListener('mousedown', this._setUpContextMenu.bind(this));
+            document.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
+            this._tempFocusedNode;
+
+            this._keyTempCombination = [];
+            this._shortcuts = {};
+            this._keyDownEventName = 'keydown';
         }
+
+        _watchShortcuts(event) {
+            if (event.type === this._keyDownEventName) {
+                const unifiedKey = Shortcut.extractKeyInfo(event);
+    
+                if (!unifiedKey)
+                    return false;
+    
+                this._keyTempCombination.push(unifiedKey);
+            }
+            else {
+                const shortcut = new Shortcut(this._keyTempCombination);
+                const commandIds = shortcut.getCommandsInUse(this._shortcuts);
+
+                if (commandIds.length)
+                    this._setUpContextMenu(this._tempFocusedNode, 
+                        MessageReceiver.emitEvent(commandIds[0]));
+    
+                this._keyTempCombination = [];
+            }
+    
+            return false;
+        }    
 
         async _initUnloadEvent() {
             const beforeUnloadEvent = 'beforeunload';
@@ -38,6 +66,14 @@ void function() {
                     if (preferences.shouldWarn === false)
                         window.removeEventListener(beforeUnloadEvent, eventCallback);
         
+                    if (preferences.shortcuts && Object.keys(preferences.shortcuts).length) {
+                        this._shortcuts = preferences.shortcuts;
+                        const callback = this._watchShortcuts.bind(this);
+
+                        window.addEventListener(this._keyDownEventName, callback);
+                        window.addEventListener('keyup', callback);
+                    }
+
                     this._canLoad = await this._pageInfo.canLoad();
         
                     if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
@@ -80,21 +116,24 @@ void function() {
             }
         }
 
-        _setUpContextMenu(event) {
-            const errorPrefix = 'An error while trying to set menu visibility: ';
+        _setUpContextMenuOnClick(event) {
+            this._tempFocusedNode = event.target;
 
+            if (event.button !== 2)
+                return true;
+
+            this._setUpContextMenu(event.target);
+        }
+
+        _setUpContextMenu(focusedNode, msg = null) {
+            const errorPrefix = 'An error while trying to set menu visibility: ';
+            
             try {
-                if (event.button !== 2)
-                    return true;
-    
-                let msg;
                 const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
-    
-                const focusedNode = event.target;
-    
+
                 if (curColourClasses)
                 {
-                    msg = MessageReceiver.combineEvents(MessageReceiver.setMarkMenuReady(), 
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setMarkMenuReady(), 
                         MessageReceiver.setAddNoteMenuReady());
     
                     if (curColourClasses.length)
@@ -102,7 +141,7 @@ void function() {
                 }
                 else if (RangeMarker.isNodeMarked(focusedNode)) 
                 {
-                    msg = MessageReceiver.combineEvents(MessageReceiver.setUnmarkMenuReady(), 
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady(), 
                         MessageReceiver.setAddNoteMenuReady());
                     this._activeNode = focusedNode;
                 }
