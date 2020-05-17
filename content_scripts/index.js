@@ -26,10 +26,11 @@ void function() {
             if (event.type === this._keyDownEventName) {
                 const unifiedKey = Shortcut.extractKeyInfo(event);
     
-                if (!unifiedKey)
-                    return false;
-    
-                this._keyTempCombination.push(unifiedKey);
+                if (unifiedKey) {
+                    this._keyTempCombination.push(unifiedKey);
+
+                    event.preventDefault();
+                }
             }
             else {
                 const shortcut = new Shortcut(this._keyTempCombination);
@@ -41,8 +42,6 @@ void function() {
     
                 this._keyTempCombination = [];
             }
-    
-            return false;
         }    
 
         async _initUnloadEvent() {
