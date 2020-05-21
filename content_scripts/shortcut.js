@@ -2,7 +2,7 @@
 class Shortcut {
     constructor(keyCombination) {
         const keysLength = keyCombination.length;
-        this.key = keysLength > 1 && keysLength < 3 ?
+        this.key = keysLength > 1 && keysLength < 4 ?
             this._sortItems(Object.values(keyCombination)).join('-') : '';
     }
 
@@ -28,7 +28,7 @@ class Shortcut {
         for (const key in shortcutCommands) {
             const combination = shortcutCommands[key];
 
-            if (combination && combination.key === shortcutKey)
+            if (combination && combination.key.toUpperCase() === shortcutKey)
                 commands.push(key);
         }
 
