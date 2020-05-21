@@ -98,7 +98,7 @@ describe('components/preferences', function () {
                     expectedValues.shouldLoad));
         });
 
-        it('should load saved shortcuts from the storage and update the form', () => {
+        it('should load shortcuts from the storage and update the form', () => {
             return Expectation.expectResolution(StorageHelper.saveTestShortcuts(),
                 async expectedShortcuts => {
                     await new Preferences().load();
@@ -107,9 +107,6 @@ describe('components/preferences', function () {
                     const renderedOptions = [...commandSelector.options];
 
                     const commandInput = shortcutDom.getCommandInput();
-
-                    assert(Object.keys(expectedShortcuts).every(sk => 
-                        renderedOptions.find(op => op.value === sk) !== null));
 
                     renderedOptions.forEach(op => {
                         commandSelector.value = op.value;
@@ -171,14 +168,14 @@ describe('components/preferences', function () {
             const firstCommand = commandSelector.item(0);
             const secondCommand = commandSelector.item(commandOptions.length - 1);
 
-            const commandInput = shortcutDom.getCommandInput();
-            shortcutDom.dispatchAndApplyCombination(commandInput);
+            shortcutDom.dispatchCombination(true);
             
+            const commandInput = shortcutDom.getCommandInput();
             const firstCombination = commandInput.value;
 
             commandSelector.value = secondCommand.value;
             shortcutDom.dispatchChangeEvent(commandSelector);
-            shortcutDom.dispatchAndApplyCombination(commandInput);
+            shortcutDom.dispatchCombination(true);
 
             const secondCombination = commandInput.value;
 

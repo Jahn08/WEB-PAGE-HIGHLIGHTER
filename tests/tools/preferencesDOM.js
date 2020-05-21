@@ -108,13 +108,46 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
         return this._getButton('apply');
     }
 
-    dispatchAndApplyCombination(control, ...eventOptions) {
-        const firstKeyOptions = eventOptions[0];
-        this.dispatchKeyDownEvent(control, firstKeyOptions);
-        this.dispatchKeyDownEvent(control, eventOptions[1]);
+    getClearButton() {
+        return this._getButton('clear');
+    }
 
-        this.dispatchKeyUpEvent(control, firstKeyOptions);
-        this.dispatchClickEvent(this.getApplyButton());
+    createKeyboardEventOptions(shortcut) {
+        return shortcut.split('-').map(k => this.createKeyboardEventOption(k, k));
+    }
+
+    createKeyboardEventOptionWithShift() {
+        const option = this.createKeyboardEventOption();
+        option.shiftKey = true;
+
+        return option;
+    }
+
+    createKeyboardEventOption(key = null, code = null) {
+        return { 
+            key: key || Randomiser.getRandomString(),
+            code: code || Randomiser.getRandomString()
+        };
+    }
+
+    createKeyboardEventOptionWithCtrl() {
+        const option = this.createKeyboardEventOption();
+        option.ctrlKey = true;
+
+        return option;
+    }
+
+    dispatchCombination(shouldApply, ...eventOptions) {
+        const control = this.getCommandInput();
+
+        if (!eventOptions.length)
+            eventOptions = [this.createKeyboardEventOption(), this.createKeyboardEventOption()];
+
+        eventOptions.forEach(op => this.dispatchKeyDownEvent(control, op));
+        this.dispatchKeyUpEvent(control, eventOptions[0]);
+
+        if (shouldApply)
+            this.dispatchClickEvent(this.getApplyButton());
     }
 
     dispatchKeyDownEvent(control, eventOptions = null) {
@@ -122,10 +155,7 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
     }
 
     _dispatchKeyboardEvent(clickableCtrl, eventName, eventOptions = null) {
-        const event = new KeyboardEvent(eventName, eventOptions || { 
-            key: Randomiser.getRandomString(),
-            code: Randomiser.getRandomString()
-        });
+        const event = new KeyboardEvent(eventName, eventOptions || this.createKeyboardEventOption());
         this._dispatchEvent(clickableCtrl, event);
     }
 

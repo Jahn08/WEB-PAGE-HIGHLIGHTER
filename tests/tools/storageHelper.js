@@ -83,7 +83,7 @@ export class StorageHelper {
             noteOptions.remove, storageOptions.save, storageOptions.load].reduce((prev, cur, i) => {
             if (i < numberOfCombinations)
                 prev[cur] = {
-                    key: Randomiser.getRandomString()
+                    key: `${Randomiser.getRandomString()}-${Randomiser.getRandomString()}`
                 };
             return prev;
         }, {});
