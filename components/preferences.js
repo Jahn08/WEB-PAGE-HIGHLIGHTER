@@ -121,13 +121,6 @@ class ShortcutSelector extends Control {
         this._clearBtn = document.getElementById(this._getControlFullName('btn-clear'));
         this._clearBtn.onclick = this.bindToThis(this._clearKeyCombination);
 
-        // window.onkeydown = (event) => {
-        //     if (event.ctrlKey && event.code === 'KeyS') {
-        //         event.preventDefault();
-        //         return false;
-        //     }
-        // };
-
         this._render();
     }
 
@@ -141,11 +134,12 @@ class ShortcutSelector extends Control {
         if (event.type === 'keydown') {
             const unifiedKey = Shortcut.extractKeyInfo(event);
 
-            if (!unifiedKey)
+            if (!unifiedKey) {
+                this._keyTempCombination.length = 0;
                 return false;
+            }
 
             this._keyTempCombination.push(unifiedKey);
-            this._input.value = '';
         }
         else {
             const shortcut = new Shortcut(this._keyTempCombination);
@@ -201,8 +195,6 @@ class ShortcutSelector extends Control {
         this._updateButtonsAvailability();
         
         this._shortcut = null;
-
-        this._makeDirty();
     }
 
     _updateButtonsAvailability() {
@@ -267,7 +259,7 @@ class ShortcutSelector extends Control {
     }
 
     get shortcuts() {
-        return this._isDirty ? this._shortcuts : null;
+        return this._shortcuts;
     }
 }
 
