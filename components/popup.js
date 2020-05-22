@@ -1,10 +1,13 @@
-import { MessageSender } from '../components/messageSender.js';
-import { PageLocalisation } from '../components/pageLocalisation.js';
+import { MessageSender } from './messageSender.js';
+import { PageLocalisation } from './pageLocalisation.js';
+import { Preferences } from './preferences.js';
 
 class Popup {
     static initialise() {
         if (Popup._initialised)
             return;
+
+        this._renderShortcuts();
 
         this._browser = new BrowserAPI();
 
@@ -90,6 +93,28 @@ class Popup {
         catch (ex) {
             console.error(`${msgPrefix}: ${ex.toString()}`);
         }
+    }
+
+    static async _renderShortcuts() {
+        const preferences = (await Preferences.loadFromStorage()) || {};
+        
+        if (preferences.shortcuts) {
+            const storageOptions = OptionList.storage;
+
+            this._setShortcut(preferences.shortcuts, storageOptions.save);
+            this._setShortcut(preferences.shortcuts, storageOptions.load);
+        }
+    }
+
+    static _setShortcut(shortcuts, cmdId) {
+        const shortcut = (shortcuts[cmdId] || {}).key;
+
+        let menuItemEl;
+        let shortcutEl;
+
+        if (shortcut && (menuItemEl = document.getElementById(cmdId)) && 
+            (shortcutEl = menuItemEl.nextElementSibling))
+            shortcutEl.innerHTML = shortcut;
     }
 }
 
