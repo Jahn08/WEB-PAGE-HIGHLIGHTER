@@ -129,7 +129,7 @@ describe('components/preferences/pageTable', function () {
                     });
                 }));
 
-        it('should enter shortcuts the number of 3 keys', () => 
+        it('should enter a shortcut with the number of 3 keys showing a message for applying', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     await new Preferences().load();
@@ -140,9 +140,10 @@ describe('components/preferences/pageTable', function () {
                     shortcutDom.dispatchCombination(false, ...shortcutOptions);
                     assert.strictEqual(shortcutDom.getCommandInput().value.toUpperCase(), 
                         shortcutOptions.map(op => op.code).join('-').toUpperCase());
+                    shortcutDom.assertStatusIsMessage('appl');
                 }));
 
-        it('should enter an allowed shortcut several times witout warnings', () => 
+        it('should enter an allowed shortcut several times without any warnings and messages', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     new Preferences().load();
@@ -182,8 +183,9 @@ describe('components/preferences/pageTable', function () {
                 async () => {
                     const dataInUse = await enterShortcutInUse(new Preferences());
                     
-                    shortcutDom.assertStatusIsWarning(dataInUse.commandInUse);
-                    shortcutDom.assertStatusIsWarning(dataInUse.shortcutInUse);
+                    const numberOfMessages = 2;
+                    shortcutDom.assertStatusIsWarning(dataInUse.commandInUse, numberOfMessages);
+                    shortcutDom.assertStatusIsWarning(dataInUse.shortcutInUse, numberOfMessages);
                 }));
     });
 

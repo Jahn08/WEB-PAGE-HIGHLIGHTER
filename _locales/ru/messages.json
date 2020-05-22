@@ -348,6 +348,10 @@
         "description": "Label for a button to clear a shortcut to a command"
     },
 
+    "preferences_applying_shortcut_info": {
+        "message": "Новая комбинация должна быть применена перед сохранением"
+    },
+
     "preferences_empty_shortcut_warning": {
         "message": "Выберите команду, чтобы применить комбинацию клавиш"
     },

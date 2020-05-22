@@ -347,6 +347,10 @@
         "message": "Clear",
         "description": "Label for a button to clear a shortcut to a command"
     },
+    
+    "preferences_applying_shortcut_info": {
+        "message": "A new shortcut must be applied before saving"
+    },
 
     "preferences_empty_shortcut_warning": {
         "message": "Choose a command to apply the shortcut"

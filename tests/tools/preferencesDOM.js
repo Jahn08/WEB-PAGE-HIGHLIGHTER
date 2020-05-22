@@ -45,8 +45,8 @@ class PreferencesDOM {
         return this._assertStatus(false, expectedSubstring);
     }
 
-    _assertStatus(isWarning, expectedSubstring) {
-        const statusLabel = this._getAssertedStatusLabel(1);
+    _assertStatus(isWarning, expectedSubstring, expectedMsgNumber = 1) {
+        const statusLabel = this._getAssertedStatusLabel(expectedMsgNumber);
 
         const msg = statusLabel.innerText;
         assert(msg);
@@ -59,8 +59,8 @@ class PreferencesDOM {
         return msg;
     }
 
-    assertStatusIsWarning(expectedSubstring = null) {
-        return this._assertStatus(true, expectedSubstring);
+    assertStatusIsWarning(expectedSubstring = null, expectedMsgNumber = 1) {
+        return this._assertStatus(true, expectedSubstring, expectedMsgNumber);
     }
 
     _getAssertedStatusLabel(expectedMsgNumber = 1) { 

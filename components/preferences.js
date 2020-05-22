@@ -145,6 +145,8 @@ class ShortcutSelector extends Control {
             const shortcut = new Shortcut(this._keyTempCombination);
 
             if (shortcut.key) {
+                this._hideStatus();
+
                 this._input.value = shortcut.key;
                 this._shortcut = shortcut;
 
@@ -155,9 +157,9 @@ class ShortcutSelector extends Control {
                     this._showStatus(this._locale.getStringWithArgs(
                         'preferences-duplicated-shortcut-warning', shortcut.key, 
                         this._locale.getString(commandId)));
-                else
-                    this._hideStatus();
 
+                this._showStatus(this._locale.getString('preferences-applying-shortcut-info'), 
+                    false);
                 this._updateButtonsAvailability();
             }
 
