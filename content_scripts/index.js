@@ -26,11 +26,8 @@ void function() {
             if (event.type === this._keyDownEventName) {
                 const unifiedKey = Shortcut.extractKeyInfo(event);
     
-                if (unifiedKey) {
+                if (unifiedKey)
                     this._keyTempCombination.push(unifiedKey);
-
-                    event.preventDefault();
-                }
             }
             else {
                 const shortcut = new Shortcut(this._keyTempCombination);
@@ -41,6 +38,7 @@ void function() {
                         MessageReceiver.emitEvent(commandIds[0]));
     
                 this._keyTempCombination = [];
+                event.preventDefault();
             }
         }    
 
