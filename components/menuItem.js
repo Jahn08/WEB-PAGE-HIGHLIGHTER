@@ -23,7 +23,7 @@ class BaseMenuItem {
                 options.contexts = ['all'];
 
             if (!options.title)
-                options.title = this._browser.locale.getString(this._id);
+                options.title = this._compileTitle(this._browser.locale.getString(this._id));
 
             this._browser.menus.create(options);
 
@@ -31,6 +31,10 @@ class BaseMenuItem {
         }
 
         return false;
+    }
+
+    _compileTitle(title) {
+        return title;
     }
 
     _removeFromMenu() {
@@ -109,6 +113,8 @@ class ButtonMenuItem extends BaseMenuItem {
         this._parentId = parentId;
 
         this._onclick = null;
+
+        this._shortcut = null;
     }
 
     static get TYPE() { return 'normal'; }
@@ -151,9 +157,30 @@ class ButtonMenuItem extends BaseMenuItem {
         if (this._title === newTitile)
             return false;
 
-        this.updateItem({ title: newTitile });
         this._title = newTitile;
+        this.updateItem({ title: this._compileTitle() });
         
+        return true;
+    }
+
+    _compileTitle(title = this._title) { 
+        if (!this._title) {
+            if (!title)
+                return null;
+
+            this._title = title;
+        }
+
+        return title + (this._shortcut ? ` (${this._shortcut})` : '');
+    }
+
+    renderShortcut(shortcut) {
+        if (this._shortcut === shortcut)
+            return false;
+
+        this._shortcut = shortcut;
+        this.updateItem({ title: this._compileTitle() });
+
         return true;
     }
 

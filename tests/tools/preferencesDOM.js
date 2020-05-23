@@ -162,6 +162,31 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
     dispatchKeyUpEvent(control, eventOptions = null) {
         this._dispatchKeyboardEvent(control, 'keyup', eventOptions);
     }
+
+    static createTestShortcuts(numberOfCombinations = 3) {
+        const markingOptions = OptionList.marking;
+        const noteOptions = OptionList.noting;
+        const storageOptions = OptionList.storage;
+        const shortcuts = [markingOptions.mark, markingOptions.unmark, noteOptions.add, 
+            noteOptions.remove, storageOptions.save, storageOptions.load].reduce((prev, cur, i) => {
+            if (i < numberOfCombinations)
+                prev[cur] = {
+                    key: `${Randomiser.getRandomString()}-${Randomiser.getRandomString()}`
+                };
+            return prev;
+        }, {});
+
+        return shortcuts;
+    }
+    
+    static assertTitleHasNoShortcut(title) {
+        assert(!title.includes('('));
+        assert(!title.includes(')'));
+    }
+
+    static assertTitleHasShortcut(title, shortcut) {
+        assert(title.endsWith(`(${shortcut.key})`));
+    }
 }
 
 class PreferencesTableDOM extends PreferencesDOM {

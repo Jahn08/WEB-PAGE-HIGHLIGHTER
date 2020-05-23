@@ -196,6 +196,24 @@ export class ContextMenu {
                 c => c.uncheck());
     }
 
+    renderShortcuts(shortcuts) {
+        shortcuts = shortcuts || {};
+
+        ArrayExtension.runForEach(this._getEmittableButtons(), btn =>
+            btn.renderShortcut((shortcuts[btn.id] || {}).key));
+    }
+
+    _getEmittableButtons() {
+        if (!this._emittableButtons) {
+            this._emittableButtons = [this._markBtn, this._unmarkBtn, this._addNoteBtn, 
+                this._removeNoteBtn];
+
+            this._emittableButtons.push(...this._storageMenu.emittableButtons);
+        }
+
+        return this._emittableButtons;
+    }
+
     renderNoteLinks(noteLinks) { this._noteNavigation.render(noteLinks); }
 
     appendNoteLink(noteId, noteText) {
@@ -211,14 +229,7 @@ export class ContextMenu {
     }
 
     emitItemClick(itemId) {
-        if (!this._emittableButtons) {
-            this._emittableButtons = [this._markBtn, this._unmarkBtn, this._addNoteBtn, 
-                this._removeNoteBtn];
-
-            this._emittableButtons.push(...this._storageMenu.emittableButtons);
-        }
-            
-        const btn = this._emittableButtons.find(b => b.id === itemId && b.isEnabled);
+        const btn = this._getEmittableButtons().find(b => b.id === itemId && b.isEnabled);
 
         if (btn)
             btn.emitClick();

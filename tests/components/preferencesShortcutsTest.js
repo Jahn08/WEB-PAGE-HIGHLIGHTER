@@ -18,7 +18,7 @@ describe('components/preferences/pageTable', function () {
     });
     
     before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
+        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
             .then(() => done()).catch(done);
     });
 

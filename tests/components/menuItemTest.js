@@ -1,8 +1,9 @@
 import assert from 'assert';
 import { SeparatorMenuItem, ButtonMenuItem, RadioSubMenuItem } from '../../components/menuItem.js';
-import { Randomiser } from '../tools/randomiser';
-import { BrowserMocked } from '../tools/browserMocked';
-import { MenuIcon } from '../../components/menuIcon';
+import { Randomiser } from '../tools/randomiser.js';
+import { ShortcutPreferencesDOM } from '../tools/preferencesDOM.js';
+import { BrowserMocked } from '../tools/browserMocked.js';
+import { MenuIcon } from '../../components/menuIcon.js';
 
 const initMockedBrowser = () => {
     const browserMocked = new BrowserMocked();
@@ -88,7 +89,7 @@ describe('components/ButtonMenuItem', () => {
     const buildRandomBtnOptions = (withParent = true, onclickFn = null) => {
         return { 
             id: Randomiser.getRandomNumberUpToMax(), 
-            title: Randomiser.getRandomNumberUpToMax(),
+            title: Randomiser.getRandomString(),
             onclick: (onclickFn ? onclickFn: () => {}),
             icon: new MenuIcon(Randomiser.getRandomNumberUpToMax()), 
             parentId: (withParent ? Randomiser.getRandomNumberUpToMax(): null)
@@ -200,6 +201,43 @@ describe('components/ButtonMenuItem', () => {
 
             btn.emitClick();
             assert(!isClicked);
+        });
+    });
+    
+    describe('#renderShortcut', () => {
+
+        const renderTestShortcut = btn => {
+            const shortcuts = ShortcutPreferencesDOM.createTestShortcuts();
+            
+            const randomShortcut = shortcuts[Randomiser.getRandomArrayItem(
+                Object.keys(shortcuts))];
+
+            btn.updateItem = options => ShortcutPreferencesDOM.assertTitleHasShortcut(
+                options.title, randomShortcut);
+            assert(btn.renderShortcut(randomShortcut.key));
+
+            return randomShortcut;
+        };
+        
+        it('should change a shortcut for an emittable button', () => {
+            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+            renderTestShortcut(btn);
+            renderTestShortcut(btn);
+        });
+
+        it('should remove a shortcut for an emittable button', () => {
+            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+            renderTestShortcut(btn);
+
+            btn.updateItem = options => ShortcutPreferencesDOM.assertTitleHasNoShortcut(
+                options.title);
+            assert(btn.renderShortcut(null));
+        });
+        
+        it('should not render the same shortcut for an emittable button', () => {
+            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+            const rendereShortcut = renderTestShortcut(btn);
+            assert(!btn.renderShortcut(rendereShortcut.key));
         });
     });
 });

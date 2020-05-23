@@ -49,6 +49,7 @@ browserApi.runtime.onMessage(async msg => {
         if (sender.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
             menu.checkColourRadio(preferences.defaultColourToken);
+            menu.renderShortcuts(preferences.shortcuts);
 
             return preferences;
         }

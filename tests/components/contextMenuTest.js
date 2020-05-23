@@ -1,7 +1,8 @@
 import assert from 'assert';
-import { ContextMenu } from '../../components/contextMenu';
-import { BrowserMocked } from '../tools/browserMocked';
-import { Randomiser } from '../tools/randomiser';
+import { ContextMenu } from '../../components/contextMenu.js';
+import { BrowserMocked } from '../tools/browserMocked.js';
+import { ShortcutPreferencesDOM } from '../tools/preferencesDOM.js';
+import { Randomiser } from '../tools/randomiser.js';
 import { ColourList } from '../../components/colourList.js';
 import { SeparatorMenuItem, RadioSubMenuItem, ButtonMenuItem } from '../../components/menuItem.js';
 
@@ -487,6 +488,82 @@ describe('components/ContextMenu', () => {
                         resolve();
                 };
                 contextMenu.emitItemClick(OptionList.noting.add);
+            });
+        });
+    });
+    
+    describe('#renderShortcuts', function () {
+        
+        const renderTestShortcuts = (contextMenu = new ContextMenu()) => {
+            const shortcuts = ShortcutPreferencesDOM.createTestShortcuts();
+            contextMenu.renderShortcuts(shortcuts);
+
+            return shortcuts;
+        };
+
+        it('should render shortcuts for some emittable buttons', () => {
+            const browserMocked = mockBrowserWithTab();
+            const shortcuts = renderTestShortcuts();
+
+            browserMocked.menuOptions.forEach(op => {
+                if (op.type !== BTN_TYPE)
+                    return;
+
+                const shortcut = shortcuts[op.id];
+
+                if (shortcut)
+                    ShortcutPreferencesDOM.assertTitleHasShortcut(op.title, shortcut);
+                else
+                    ShortcutPreferencesDOM.assertTitleHasNoShortcut(op.title);
+            });
+        });
+        
+        it('should change a shortcut for an emittable button', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            const shortcuts = renderTestShortcuts(contextMenu);
+
+            const cmdIds = Object.keys(shortcuts);
+            const firstCmdId = cmdIds[0];
+            shortcuts[firstCmdId].key = shortcuts[cmdIds[cmdIds.length - 1]].key;
+
+            contextMenu.renderShortcuts(shortcuts);
+            const btn = browserMocked.menuOptions.find(op => op.id === firstCmdId);
+            assert(btn.title.endsWith(`(${shortcuts[firstCmdId].key})`));
+        });
+
+        it('should remove a shortcut for some emittable buttons without emptying the others', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            const shortcuts = renderTestShortcuts(contextMenu);
+
+            const cmdIds = Object.keys(shortcuts);
+            const firstCmdId = cmdIds[0];
+            shortcuts[firstCmdId].key = null;
+            
+            const lastCmdId = cmdIds[cmdIds.length - 1];
+            shortcuts[lastCmdId] = null;
+
+            contextMenu.renderShortcuts(shortcuts);
+            browserMocked.menuOptions.forEach(op => {
+                let shortcut;
+
+                if (op.id === firstCmdId || op.id === lastCmdId)
+                    ShortcutPreferencesDOM.assertTitleHasNoShortcut(op.title);
+                else if ((shortcut = shortcuts[op.id]))
+                    ShortcutPreferencesDOM.assertTitleHasShortcut(op.title, shortcut);
+            });
+        });
+
+        it('should remove shortcuts for emittable buttons when there are none provided', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = new ContextMenu();
+            renderTestShortcuts(contextMenu);
+
+            contextMenu.renderShortcuts();
+            browserMocked.menuOptions.forEach(op => {
+                if (op.type === BTN_TYPE)
+                    ShortcutPreferencesDOM.assertTitleHasNoShortcut(op.title);
             });
         });
     });
