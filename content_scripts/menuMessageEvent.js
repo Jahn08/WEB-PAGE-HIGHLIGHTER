@@ -70,12 +70,15 @@ class MenuMessageEvent {
 
         this._emitEvent = 'emit';
 
+        this._updateShortcuts = 'updateShortcuts';
+
         this._props = {
             noteLink: 'noteLink',
             category: 'category',
             defaultCategory: 'defaultCategory',
             colourClass: 'colourClass',
-            eventName: 'eventName'
+            eventName: 'eventName',
+            shortcuts: 'shortcuts'
         };
     }
 
@@ -113,6 +116,7 @@ class MenuMessageEvent {
             this._combineProps(p, c, this._props.category);
             this._combineProps(p, c, this._props.defaultCategory);
             this._combineProps(p, c, this._props.eventName);
+            this._combineProps(p, c, this._props.shortcuts);
             
             return p;
         }, { event: [] });
@@ -218,4 +222,10 @@ class MenuMessageEvent {
     }
     isEmitEvent(msg) { return this._isEvent(msg, this._emitEvent); }
     getEventName(msg) { return msg ? msg[this._props.eventName]: null; }
+
+    createUpdateShortcutsEvent(shortcuts) { 
+        return this._createEventWithArgs(this._updateShortcuts, { [this._props.shortcuts]: shortcuts }); 
+    }
+    isUpdateShortcuts(msg) { return this._isEvent(msg, this._updateShortcuts); }
+    getShortcuts(msg) { return msg ? msg[this._props.shortcuts]: null; }
 }

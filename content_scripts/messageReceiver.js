@@ -85,6 +85,10 @@ class MessageReceiver {
     static emitEvent(eventName) {
         return MessageReceiver.msgEvent.createEmitEvent(eventName);
     }
+
+    static updateShortcuts(shortcuts) {
+        return shortcuts ? MessageReceiver.msgEvent.createUpdateShortcutsEvent(shortcuts) : null;
+    }
 }
 
 MessageReceiver.msgEvent = new MenuMessageEvent();

@@ -54,6 +54,9 @@ browserApi.runtime.onMessage(async msg => {
             return preferences;
         }
 
+        if (sender.shouldUpdateShortcuts())
+            menu.renderShortcuts(sender.shortcuts);
+
         if (sender.shouldSetSaveMenuReady())
             menu.enableSaveBtn();
         else

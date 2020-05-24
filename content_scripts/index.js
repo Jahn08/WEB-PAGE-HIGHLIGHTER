@@ -147,8 +147,9 @@ void function() {
                     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
                     this._activeNode = focusedNode;
                 }
-                
-                msg = MessageReceiver.combineEvents(msg, MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
+
+                msg = MessageReceiver.combineEvents(msg, MessageReceiver.updateShortcuts(this._shortcuts),
+                    MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
                 this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg))
                     .catch(error => console.error(errorPrefix + error.toString()));
     
@@ -219,7 +220,7 @@ void function() {
                 else if (receiver.shouldLoad())
                     await this._performStorageAction(this._load);
                 else if (receiver.shouldReturnTabState())
-                    return this._includeLoadSaveEvents();
+                    return this._includeLoadSaveEvents(MessageReceiver.updateShortcuts(this._shortcuts));
                 else if (receiver.shouldGoToNote())
                     RangeNote.goToNote(receiver.noteLink.id);
                 else

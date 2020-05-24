@@ -7,7 +7,7 @@ class Popup {
         if (Popup._initialised)
             return;
 
-        this._renderShortcuts();
+        this._loadShortcuts();
 
         this._browser = new BrowserAPI();
 
@@ -33,8 +33,12 @@ class Popup {
                         sectionIsVisible = true;
                     }
 
-                    if (sectionIsVisible)
+                    if (sectionIsVisible) {
                         Popup._showControl(Popup._getControl('separator'));
+
+                        if (sender.shouldUpdateShortcuts())
+                            this._updateShortcuts(sender.shortcuts);
+                    }
 
                     Popup._browser.runtime.logLastError('An error while trying to get button states');
                 });
@@ -95,15 +99,19 @@ class Popup {
         }
     }
 
-    static async _renderShortcuts() {
+    static async _loadShortcuts() {
         const preferences = (await Preferences.loadFromStorage()) || {};
-        
-        if (preferences.shortcuts) {
-            const storageOptions = OptionList.storage;
+        this._updateShortcuts(preferences.shortcuts);
+    }
 
-            this._setShortcut(preferences.shortcuts, storageOptions.save);
-            this._setShortcut(preferences.shortcuts, storageOptions.load);
-        }
+    static _updateShortcuts(shortcuts) {
+        if (!shortcuts)
+            return;
+
+        const storageOptions = OptionList.storage;
+
+        this._setShortcut(shortcuts, storageOptions.save);
+        this._setShortcut(shortcuts, storageOptions.load);
     }
 
     static _setShortcut(shortcuts, cmdId) {

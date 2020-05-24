@@ -83,4 +83,8 @@ export class MessageSender {
     shouldEmitEvent() { return msgEvent.isEmitEvent(this._msg); }
     
     get eventName() { return msgEvent.getEventName(this._msg); }
+
+    shouldUpdateShortcuts() { return msgEvent.isUpdateShortcuts(this._msg); }
+    
+    get shortcuts() { return msgEvent.getShortcuts(this._msg); }
 }
