@@ -60,6 +60,14 @@ describe('content_script/rangeNote', function () {
                 .getElementsByClassName(RangeNote.START_NOTE_CLASS_NAME)[0];
             assert.strictEqual(RangeNote.hasNote(targetNode), true);
         });
+
+        it('should return true if a node has children with a note', () => {
+            TestPageHelper.setRange(TestPageHelper.setRangeForLastParagraphSentenceNode);
+            createNoteWithText();
+
+            const targetNode = TestPageHelper.getLastParagraphSentenceNode();
+            assert.strictEqual(RangeNote.hasNote(targetNode), true);
+        });
     });
 
     const excludeNotesFromText = (text, noteText) => {

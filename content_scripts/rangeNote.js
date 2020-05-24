@@ -168,7 +168,11 @@ class RangeNote extends RangeBase {
             return targetNode;
 
         const parentElement = targetNode.parentElement;
-        return this._elementHasNote(parentElement) ? parentElement : null;
+        
+        if (this._elementHasNote(parentElement))
+            return parentElement;
+
+        return [...targetNode.children].find(el => this._elementHasNote(el)) || null;
     }
 
     static _elementHasNote(targetNode) {
