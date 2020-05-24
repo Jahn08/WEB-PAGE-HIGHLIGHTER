@@ -158,8 +158,6 @@ class ShortcutSelector extends Control {
                         'preferences-duplicated-shortcut-warning', shortcut.key, 
                         this._locale.getString(commandId)));
 
-                this._showStatus(this._locale.getString('preferences-applying-shortcut-info'), 
-                    false);
                 this._updateButtonsAvailability();
             }
 
@@ -206,7 +204,11 @@ class ShortcutSelector extends Control {
         
         const storedShortcutKey = (this._shortcuts[selectedValue] || {}).key;
         const shortcutKey = (this._shortcut || {}).key;
-        this._applyBtn.disabled = storedShortcutKey == shortcutKey;
+        const isShortcutSame = storedShortcutKey === shortcutKey;
+
+        this._applyBtn.disabled = isShortcutSame;
+        if (!isShortcutSame)
+            this._showStatus(this._locale.getString('preferences-applying-shortcut-info'), false);
     }
 
     _clearKeyCombination() {

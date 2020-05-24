@@ -89,6 +89,8 @@ describe('components/preferences/pageTable', function () {
         };
     };
 
+    const assertReminderInfoMessage = () => shortcutDom.assertStatusIsMessage('appl');
+
     describe('#input', function () {
         it('should not enter shortcuts with the number of keys fewer than 2 or more than 3', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
@@ -140,7 +142,7 @@ describe('components/preferences/pageTable', function () {
                     shortcutDom.dispatchCombination(false, ...shortcutOptions);
                     assert.strictEqual(shortcutDom.getCommandInput().value.toUpperCase(), 
                         shortcutOptions.map(op => op.code).join('-').toUpperCase());
-                    shortcutDom.assertStatusIsMessage('appl');
+                    assertReminderInfoMessage();
                 }));
 
         it('should enter an allowed shortcut several times without any warnings and messages', () => 
@@ -167,7 +169,7 @@ describe('components/preferences/pageTable', function () {
                     assert(!shortcutDom.getApplyButton().disabled);
                 }));
 
-        it('should disable the apply button when a shortcut has not changed', () => 
+        it('should disable the apply button and show no messages when a shortcut has not changed', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     new Preferences().load();
@@ -176,6 +178,7 @@ describe('components/preferences/pageTable', function () {
                     shortcutDom.dispatchCombination(
                         shortcutDom.createKeyboardEventOptions(shortcutInUse));
                     assert(shortcutDom.getApplyButton().disabled);
+                    shortcutDom.assertStatusIsEmpty();
                 }));
 
         it('should warn when entering a shortcut already in use', () => 
@@ -278,13 +281,14 @@ describe('components/preferences/pageTable', function () {
     });
 
     describe('#clear', function () {
-        it('should clear a shortcut in the input without applying it', () =>
+        it('should clear a shortcut in the input without applying it and show a reminder message', () =>
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(),
                 async expectedShortcuts => {
                     const preferences = new Preferences();
                     await preferences.load();
 
                     const curCommand = clearSelectedShortcut();
+                    assertReminderInfoMessage();
                     const expectedShortcut = expectedShortcuts[curCommand];
 
                     await preferences.save();
