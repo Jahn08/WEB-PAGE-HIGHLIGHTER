@@ -81,7 +81,7 @@ describe('components/preferences/pageTable', function () {
         shortcutDom.dispatchChangeEvent(selector);
 
         shortcutDom.dispatchCombination(shouldApply,
-            ...shortcutDom.createKeyboardEventOptions(shortcutInUse));
+            ...ShortcutPreferencesDOM.createKeyboardEventOptions(shortcutInUse));
 
         return { 
             commandInUse: selector.options[0].value, 
@@ -92,7 +92,7 @@ describe('components/preferences/pageTable', function () {
     const assertReminderInfoMessage = () => shortcutDom.assertStatusIsMessage('appl');
 
     describe('#input', function () {
-        it('should not enter shortcuts with the number of keys fewer than 2 or more than 3', () => 
+        it('should ignore shortcuts with the number of keys fewer than 2 or more than 3', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     await new Preferences().load();
@@ -100,16 +100,16 @@ describe('components/preferences/pageTable', function () {
                     const input = shortcutDom.getCommandInput();
                     const prevValue = input.value;
 
-                    [[shortcutDom.createKeyboardEventOption()],
-                        [shortcutDom.createKeyboardEventOption(), shortcutDom.createKeyboardEventOption(),
-                            shortcutDom.createKeyboardEventOption(), 
-                            shortcutDom.createKeyboardEventOption()]].forEach(combinations => {
+                    [[ShortcutPreferencesDOM.createKeyboardEventOption()],
+                        [ShortcutPreferencesDOM.createKeyboardEventOption(), ShortcutPreferencesDOM.createKeyboardEventOption(),
+                            ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                            ShortcutPreferencesDOM.createKeyboardEventOption()]].forEach(combinations => {
                         shortcutDom.dispatchCombination(false, ...combinations);
                         assert.strictEqual(input.value, prevValue);
                     });
                 }));
 
-        it('should not enter shortcuts with keys containing CTRL, SHIFT or BACKSPACE', () => 
+        it('should ignore shortcuts with keys containing CTRL, SHIFT or BACKSPACE', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     await new Preferences().load();
@@ -118,30 +118,71 @@ describe('components/preferences/pageTable', function () {
                     const prevValue = input.value;
 
                     const printScreenKey = 'PrintScreen';
-                    [[shortcutDom.createKeyboardEventOption(), 
-                        shortcutDom.createKeyboardEventOptionWithShift(),
-                        shortcutDom.createKeyboardEventOption()],
-                    [shortcutDom.createKeyboardEventOption(), 
-                        shortcutDom.createKeyboardEventOptionWithCtrl(), 
-                        shortcutDom.createKeyboardEventOption()],
-                    [shortcutDom.createKeyboardEventOption(printScreenKey, printScreenKey),
-                        shortcutDom.createKeyboardEventOption()]].forEach(combinations => {
+                    [[ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                        ShortcutPreferencesDOM.createKeyboardEventOptionWithShift(),
+                        ShortcutPreferencesDOM.createKeyboardEventOption()],
+                    [ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                        ShortcutPreferencesDOM.createKeyboardEventOptionWithCtrl(), 
+                        ShortcutPreferencesDOM.createKeyboardEventOption()],
+                    [ShortcutPreferencesDOM.createKeyboardEventOption(printScreenKey, printScreenKey),
+                        ShortcutPreferencesDOM.createKeyboardEventOption()]].forEach(combinations => {
                         shortcutDom.dispatchCombination(false, ...combinations);
                         assert.strictEqual(input.value, prevValue);
                     });
                 }));
+
+        it('should ignore keys entered more than once following the shortcut length rule', 
+            () => Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
+                async () => {
+                    await new Preferences().load();
+
+                    const duplicatedKeyOptions = ShortcutPreferencesDOM.createKeyboardEventOption();
+                    const keyOptions = ShortcutPreferencesDOM.createKeyboardEventOption();
+                    const combination = [duplicatedKeyOptions, keyOptions, duplicatedKeyOptions];
+                    shortcutDom.dispatchCombination(false, ...combination);
+                    
+                    const input = shortcutDom.getCommandInput();
+                    const curCombination = input.value;
+                    assert.strictEqual(curCombination, 
+                        ShortcutPreferencesDOM.compileShortcut([duplicatedKeyOptions, keyOptions]));
+                
+                    const tooShortCombination = [duplicatedKeyOptions, duplicatedKeyOptions];
+                    shortcutDom.dispatchCombination(false, ...tooShortCombination);
+                    assert.strictEqual(input.value, curCombination);
+                }));
+
+        it('should not accumulate keys entered for different commands', () => 
+            Expectation.expectResolution(StorageHelper.saveTestShortcuts(),
+                async () => {
+                    await new Preferences().load();
+
+                    const cmdInput = shortcutDom.getCommandInput();
+                    const excessKeyOptions = ShortcutPreferencesDOM.createKeyboardEventOption();
+                    shortcutDom.dispatchKeyDownEvent(cmdInput, excessKeyOptions);
+
+                    const selector = shortcutDom.getCommandSelector();
+                    selector.value = selector.options[selector.options.length - 1].value;
+                    shortcutDom.dispatchChangeEvent(selector);
+                    
+                    const combination = [ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                        ShortcutPreferencesDOM.createKeyboardEventOption()];
+                    shortcutDom.dispatchCombination(false, ...combination);
+                    
+                    assert.strictEqual(cmdInput.value, 
+                        ShortcutPreferencesDOM.compileShortcut(combination));
+                })); 
 
         it('should enter a shortcut with the number of 3 keys showing a message for applying', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     await new Preferences().load();
 
-                    const shortcutOptions = [shortcutDom.createKeyboardEventOption(), 
-                        shortcutDom.createKeyboardEventOption(), shortcutDom.createKeyboardEventOption()];
+                    const shortcutOptions = [ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                        ShortcutPreferencesDOM.createKeyboardEventOption(), ShortcutPreferencesDOM.createKeyboardEventOption()];
 
                     shortcutDom.dispatchCombination(false, ...shortcutOptions);
                     assert.strictEqual(shortcutDom.getCommandInput().value.toUpperCase(), 
-                        shortcutOptions.map(op => op.code).join('-').toUpperCase());
+                        ShortcutPreferencesDOM.compileShortcut(shortcutOptions));
                     assertReminderInfoMessage();
                 }));
 
@@ -155,7 +196,7 @@ describe('components/preferences/pageTable', function () {
                     let i = 0;
                     while (i++ < 3)
                         shortcutDom.dispatchCombination(
-                            shortcutDom.createKeyboardEventOptions(shortcutInUse));
+                            ShortcutPreferencesDOM.createKeyboardEventOptions(shortcutInUse));
                     
                     shortcutDom.assertStatusIsEmpty();
                 }));
@@ -176,7 +217,7 @@ describe('components/preferences/pageTable', function () {
 
                     const shortcutInUse = shortcutDom.getCommandInput().value;
                     shortcutDom.dispatchCombination(
-                        shortcutDom.createKeyboardEventOptions(shortcutInUse));
+                        ShortcutPreferencesDOM.createKeyboardEventOptions(shortcutInUse));
                     assert(shortcutDom.getApplyButton().disabled);
                     shortcutDom.assertStatusIsEmpty();
                 }));

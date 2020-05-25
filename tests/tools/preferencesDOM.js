@@ -112,25 +112,32 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
         return this._getButton('clear');
     }
 
-    createKeyboardEventOptions(shortcut) {
-        return shortcut.split('-').map(k => this.createKeyboardEventOption(k, k));
+    static compileShortcut(shortcutOptions) {
+        return shortcutOptions.map(op => op.code).join(this._SHORTCUT_DIVIDER).toUpperCase();
     }
 
-    createKeyboardEventOptionWithShift() {
+    static get _SHORTCUT_DIVIDER() { return '-'; }
+
+    static createKeyboardEventOptions(shortcut) {
+        return shortcut.split(this._SHORTCUT_DIVIDER)
+            .map(k => this.createKeyboardEventOption(k, k));
+    }
+
+    static createKeyboardEventOptionWithShift() {
         const option = this.createKeyboardEventOption();
         option.shiftKey = true;
 
         return option;
     }
 
-    createKeyboardEventOption(key = null, code = null) {
+    static createKeyboardEventOption(key = null, code = null) {
         return { 
             key: key || Randomiser.getRandomString(),
             code: code || Randomiser.getRandomString()
         };
     }
 
-    createKeyboardEventOptionWithCtrl() {
+    static createKeyboardEventOptionWithCtrl() {
         const option = this.createKeyboardEventOption();
         option.ctrlKey = true;
 
@@ -141,7 +148,8 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
         const control = this.getCommandInput();
 
         if (!eventOptions.length)
-            eventOptions = [this.createKeyboardEventOption(), this.createKeyboardEventOption()];
+            eventOptions = [ShortcutPreferencesDOM.createKeyboardEventOption(), 
+                ShortcutPreferencesDOM.createKeyboardEventOption()];
 
         eventOptions.forEach(op => this.dispatchKeyDownEvent(control, op));
         this.dispatchKeyUpEvent(control, eventOptions[0]);
@@ -155,7 +163,8 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
     }
 
     _dispatchKeyboardEvent(clickableCtrl, eventName, eventOptions = null) {
-        const event = new KeyboardEvent(eventName, eventOptions || this.createKeyboardEventOption());
+        const event = new KeyboardEvent(eventName, eventOptions || 
+            ShortcutPreferencesDOM.createKeyboardEventOption());
         this._dispatchEvent(clickableCtrl, event);
     }
 
@@ -164,6 +173,8 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
     }
 
     static createTestShortcuts(numberOfCombinations = 3) {
+        const divider = this._SHORTCUT_DIVIDER;
+
         const markingOptions = OptionList.marking;
         const noteOptions = OptionList.noting;
         const storageOptions = OptionList.storage;
@@ -171,7 +182,7 @@ class ShortcutPreferencesDOM extends PreferencesDOM {
             noteOptions.remove, storageOptions.save, storageOptions.load].reduce((prev, cur, i) => {
             if (i < numberOfCombinations)
                 prev[cur] = {
-                    key: `${Randomiser.getRandomString()}-${Randomiser.getRandomString()}`
+                    key: `${Randomiser.getRandomString()}${divider}${Randomiser.getRandomString()}`
                 };
             return prev;
         }, {});

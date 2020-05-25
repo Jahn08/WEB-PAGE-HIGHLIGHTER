@@ -1,9 +1,16 @@
 // eslint-disable-next-line no-unused-vars
 class Shortcut {
     constructor(keyCombination) {
-        const keysLength = keyCombination.length;
+        const combination = keyCombination.reduce((prev, cur) => {
+            if (!prev.includes(cur))
+                prev.push(cur);
+
+            return prev;
+        }, []);
+
+        const keysLength = combination.length;
         this.key = keysLength > 1 && keysLength < 4 ?
-            this._sortItems(Object.values(keyCombination)).join('-') : '';
+            this._sortItems(Object.values(combination)).join('-') : '';
     }
 
     _sortItems(items) {

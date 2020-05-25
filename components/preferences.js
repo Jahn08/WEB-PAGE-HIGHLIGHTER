@@ -224,6 +224,8 @@ class ShortcutSelector extends Control {
         this._shortcut = this._shortcuts[this._getSelectedOption(this._selector)];
         this._input.value = (this._shortcut || {}).key || null;
 
+        this._keyTempCombination = [];
+
         this._hideStatus();
         this._updateButtonsAvailability();
     }
