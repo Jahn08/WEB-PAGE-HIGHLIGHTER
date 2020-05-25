@@ -46,36 +46,52 @@ describe('components/ContextMenu', () => {
             const browserMocked = mockBrowserWithTab();
             const menu = new ContextMenu();
 
-            menu[menuCallbackNameToTest] = 
-                (tabInfo) => assert(tabInfo.tabId && tabInfo.colourClass);
+            let error;
+            let passedOptions;
+            menu[menuCallbackNameToTest] = tabInfo => {
+                try {
+                    assert(tabInfo.tabId);
+                    passedOptions = tabInfo;
+                }
+                catch (err) {
+                    error = err;
+                    throw err;
+                }
+            };
             
             const menuOptions = browserMocked.menuOptions;
             const foundItems = menuOptions.filter(filterMenuItemCallback);
             
             assert(foundItems.length);
 
-            return Promise.all(foundItems.map(item => {
+            return Promise.all(foundItems.map(async item => {
                 assert(item.onclick);
                 
-                return (async () => {
-                    const tabItemInfo = { menuItemId: Randomiser.getRandomNumberUpToMax() };
+                const tabItemInfo = { menuItemId: Randomiser.getRandomNumberUpToMax() };
 
-                    await item.onclick(tabItemInfo);
+                passedOptions = null;
+                await item.onclick(tabItemInfo);
 
-                    if (onClickedCallback)
-                        onClickedCallback(tabItemInfo, menu);
-                })().then(() => {
-                    const tabQueries = browserMocked.tabQueries;
-                    assert.strictEqual(tabQueries.length, foundItems.length);
-                    assert(tabQueries.every(t => t.active && t.currentWindow));
-                }); 
+                if (error)
+                    throw error;
+
+                assert(passedOptions);
+
+                if (onClickedCallback)
+                    onClickedCallback(tabItemInfo, menu, passedOptions);
+
+                const tabQueries = browserMocked.tabQueries;
+                assert.strictEqual(tabQueries.length, foundItems.length);
+                assert(tabQueries.every(t => t.active && t.currentWindow));
             }));
         };
 
-        it('should run event callbacks while marking and unmarking', () =>
-            Promise.all([{ id: 'mark', callbackName: 'onMarking' }, 
-                { id: 'unmark', callbackName: 'onUnmarking' }]
-                .map(o => testClickingOnMenuItem(o.callbackName, i => i.id === o.id))));
+        it('should run event callbacks while marking', () =>
+            testClickingOnMenuItem('onMarking', i => i.id === 'mark', 
+                (menuInfo, menu, options) => assert(options.colourClass)));
+        
+        it('should run event callbacks while unmarking', () =>
+            testClickingOnMenuItem('onUnmarking', i => i.id === 'unmark'));
 
         it('should run event callbacks and change the marker colour while clicking on menu radio items', () => { 
             const menuColourIds = [];
