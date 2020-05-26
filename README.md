@@ -9,6 +9,7 @@ A Mozilla Firefox and Google Chrome extension that marks text on a web page. The
 * Preferences for changing the default colour for marking and autoloading a page, provided it is available in the storage ([more about configuring](#headConfiguration))
 * Categorising pages when saving or in the preferences
 * Adding notes on a page and navigating them through quick scrolling by means of clicking the respective links in the context menu
+* Supporting keyboard shortcuts for frequently used commands in the context menu
 * Importing and exporting stored pages between different devices and browsers (it is available for [installing](#headInstalling) in Mozilla and Chrome) through the preferences page
 
 ## <a name="headInstalling"></a>Installing / Getting started

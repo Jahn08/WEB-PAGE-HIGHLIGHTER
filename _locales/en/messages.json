@@ -143,7 +143,7 @@
     },
 
     "preferences_option_default_colour": {
-        "message": "Default colour:",
+        "message": "Default Colour:",
         "description": "Description of a preferences option setting a default colour"
     },
 
@@ -208,7 +208,7 @@
     },
 
     "preferences_category_table": {
-        "message": "Page categories:",
+        "message": "Page Categories:",
         "description": "Label for a table listing all categories for saved pages in the preferences"
     },
 
@@ -223,7 +223,7 @@
     },
     
     "preferences_page_table": {
-        "message": "Saved pages:",
+        "message": "Saved Pages:",
         "description": "Label for a table listing all saved pages in the preferences"
     },
 
@@ -309,7 +309,7 @@
     },
 
     "preferences_option_shortcuts": {
-        "message": "Shortcuts:",
+        "message": "Keyboard Shortcuts:",
         "description": "Label for a section for setting up shortcuts"
     },
 
@@ -349,15 +349,15 @@
     },
     
     "preferences_applying_shortcut_info": {
-        "message": "A new shortcut must be applied before saving"
+        "message": "A new keyboard shortcut must be applied before saving"
     },
 
     "preferences_empty_shortcut_warning": {
-        "message": "Choose a command to apply the shortcut"
+        "message": "Choose a command to apply the keyboard shortcut"
     },
 
     "preferences_duplicated_shortcut_warning": {
-        "message": "A shortcut $shortcut$ is already in use for a command $command$",
+        "message": "A combination $shortcut$ is already in use for a command $command$",
         "placeholders": {
             "shortcut" : {
                 "content" : "$1"
@@ -369,7 +369,7 @@
     },
 
     "preferences_duplicated_shortcut_confirmation": {
-        "message": "Applying the $shortcut$ shortcut will remove it for a command $command$. Continue?",
+        "message": "Applying the $shortcut$ combination will remove it for a command $command$. Continue?",
         "placeholders": {
             "shortcut" : {
                 "content" : "$1"
