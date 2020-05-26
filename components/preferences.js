@@ -1090,6 +1090,7 @@ class Preferences {
             radio.type = 'radio';
             radio.value = c.token;
             radio.checked = index === 0;
+            radio.id = c.token;
 
             const image = document.createElement('img');
             image.src = '../' + c.icon.relativeFilePath;
@@ -1098,6 +1099,7 @@ class Preferences {
             label.className = PageLocalisation.LOCALE_CLASS_NAME;
             label.name = c.token;
             label.innerHTML = c.title;
+            label.setAttribute('for', c.token);
 
             groupEl.append(radio, image, label);
 
