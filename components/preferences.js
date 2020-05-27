@@ -179,14 +179,8 @@ class ShortcutSelector extends Control {
             const commandId = Shortcut.getCommandsInUse(this._shortcuts, this._shortcut.key)
                 .find(c => c !== selectedCommandId);
 
-            if (commandId) {
-                if (!confirm(this._locale.getStringWithArgs(
-                    'preferences-duplicated-shortcut-confirmation', this._shortcut.key, 
-                    this._locale.getString(commandId))))
-                    return;
-
+            if (commandId)
                 this._shortcuts[commandId] = null;
-            }
         }
 
         this._hideStatus();

@@ -357,7 +357,7 @@
     },
 
     "preferences_duplicated_shortcut_warning": {
-        "message": "Комбинация клавиш $shortcut$ уже используется для команды $command$",
+        "message": "Применение комбинации клавиш $shortcut$ удалит её для команды $command$",
         "placeholders": {
             "shortcut" : {
                 "content" : "$1"
@@ -368,18 +368,6 @@
         }
     },
     
-    "preferences_duplicated_shortcut_confirmation": {
-        "message": "Комбинация клавиш $shortcut$ будет удалена для команды $command$. Продолжить?",
-        "placeholders": {
-            "shortcut" : {
-                "content" : "$1"
-            },
-            "command": {
-                "content" : "$2"
-            }
-        }
-    },
-
     "import_inserted_page_count": {
         "message": "Количество успешно импортированных страниц: $count$",
         "description": "Status featuring a number of successfully imported pages",

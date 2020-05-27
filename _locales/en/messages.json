@@ -357,19 +357,7 @@
     },
 
     "preferences_duplicated_shortcut_warning": {
-        "message": "A combination $shortcut$ is already in use for a command $command$",
-        "placeholders": {
-            "shortcut" : {
-                "content" : "$1"
-            },
-            "command": {
-                "content" : "$2"
-            }
-        }
-    },
-
-    "preferences_duplicated_shortcut_confirmation": {
-        "message": "Applying the $shortcut$ combination will remove it for a command $command$. Continue?",
+        "message": "Applying a combination $shortcut$ will remove it for a command $command$",
         "placeholders": {
             "shortcut" : {
                 "content" : "$1"

@@ -246,26 +246,11 @@ describe('components/preferences/pageTable', function () {
 
     describe('#apply', function () {
 
-        const confirmShortcutInUse = async (preferences, isConfirmed) => {
-            let confirmationMsg;
-            global.confirm = msg => {
-                confirmationMsg = msg;
-                return isConfirmed;
-            };
-            
-            const dataInUse = await enterShortcutInUse(preferences, true);
-
-            assert(confirmationMsg);
-            assert(confirmationMsg.toUpperCase().includes(dataInUse.shortcutInUse.toUpperCase()));
-
-            return dataInUse;
-        };
-
         it('should clear a shortcut in use and apply it to a current command instead', () => 
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     const preferences = new Preferences();
-                    const dataInUse = await confirmShortcutInUse(preferences, true);
+                    const dataInUse = await enterShortcutInUse(preferences, true);
 
                     const curCommand = shortcutDom.getCommandSelector().value;
                     const curShortcut = shortcutDom.getCommandInput().value;
@@ -279,19 +264,6 @@ describe('components/preferences/pageTable', function () {
                     const actualShortcut = loadedShortcuts[curCommand];
                     assert(actualShortcut);
                     assert.deepStrictEqual(actualShortcut.key, curShortcut);
-                }));
-
-        
-        it('should do nothing when cancelling confirmation for a shortcut in use', () => 
-            Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
-                async expectedShortcuts => {
-                    const preferences = new Preferences();
-                    await confirmShortcutInUse(preferences, false);
-
-                    await preferences.save();
-
-                    const loadedForm = await Preferences.loadFromStorage();
-                    assert.deepStrictEqual(loadedForm.shortcuts, expectedShortcuts);
                 }));
 
         it('should disable the apply button if there is no command chosen', () => 
