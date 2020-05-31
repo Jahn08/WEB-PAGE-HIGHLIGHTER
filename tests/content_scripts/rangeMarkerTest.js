@@ -61,21 +61,23 @@ describe('content_script/rangeMarker', function () {
         return colourClass;
     };
 
+    const extractText = (...nodes) => {
+        const text = nodes.reduce(
+            (p, c) => (p.textContent ? p.textContent: p) + c.textContent, '');
+
+        return TestPageHelper.removeExcessSpaces(text);
+    };
+
+    const selectMarkedNodes = (colourClass = RangeMarker.MARKER_CLASS_NAME) => 
+        document.querySelectorAll(`.${colourClass}`);
+
     const checkMarkedNodes = function (expectedMarkersNumber, expectedText, 
-        colourClass = RangeMarker.MARKER_CLASS_NAME) {
-        const markedNodes = [...document.querySelectorAll(`.${colourClass}`)];
+        colourClass) {
+        const markedNodes = [...selectMarkedNodes(colourClass)];
         assert.strictEqual(markedNodes.length, expectedMarkersNumber);
         
-        let markedText = '';
-        
-        if (markedNodes.length === 1)
-            markedText = markedNodes[0].textContent;
-        else if (markedNodes.length > 1)
-            markedText = markedNodes.reduce(
-                (p, c) => (p.textContent ? p.textContent: p) + c.textContent);
-
-        assert.strictEqual(TestPageHelper.removeExcessSpaces(markedText), expectedText);
-        assert.strictEqual(document.querySelectorAll('.' + colourClass).length > 0,
+        assert.strictEqual(extractText(...markedNodes), expectedText);
+        assert.strictEqual(selectMarkedNodes(colourClass).length > 0,
             expectedMarkersNumber ? true: false);
     };
 
@@ -341,6 +343,30 @@ describe('content_script/rangeMarker', function () {
             assert(markers.every(m => expectedTokens.includes(m.innerHTML)));
 
             markers.forEach(m => m.remove());
+        });
+
+        before(done => {
+            EnvLoader.loadClass('./content_scripts/rangeNote.js', 'RangeNote')
+                .then(() => done()).catch(done);
+        });
+
+        it('should unmark text previously having a note without changing its content', () => {
+            markRangeAndCheckColour(TestPageHelper.setRangeContainerForSentenceItalic);
+            const markedNode = TestPageHelper.getFirstItalicSentenceNode();
+            const originalText = extractText(markedNode);
+            
+            const setRangeForPartiallySelectedText = (range, start, end) => {
+                const markedTextNode = markedNode.firstChild;
+                range.setStart(markedTextNode, start);
+                range.setEnd(markedTextNode, end);
+            };
+            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 29, 50));
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+            assert(RangeNote.removeNote(markedNode.firstChild));
+
+            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 20, 48));
+            RangeMarker.unmarkSelectedNodes();
+            assert.strictEqual(extractText(markedNode), originalText);
         });
     });
 

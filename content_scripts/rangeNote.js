@@ -199,7 +199,24 @@ class RangeNote extends RangeBase {
     }
 
     static _extractLastChildContent(targetNode) {
-        targetNode.replaceWith(targetNode.lastChild);
+        const lastChild = targetNode.lastChild;
+        targetNode.replaceWith(lastChild);
+
+        const mergedNode = this._mergeTextNodes(lastChild, lastChild.previousSibling);
+        this._mergeTextNodes(mergedNode.nextSibling, mergedNode);
+    }
+
+    static _mergeTextNodes(source, target) {
+        const textNodeType = Node.TEXT_NODE;
+
+        if (source && source.nodeType === textNodeType && 
+            target && target.nodeType === textNodeType) {
+            target.textContent += source.textContent;
+            source.remove();
+            return target;
+        }
+
+        return source;
     }
 
     static goToNote(noteId) {

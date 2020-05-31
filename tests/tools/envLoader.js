@@ -225,21 +225,21 @@ class Range {
         if (this.endContainer === this.startContainer)
             return this.commonAncestorContainer = this.endContainer, undefined;
         
-        const startParents = this._getParentsUntilRoot(this.startContainer);
+        const startParents = this._getAncestorsUntilRoot(this.startContainer);
 
         let node = this.endContainer;
-        while ((node = node.parentNode) && !startParents.includes(node));
+        while (!startParents.includes(node) && (node = node.parentNode));
 
         this.commonAncestorContainer = node;
     }
 
-    _getParentsUntilRoot(node) {
-        const parents = [];
+    _getAncestorsUntilRoot(node) {
+        const ancestors = [node];
         
         while ((node = node.parentNode) && node !== document.body)
-            parents.push(node);
+            ancestors.push(node);
 
-        return parents;
+        return ancestors;
     }
 
     extractContents() {
@@ -249,21 +249,61 @@ class Range {
             return docFragment;
 
         let curContainer = this.startContainer;
+        const textNodes = this._splitTextNode(curContainer, this.startOffset);
 
-        curContainer.remove();
-        docFragment.append(curContainer);
+        let startFragmentNode;
+        if (textNodes.length > 1) {
+            curContainer.replaceWith(textNodes[0]);
+            startFragmentNode = textNodes[1];
+        }
+        else {
+            curContainer.remove();
+            startFragmentNode = curContainer;
+        }
+
+        docFragment.append(startFragmentNode);
 
         while (curContainer !== this.endContainer) {
             curContainer = curContainer.nextSibling;
-            curContainer.remove();
-            docFragment.append(curContainer);
+            
+            let fragmentEndNode;
+            let endTextNodes;
+            if (curContainer === this.endContainer && 
+                (endTextNodes = this._splitTextNode(curContainer, this.endOffset).length > 1)) {
+                curContainer.replaceWith(endTextNodes[1]);
+                fragmentEndNode = endTextNodes[0];
+            }
+            else {
+                curContainer.remove();
+                fragmentEndNode = curContainer;
+            }
+
+            docFragment.append(fragmentEndNode);
         }
 
         return docFragment;
     }
 
+    _splitTextNode(node, splitPosition) {
+        let text;
+
+        if (node.nodeType != Node.TEXT_NODE || !splitPosition || 
+            !(text = node.textContent) || splitPosition === text.length)
+            return [node];
+
+        const firstPart = text.substring(0, splitPosition);
+        const secondPart = text.substring(splitPosition);
+        return [document.createTextNode(firstPart), document.createTextNode(secondPart)];
+    }
+
     insertNode(newNode) {
-        if (this._startContainerParent)
-            this._startContainerParent.insertBefore(newNode, this._startContainerParent.firstChild);
+        if (!this._startContainerParent)
+            return;
+
+        const firstChild = this._startContainerParent.firstChild;
+        if (this.startOffset)
+            firstChild.after(newNode);
+        else
+            this._startContainerParent.insertBefore(newNode, firstChild);
     }
 }
