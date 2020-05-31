@@ -1,29 +1,33 @@
-.marker:hover {
-    opacity: 0.8;
-}
-
 .marker-green {
-    background-color: rgb(0, 255, 0, 0.5) !important;
+    --colour-rgb: 0, 255, 0;
 }
 
 .marker-red {
-    background-color: rgb(255, 0, 0, 0.5) !important;
+    --colour-rgb: 255, 0, 0;
 }
 
 .marker-pink {
-    background-color: rgba(255, 0, 212, 0.5) !important;
+    --colour-rgb: 255, 0, 212;
 }
 
 .marker-blue {
-    background-color: rgb(0, 0, 255, 0.5) !important;
+    --colour-rgb: 0, 0, 255;
 }
 
 .marker-orange {
-    background-color: rgba(240, 156, 0, 0.5) !important;
+    --colour-rgb: 240, 156, 0;
 }
 
 .marker-yellow {
-    background-color: rgba(238, 255, 0, 0.5) !important;
+    --colour-rgb: 238, 255, 0;
+}
+
+.marker {
+    background-color: rgb(var(--colour-rgb), 0.5) !important;
+}
+
+.marker:hover {
+    background-color: rgb(var(--colour-rgb), 0.3) !important;
 }
 
 #blanket {
@@ -100,7 +104,7 @@
 .marker-has-note {
 	position: relative;
 	background: burlywood !important;
-	color: black !important;
+    color: black !important;
 }
 
 .marker-has-note:hover > .marker--note {
