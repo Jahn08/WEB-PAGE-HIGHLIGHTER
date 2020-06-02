@@ -8,7 +8,9 @@ describe('content_script/rangeMarker', function () {
 
     before(done => {
         EnvLoader.loadClass('./content_scripts/rangeBase.js', 'RangeBase')
-            .then(() => EnvLoader.loadClass('./content_scripts/rangeMarker.js', 'RangeMarker').then(() => done()))
+            .then(() => EnvLoader.loadClass('./content_scripts/rangeMarker.js', 'RangeMarker')
+                .then(() => EnvLoader.loadClass('./content_scripts/rangeNote.js', 'RangeNote')
+                    .then(() => done())))
             .catch(done);
     });
 
@@ -17,7 +19,7 @@ describe('content_script/rangeMarker', function () {
     });
 
     afterEach(function () {
-        if (document.textContentChanged() === true)
+        if (!this.currentTest.err && document.textContentChanged() === true)
             this.test.error(new Error('The DOM document text content has been altered'));
 
         EnvLoader.unloadDomModel();
@@ -62,8 +64,13 @@ describe('content_script/rangeMarker', function () {
     };
 
     const extractText = (...nodes) => {
-        const text = nodes.reduce(
-            (p, c) => (p.textContent ? p.textContent: p) + c.textContent, '');
+        const text = nodes.reduce((p, c) => {
+            const text = p.textContent ? p.textContent: p;
+
+            const curNodeText = [...c.getElementsByClassName(RangeNote.NOTE_CLASS_NAME)]
+                .reduce((prev, cur) => prev.replace(cur.textContent, ''), c.textContent);
+            return text + curNodeText;
+        }, '');
 
         return TestPageHelper.removeExcessSpaces(text);
     };
@@ -345,11 +352,6 @@ describe('content_script/rangeMarker', function () {
             markers.forEach(m => m.remove());
         });
 
-        before(done => {
-            EnvLoader.loadClass('./content_scripts/rangeNote.js', 'RangeNote')
-                .then(() => done()).catch(done);
-        });
-
         it('should unmark text previously having a note without changing its content', () => {
             markRangeAndCheckColour(TestPageHelper.setRangeContainerForSentenceItalic);
             const markedNode = TestPageHelper.getFirstItalicSentenceNode();
@@ -361,12 +363,39 @@ describe('content_script/rangeMarker', function () {
                 range.setEnd(markedTextNode, end);
             };
             TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 29, 50));
-            assert(RangeNote.createNote(Randomiser.getRandomString()));
-            assert(RangeNote.removeNote(markedNode.firstChild));
 
-            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 20, 48));
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+            assert(RangeNote.removeNote(markedNode));
+
+            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 27, 48));
             RangeMarker.unmarkSelectedNodes();
             assert.strictEqual(extractText(markedNode), originalText);
+
+            [...markedNode.children].forEach(ch => RangeMarker.unmarkSelectedNodes(ch));
+        });
+
+        it('should unmark text having a note without changing its content', () => {
+            markRangeAndCheckColour(TestPageHelper.setRangeContainerForSentenceItalic);
+            const markedNode = TestPageHelper.getFirstItalicSentenceNode();
+            const originalText = extractText(markedNode);
+            
+            const setRangeForPartiallySelectedText = (range, start, end) => {
+                const markedTextNode = markedNode.firstChild;
+                range.setStart(markedTextNode, start);
+                range.setEnd(markedTextNode, end);
+            };
+            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 29, 50));
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+
+            TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 27, 48));
+            RangeMarker.unmarkSelectedNodes();
+
+            assert.strictEqual(extractText(markedNode), originalText);
+
+            [...markedNode.children].forEach(ch => {
+                if (!RangeNote.removeNote(ch))
+                    RangeMarker.unmarkSelectedNodes(ch);
+            });
         });
     });
 

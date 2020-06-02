@@ -91,7 +91,7 @@ class RangeBase {
     }
 
     static _isProperTextNode(node) {     
-        return this._isTextNode(node) && node.nodeValue && 
+        return node && this._isTextNode(node) && node.nodeValue && 
             node.nodeValue.trim().length > 0;
     }
 

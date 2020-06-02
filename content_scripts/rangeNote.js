@@ -62,10 +62,23 @@ class RangeNote extends RangeBase {
     
             if (isSingleNode) {
                 const noteNode = this._createSolidContainerNoteNode(noteId, text);
+ 
+                if ((RangeMarker.getColourClassesForSelectedNodes() || [])[0]) {
+                    const pseudoColourClass = this.NOTE_CLASS_NAME + noteId;
+                    RangeMarker.markSelectedNodes(pseudoColourClass);
+                    const nodeToReplace = document.getElementsByClassName(pseudoColourClass).item(0);
 
-                noteNode.append(range.extractContents());
-                range.insertNode(noteNode);
-    
+                    if (!nodeToReplace)
+                        return false;
+
+                    noteNode.append(nodeToReplace.textContent);
+                    nodeToReplace.replaceWith(noteNode);
+                }
+                else {
+                    noteNode.append(range.extractContents());
+                    range.insertNode(noteNode);
+                }
+                
                 return true;
             }
         
@@ -114,6 +127,9 @@ class RangeNote extends RangeBase {
         targetNode.replaceWith(noteEl);
 
         noteEl.append(targetNode);
+
+        if (RangeMarker.isNodeMarked(targetNode))
+            RangeMarker.unmarkSelectedNodes(targetNode);
 
         return true;
     }

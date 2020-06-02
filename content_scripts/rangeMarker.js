@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 class RangeMarker extends RangeBase {    
     static isNodeMarked(node) {
-        return node && node.classList.contains(this.MARKER_CLASS_NAME);
+        return node && node.classList && node.classList.contains(this.MARKER_CLASS_NAME);
     }
 
     static getColourClassesForSelectedNodes() {
@@ -40,13 +40,13 @@ class RangeMarker extends RangeBase {
         let affectedNodes = [];
 
         if (ranges.length)
-            affectedNodes = this._getSelectionRanges().filter(range => {
-                const affectedNodes = this._markTextNodes(this._getSelectedTextNodes(range), range);
-
+            this._getSelectionRanges().reduce((nodes, range) => {
+                const _affectedNodes = this._markTextNodes(this._getSelectedTextNodes(range), range);
                 this._collapseRange(range);
 
-                return affectedNodes.length > 0;
-            });
+                nodes.push(..._affectedNodes);
+                return nodes;
+            }, affectedNodes);
         else if (targetNode)
             affectedNodes = this._markTextNodes(this._getActiveTextNodes(targetNode));
 
@@ -83,13 +83,14 @@ class RangeMarker extends RangeBase {
         return this._getSelectionRanges().filter(range => {
             const selectedNodes = this._getSelectedTextNodes(range);
 
-            if (!selectedNodes.length)
-                return this._collapseRange(range), false;
-    
-            this._markTextNodes(selectedNodes, range, colourClass);
+            let result = false;
+            if (selectedNodes.length) {
+                this._markTextNodes(selectedNodes, range, colourClass);
+                result = true;
+            }
+            
             this._collapseRange(range);
-    
-            return true;
+            return result;
         }).length !== 0;
     }
 
