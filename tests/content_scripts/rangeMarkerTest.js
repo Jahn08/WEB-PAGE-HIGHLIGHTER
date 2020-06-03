@@ -397,6 +397,30 @@ describe('content_script/rangeMarker', function () {
                     RangeMarker.unmarkSelectedNodes(ch);
             });
         });
+
+        it('should unmark a node previously having a note without changing its content', () => {
+            markRangeAndCheckColour(TestPageHelper.setRangeContainerForSentenceItalic);
+            const markedNode = TestPageHelper.getFirstItalicSentenceNode();
+            const originalText = extractText(markedNode);
+            
+            assert(RangeNote.createNote(Randomiser.getRandomString(), markedNode));
+            assert(RangeNote.removeNote(markedNode));
+
+            RangeMarker.unmarkSelectedNodes(markedNode);
+            assert.strictEqual(extractText(markedNode), originalText);
+        });
+
+        it('should unmark a node having a note without changing its content', () => {
+            markRangeAndCheckColour(TestPageHelper.setRangeContainerForSentenceItalic);
+            const markedNode = TestPageHelper.getFirstItalicSentenceNode();
+            const originalText = extractText(markedNode);
+      
+            assert(RangeNote.createNote(Randomiser.getRandomString(), markedNode));
+            RangeMarker.unmarkSelectedNodes(markedNode);
+
+            assert.strictEqual(extractText(markedNode), originalText);
+            RangeNote.removeNote(markedNode);
+        });
     });
 
     describe('#changeSelectedNodesColour', function () {

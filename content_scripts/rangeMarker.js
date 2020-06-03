@@ -119,7 +119,6 @@ class RangeMarker extends RangeBase {
                 const markLastNodePartially = isLastNode && endOffset && endOffset !== node.length;
 
                 let markerNode = node.parentElement;
-
                 if (markerNode.classList.contains(markerClass)) {
                     let curColour;
                     
@@ -163,7 +162,8 @@ class RangeMarker extends RangeBase {
                     }
                 }
                 else {
-                    if (!colour)
+                    if (!colour || markerNode.classList.contains(RangeNote.HAS_NOTE_CLASS_NAME) || 
+                        markerNode.classList.contains(RangeNote.NOTE_CLASS_NAME))
                         return false;
 
                     if (rangeIsAvailable && isSingleNode)
