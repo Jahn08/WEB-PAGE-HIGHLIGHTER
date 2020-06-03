@@ -223,7 +223,8 @@ class ShortcutSelector extends Control {
         this._hideStatus();
         this._updateButtonsAvailability();
 
-        this._input.focus();
+        if (!this._input.value)
+            this._input.focus();
     }
 
     _render() {
