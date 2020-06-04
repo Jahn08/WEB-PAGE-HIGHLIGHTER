@@ -50,19 +50,23 @@ class RangeNote extends RangeBase {
         if (!ranges || !ranges.length)
             return false;
 
-        ArrayExtension.runForEach(ranges, range => {            
+        return ranges.map(range => {
             const endOffset = range.endOffset;
             const skipLastNode = !endOffset;
     
-            const selectedNodes = this._getSelectedTextNodes(range);
-    
-            let lastNodeIndex = selectedNodes.length - (skipLastNode ? 1 : 0) - 1;
+            const selectedNodes = this._getSelectedTextNodes(range)
+                .filter(n => !this._getNoteElement(n));
+            const selectionLength = selectedNodes.length;
+            if (!selectionLength)
+                return false;
+
+            let lastNodeIndex = selectionLength - (skipLastNode ? 1 : 0) - 1;
             lastNodeIndex = lastNodeIndex <= 0 ? 0: lastNodeIndex;
             const isSingleNode = !lastNodeIndex;
     
             if (isSingleNode) {
                 const noteNode = this._createSolidContainerNoteNode(noteId, text);
- 
+
                 if ((RangeMarker.getColourClassesForSelectedNodes() || [])[0]) {
                     const pseudoColourClass = this.NOTE_CLASS_NAME + noteId;
                     RangeMarker.markSelectedNodes(pseudoColourClass);
@@ -117,9 +121,9 @@ class RangeNote extends RangeBase {
             }
             else
                 lastNode.parentElement.insertBefore(endNoteEl, lastNode.nextSibling);
-        });
 
-        return true;
+            return true;
+        }).some(result => result);
     }
 
     static _appendNoteToNode(targetNode, noteId, text) {
@@ -173,7 +177,15 @@ class RangeNote extends RangeBase {
     }
 
     static hasNote(targetNode) {
-        return this._getNoteElement(targetNode) !== null;
+        if (this._getNoteElement(targetNode))
+            return true;
+
+        const ranges = this._getSelectionRanges();
+        if (!ranges || !ranges.length)
+            return false;
+
+        return ranges.some(range =>
+            this._getSelectedTextNodes(range).some(n => this._getNoteElement(n)));
     }
 
     static _getNoteElement(targetNode) {
@@ -188,19 +200,36 @@ class RangeNote extends RangeBase {
         if (this._elementHasNote(parentElement))
             return parentElement;
 
-        return [...targetNode.children].find(el => this._elementHasNote(el)) || null;
+        return null;
     }
 
     static _elementHasNote(targetNode) {
         return targetNode && targetNode.classList && 
-            targetNode.classList.contains(this.HAS_NOTE_CLASS_NAME);
+            (targetNode.classList.contains(this.HAS_NOTE_CLASS_NAME) || 
+                targetNode.classList.contains(this.NOTE_CLASS_NAME));
     }
 
-    static removeNote(targetNode) {
+    static removeNote(targetNode = null) {
         let noteId;
+        if (!(noteId = this._extractNoteId(targetNode))) {
+            const ranges = this._getSelectionRanges();
+            if (!ranges || !ranges.length)
+                return null;
+    
+            const textNodes = this._getSelectedTextNodes(ranges[0]);
+            let curNode = textNodes[0];
+            const lastNode = textNodes[textNodes.length - 1];
+            
+            if (!curNode || !lastNode)
+                return null;
 
-        if (!(targetNode = this._getNoteElement(targetNode)) || !(noteId = targetNode.dataset.noteId))
-            return null;
+            do {
+                noteId = this._extractNoteId(curNode);
+            } while (!noteId && curNode !== lastNode && (curNode = this._nextNode(curNode)));
+
+            if (!noteId)
+                return null;
+        }
 
         const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
         ArrayExtension.runForEach(noteNodes, 
@@ -209,6 +238,14 @@ class RangeNote extends RangeBase {
 
         return noteNodes.length > 0 ? noteId : null;        
     }
+
+    static _extractNoteId(node) {
+        if (!node)
+            return null;
+
+        const noteNode = this._getNoteElement(node);
+        return noteNode ? noteNode.dataset.noteId : null;
+    } 
 
     static _getNoteSearchSelector(noteId) {
         return `.marker-has-note[data-note-id="${noteId}"]`;

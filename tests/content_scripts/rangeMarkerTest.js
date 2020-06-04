@@ -365,7 +365,8 @@ describe('content_script/rangeMarker', function () {
             TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 29, 50));
 
             assert(RangeNote.createNote(Randomiser.getRandomString()));
-            assert(RangeNote.removeNote(markedNode));
+            TestPageHelper.setRange(TestPageHelper.setRangeContainerForSentenceItalic);
+            assert(RangeNote.removeNote());
 
             TestPageHelper.setRange(range => setRangeForPartiallySelectedText(range, 27, 48));
             RangeMarker.unmarkSelectedNodes();

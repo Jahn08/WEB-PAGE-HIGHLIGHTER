@@ -128,25 +128,26 @@ void function() {
             try {
                 const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
 
-                if (curColourClasses)
-                {
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setMarkMenuReady(), 
-                        MessageReceiver.setAddNoteMenuReady());
+                let hasRangeOrFocusedNode;
+                if (curColourClasses) {
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setMarkMenuReady());
+                    hasRangeOrFocusedNode = true;
     
                     if (curColourClasses.length)
                         msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
                 }
-                else if (RangeMarker.isNodeMarked(focusedNode)) 
-                {
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady(), 
-                        MessageReceiver.setAddNoteMenuReady());
+                else if (RangeMarker.isNodeMarked(focusedNode)) {
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
                     this._activeNode = focusedNode;
+                    hasRangeOrFocusedNode = true;
                 }
                 
                 if (RangeNote.hasNote(focusedNode)) {
                     msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
                     this._activeNode = focusedNode;
                 }
+                else if (hasRangeOrFocusedNode)
+                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setAddNoteMenuReady());
 
                 msg = MessageReceiver.combineEvents(msg, MessageReceiver.updateShortcuts(this._shortcuts),
                     MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));

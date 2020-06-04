@@ -60,14 +60,6 @@ describe('content_script/rangeNote', function () {
                 .getElementsByClassName(RangeNote.START_NOTE_CLASS_NAME)[0];
             assert.strictEqual(RangeNote.hasNote(targetNode), true);
         });
-
-        it('should return true if a node has children with a note', () => {
-            TestPageHelper.setRange(TestPageHelper.setRangeForLastParagraphSentenceNode);
-            createNoteWithText();
-
-            const targetNode = TestPageHelper.getLastParagraphSentenceNode();
-            assert.strictEqual(RangeNote.hasNote(targetNode), true);
-        });
     });
 
     const excludeNotesFromText = (text, noteText) => {
@@ -140,10 +132,19 @@ describe('content_script/rangeNote', function () {
             assureNoteValidity(createNoteWithText(), [TestPageHelper.PARTLY_SELECTED_NODES_TEXT]);
         });
 
-        it('should create a note for a focused node', () => {
+        it('should create a note for a focused element', () => {
             const targetNode = TestPageHelper.getFirstItalicSentenceNode();
 
             assureNoteValidity(createNoteWithText(targetNode), [targetNode.textContent]);
+        });
+
+        it('should not create a note inside an element having another note', () => {
+            const targetNode = TestPageHelper.getFirstItalicSentenceNode();
+            const noteText = createNoteWithText(targetNode.firstChild);
+
+            TestPageHelper.setRange(TestPageHelper.setRangeContainerForSentenceItalic);
+            assert(!RangeNote.createNote(Randomiser.getRandomString()));
+            assureNoteValidity(noteText, [targetNode.textContent]);
         });
     });
 
@@ -204,6 +205,45 @@ describe('content_script/rangeNote', function () {
 
             assert.strictEqual(RangeNote.removeNote(nodeForNoteRemoval), '1'); 
             createNoteWithText(nodeForNoteRemoval, '3');
+        });
+
+        it('should remove a solid note for selection', () => {
+            TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+
+            TestPageHelper.setRange(range => 
+                TestPageHelper.setRangeForPartlySelectedItalicSentenceNode(range, 31, 37));
+            assert.strictEqual(RangeNote.removeNote(), '1');
+        });
+
+        it('should remove a range note for selection', () => {
+            TestPageHelper.setRange(TestPageHelper.setRangeForEntireNodes);
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+
+            const noteBorderElem = document.getElementsByClassName(RangeNote.START_NOTE_CLASS_NAME)
+                .item(0);
+            assert(noteBorderElem);
+            TestPageHelper.setRange(range => {
+                const parentElem = noteBorderElem.parentElement;
+                range.setStart(parentElem.previousSibling);
+                range.setEnd(parentElem.nextSibling);
+            });
+            assert.strictEqual(RangeNote.removeNote(), '1');
+        });
+
+        it('should not remove a note if it is not in selection', () => {
+            TestPageHelper.setRange(TestPageHelper.setRangeForEntireNodes);
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+
+            const noteBorderElem = document.getElementsByClassName(RangeNote.START_NOTE_CLASS_NAME)
+                .item(0);
+            assert(noteBorderElem);
+            TestPageHelper.setRange(range => {
+                const elemWithoutNote = noteBorderElem.parentElement.previousSibling;
+                range.setStart(elemWithoutNote);
+                range.setEnd(elemWithoutNote);
+            });
+            assert(!RangeNote.removeNote());
         });
     });
 

@@ -27,10 +27,10 @@ export class TestPageHelper {
         range.setEnd(document.querySelector('.article--paragraph--sentence--bold--italic'));    
     }
     
-    static setRangeForPartlySelectedItalicSentenceNode(range) {
+    static setRangeForPartlySelectedItalicSentenceNode(range, startOffset = 29, endOffset = 50) {
         const italicNode = TestPageHelper.getFirstItalicSentenceNode();
-        range.setStart(italicNode, 29);
-        range.setEnd(italicNode, 50);
+        range.setStart(italicNode, startOffset);
+        range.setEnd(italicNode, endOffset);
     }
 
     static getFirstItalicSentenceNode() {
