@@ -23,7 +23,7 @@ class Shortcut {
     }
 
     getCommandsInUse(shortcutCommands) {
-        return Shortcut.getCommandsInUse(shortcutCommands, this.key);
+        return this.key ? Shortcut.getCommandsInUse(shortcutCommands, this.key) : [];
     }
 
     static getCommandsInUse(shortcutCommands, shortcutKey) {

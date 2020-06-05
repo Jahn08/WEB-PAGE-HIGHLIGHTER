@@ -28,18 +28,20 @@ void function() {
     
                 if (unifiedKey)
                     this._keyTempCombination.push(unifiedKey);
-            }
-            else {
+
                 const shortcut = new Shortcut(this._keyTempCombination);
                 const commandIds = shortcut.getCommandsInUse(this._shortcuts);
 
-                if (commandIds.length)
+                if (commandIds.length) {
                     this._setUpContextMenu(this._tempFocusedNode, 
                         MessageReceiver.emitEvent(commandIds[0]));
     
-                this._keyTempCombination = [];
-                event.preventDefault();
+                    this._keyTempCombination = [];
+                    event.preventDefault();
+                }
             }
+            else
+                this._keyTempCombination = [];
         }    
 
         async _initUnloadEvent() {
