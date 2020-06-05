@@ -92,35 +92,58 @@ class RangeNote extends RangeBase {
             const useFirstNodePartially = startOffset > 0;
     
             const startNoteEl = this._createStartContainerNoteNode(noteId, text);
-    
+
+            const firstElParent = firstNode.parentElement;
+            const isFirstNodeMarked = RangeMarker.isNodeMarked(firstElParent);
             if (useFirstNodePartially) {
-                const val = firstNode.nodeValue;
-                firstNode.nodeValue = val.substring(0, startOffset);
-    
-                const fragment = document.createDocumentFragment();
-                fragment.append(startNoteEl, document.createTextNode(val.substring(startOffset)));
-                
-                firstNode.parentElement.insertBefore(fragment, firstNode.nextSibling);
+                if (isFirstNodeMarked)
+                    this._insertNodeBefore(startNoteEl,
+                        RangeMarker.splitMarkerNode(firstElParent, startOffset));
+                else {
+                    const val = firstNode.nodeValue;
+                    firstNode.nodeValue = val.substring(0, startOffset);
+        
+                    const fragment = document.createDocumentFragment();
+                    fragment.append(startNoteEl, document.createTextNode(val.substring(startOffset)));
+                    
+                    firstElParent.insertBefore(fragment, firstNode.nextSibling);
+                }
             }
-            else
-                firstNode.parentElement.insertBefore(startNoteEl, firstNode);
+            else {
+                if (isFirstNodeMarked)
+                    this._insertNodeBefore(startNoteEl, firstElParent);
+                else
+                    firstElParent.insertBefore(startNoteEl, firstNode);
+            }
     
             const lastNode = selectedNodes[lastNodeIndex];
             const useLastNodePartially = endOffset && endOffset !== lastNode.length;
     
             const endNoteEl = this._createEndContainerNoteNode(noteId, text);
-    
+
+            const lastElParent = lastNode.parentElement;
+            const isLastNodeMarked = RangeMarker.isNodeMarked(lastElParent);
             if (useLastNodePartially) {
-                const val = lastNode.nodeValue;
-                lastNode.nodeValue = val.substring(endOffset);
-    
-                const fragment = document.createDocumentFragment();
-                fragment.append(document.createTextNode(val.substring(0, endOffset)), endNoteEl);
-                
-                lastNode.parentElement.insertBefore(fragment, lastNode);
+                if (isLastNodeMarked) {
+                    RangeMarker.splitMarkerNode(lastElParent, endOffset);
+                    this._insertNodeAfter(endNoteEl, lastElParent);
+                }
+                else {
+                    const val = lastNode.nodeValue;
+                    lastNode.nodeValue = val.substring(endOffset);
+        
+                    const fragment = document.createDocumentFragment();
+                    fragment.append(document.createTextNode(val.substring(0, endOffset)), endNoteEl);
+                    
+                    lastElParent.insertBefore(fragment, lastNode);
+                }
             }
-            else
-                lastNode.parentElement.insertBefore(endNoteEl, lastNode.nextSibling);
+            else {
+                if (isLastNodeMarked)
+                    this._insertNodeAfter(endNoteEl, lastElParent);
+                else
+                    lastElParent.insertBefore(endNoteEl, lastNode.nextSibling);
+            }
 
             return true;
         }).some(result => result);

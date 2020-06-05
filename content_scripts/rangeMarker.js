@@ -16,14 +16,16 @@ class RangeMarker extends RangeBase {
             if (!markerElems.length)
                 return [];
     
-            return markerElems.map(e => this._obtainMarkerColourClass(e.classList))
+            return markerElems.map(e => this._obtainMarkerColourClass(e))
                 .filter(cl => cl);
         }).reduce((prev, cur) => prev.concat(cur));
 
         return [...new Set(colourClasses)];
     }
 
-    static _obtainMarkerColourClass(classList) { return classList.item(1); }
+    static _obtainMarkerColourClass(node) { 
+        return node && node.classList ? node.classList.item(1) : null; 
+    }
 
     static _getMarkerElementsFromSelection(range) {
         return this._getMarkerElementsFromTextNodes(this._getSelectedTextNodes(range));
@@ -122,7 +124,7 @@ class RangeMarker extends RangeBase {
                 if (markerNode.classList.contains(markerClass)) {
                     let curColour;
                     
-                    if ((curColour = this._obtainMarkerColourClass(markerNode.classList)) === colour)
+                    if ((curColour = this._obtainMarkerColourClass(markerNode)) === colour)
                         return false;
 
                     const nodeValue = node.nodeValue;
@@ -200,6 +202,20 @@ class RangeMarker extends RangeBase {
         return affectedNodes;
     }
 
+    static splitMarkerNode(node, splitPosition) {
+        let colour;
+        let text;
+        if (!splitPosition || !(text = node.innerHTML) || splitPosition === text.length || 
+            !(colour = this._obtainMarkerColourClass(node)))
+            return;
+
+        node.innerHTML = text.substring(0, splitPosition);
+        const newMarkedNode = this._createMarkerNode(colour, text, splitPosition);
+        this._insertNodeAfter(newMarkedNode, node);
+
+        return newMarkedNode;
+    }
+
     static _createMarkerNode(colour, innerHtml, substrStart = 0, substrEnd = innerHtml.length) {
         const contents = innerHtml.substring(substrStart, substrEnd);
 
@@ -213,14 +229,6 @@ class RangeMarker extends RangeBase {
             newNode = document.createTextNode(contents);
 
         return newNode;
-    }
-
-    static _insertNodeAfter(newNode, referenceNode) { 
-        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling); 
-    }
-
-    static _insertNodeBefore(newNode, referenceNode) { 
-        referenceNode.parentNode.insertBefore(newNode, referenceNode);
     }
 
     static _createMarkedSpan(colourClass) {

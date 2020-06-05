@@ -422,6 +422,23 @@ describe('content_script/rangeMarker', function () {
             assert.strictEqual(extractText(markedNode), originalText);
             RangeNote.removeNote(markedNode);
         });
+
+        it('should unmark selection having a range note without changing its content', () => {
+            const colourClass = markRangeAndCheckColour(TestPageHelper.setRangeForEntireNodes);
+            const originalText = extractText(...document.getElementsByClassName(colourClass));
+
+            TestPageHelper.setRange(TestPageHelper.setRangeForEntireNodes);
+            assert(RangeNote.createNote(Randomiser.getRandomString()));
+      
+            TestPageHelper.setRange(TestPageHelper.setRangeForEntireNodes);
+            RangeMarker.unmarkSelectedNodes();
+
+            TestPageHelper.setRange(range => {
+                TestPageHelper.setRangeForEntireNodes(range);
+                assert(extractText(range.commonAncestorContainer).includes(originalText));
+            });
+            RangeNote.removeNote();
+        });
     });
 
     describe('#changeSelectedNodesColour', function () {

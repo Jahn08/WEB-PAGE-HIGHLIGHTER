@@ -112,4 +112,12 @@ class RangeBase {
             return node ? node.nextSibling: null;
         }
     }
+
+    static _insertNodeAfter(newNode, referenceNode) { 
+        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling); 
+    }
+
+    static _insertNodeBefore(newNode, referenceNode) { 
+        referenceNode.parentNode.insertBefore(newNode, referenceNode);
+    }
 }
