@@ -151,7 +151,7 @@ class ShortcutSelector extends Control {
                 this._shortcut = shortcut;
 
                 const selectedCommandId = this._getSelectedOption(this._selector);
-                const commandId = shortcut.getCommandsInUse(this._shortcuts)
+                const commandId = shortcut.getCommandsInUse(this._shortcuts, false)
                     .find(c => c !== selectedCommandId);
                 if (commandId)
                     this._showStatus(this._locale.getStringWithArgs(
@@ -176,7 +176,7 @@ class ShortcutSelector extends Control {
         }
 
         if (this._shortcut) {
-            const commandId = Shortcut.getCommandsInUse(this._shortcuts, this._shortcut.key)
+            const commandId = Shortcut.getCommandsInUse(this._shortcuts, this._shortcut.key, false)
                 .find(c => c !== selectedCommandId);
 
             if (commandId)

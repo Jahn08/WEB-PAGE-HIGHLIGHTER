@@ -22,11 +22,11 @@ class Shortcut {
         });
     }
 
-    getCommandsInUse(shortcutCommands) {
-        return this.key ? Shortcut.getCommandsInUse(shortcutCommands, this.key) : [];
+    getCommandsInUse(shortcutCommands, strictlyEqual) {
+        return this.key ? Shortcut.getCommandsInUse(shortcutCommands, this.key, strictlyEqual) : [];
     }
 
-    static getCommandsInUse(shortcutCommands, shortcutKey) {
+    static getCommandsInUse(shortcutCommands, shortcutKey, strictlyEqual) {
         const commands = [];
         
         if (!shortcutKey || !shortcutCommands)
@@ -35,7 +35,12 @@ class Shortcut {
         for (const key in shortcutCommands) {
             const combination = shortcutCommands[key];
 
-            if (combination && combination.key.toUpperCase() === shortcutKey)
+            if (!combination)
+                continue;
+
+            const cmdKey = combination.key.toUpperCase();
+            if ((strictlyEqual && cmdKey === shortcutKey) || 
+                (!strictlyEqual && (cmdKey.startsWith(shortcutKey) || shortcutKey.startsWith(cmdKey))))
                 commands.push(key);
         }
 

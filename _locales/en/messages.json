@@ -334,7 +334,7 @@
     },
 
     "preferences_shortcuts_tooltip": {
-        "message": "Use 2-3 keys as combinations, excluding Shift, Ctrl and PrintScreen",
+        "message": "Use 2-3 keys as combinations, excluding Shift, Ctrl and PrintScreen. Different combinations cannot start with identical keys",
         "description": "Title expanding on what key combinations can be used as shortcuts"
     },
     
@@ -357,7 +357,7 @@
     },
 
     "preferences_duplicated_shortcut_warning": {
-        "message": "Applying a combination $shortcut$ will remove it for a command $command$",
+        "message": "Applying a combination $shortcut$ will remove one for a command $command$",
         "placeholders": {
             "shortcut" : {
                 "content" : "$1"

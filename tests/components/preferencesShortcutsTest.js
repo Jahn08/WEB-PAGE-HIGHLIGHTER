@@ -71,7 +71,8 @@ describe('components/preferences/pageTable', function () {
                 }));
     });
 
-    const enterShortcutInUse = async (preferences, shouldApply = false) => {
+    const enterShortcutInUse = async (preferences, shouldApply = false, 
+        changeShortcutFn = null) => {
         await preferences.load();
 
         const shortcutInUse = shortcutDom.getCommandInput().value;
@@ -80,12 +81,14 @@ describe('components/preferences/pageTable', function () {
         selector.value = selector.options[selector.options.length - 1].value;
         shortcutDom.dispatchChangeEvent(selector);
 
+        const shortcutToDispatch = changeShortcutFn ? changeShortcutFn(shortcutInUse) :
+            shortcutInUse;
         shortcutDom.dispatchCombination(shouldApply,
-            ...ShortcutPreferencesDOM.createKeyboardEventOptions(shortcutInUse));
+            ...ShortcutPreferencesDOM.createKeyboardEventOptions(shortcutToDispatch));
 
         return { 
             commandInUse: selector.options[0].value, 
-            shortcutInUse 
+            shortcutInUse: shortcutToDispatch 
         };
     };
 
@@ -226,6 +229,22 @@ describe('components/preferences/pageTable', function () {
             Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
                 async () => {
                     const dataInUse = await enterShortcutInUse(new Preferences());
+                    
+                    const numberOfMessages = 2;
+                    shortcutDom.assertStatusIsWarning(dataInUse.commandInUse, numberOfMessages);
+                    shortcutDom.assertStatusIsWarning(dataInUse.shortcutInUse, numberOfMessages);
+                }));
+
+        it('should warn when entering a shortcut which starts like another in use', () => 
+            Expectation.expectResolution(StorageHelper.saveTestShortcuts(100),
+                async () => {
+                    const dataInUse = await enterShortcutInUse(new Preferences(), false,
+                        shortcutInUse => {
+                            const options = ShortcutPreferencesDOM.createKeyboardEventOptions(
+                                shortcutInUse);
+                            options.push(ShortcutPreferencesDOM.createKeyboardEventOption());
+                            return ShortcutPreferencesDOM.compileShortcut(options);
+                        });
                     
                     const numberOfMessages = 2;
                     shortcutDom.assertStatusIsWarning(dataInUse.commandInUse, numberOfMessages);

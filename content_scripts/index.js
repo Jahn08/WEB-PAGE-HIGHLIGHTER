@@ -30,7 +30,7 @@ void function() {
                     this._keyTempCombination.push(unifiedKey);
 
                 const shortcut = new Shortcut(this._keyTempCombination);
-                const commandIds = shortcut.getCommandsInUse(this._shortcuts);
+                const commandIds = shortcut.getCommandsInUse(this._shortcuts, true);
 
                 if (commandIds.length) {
                     this._setUpContextMenu(this._tempFocusedNode, 
