@@ -30,8 +30,8 @@ As development dependencies necessary to build an environment for tests there ar
 
 ### Prerequisites
 
-* [Node.js 8.10.0](https://nodejs.org/download/release/v8.10.0) is used for running tests
-* Npm 6.9.0 ([how to install](https://www.npmjs.com/get-npm))
+* [Node.js 16.14.0](https://nodejs.org/download/release/latest-v16.x/) is used for running tests
+* Npm 8.3.1 ([how to install](https://www.npmjs.com/get-npm)) - Node.js is likely to include it  
 * [Visual Studio Code](https://code.visualstudio.com/) was used as an IDE
 
 ### <a name="headDeploying"></a>Deploying / Debugging
