@@ -62,7 +62,7 @@ describe('components/locale', function () {
 
     it('should assure that the labels of the preferences page are localised', () =>
         testViewLocalisation('preferences')
-    );
+    ).timeout(5000);
 
     it('should assure that the labels of the popup page are localised', () =>
         testViewLocalisation('popup')
