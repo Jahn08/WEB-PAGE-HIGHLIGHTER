@@ -1,6 +1,6 @@
 const msgEvent = new MenuMessageEvent();
 
-export class MessageSender {
+export class SenderMessage {
     constructor (msg) {
         this._msg = msg;
 

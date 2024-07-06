@@ -34,7 +34,7 @@ void function() {
 
                 if (commandIds.length) {
                     this._setUpContextMenu(this._tempFocusedNode, 
-                        MessageReceiver.emitEvent(commandIds[0]));
+                        ReceiverMessage.emitEvent(commandIds[0]));
     
                     this._keyTempCombination = [];
                     event.preventDefault();
@@ -54,11 +54,11 @@ void function() {
             const categoryView = new CategoryView(categories);
 
             this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
-            const msg = MessageReceiver.addCategories(categoryView.categoryTitles, 
+            const msg = ReceiverMessage.addCategories(categoryView.categoryTitles, 
                 this._defaultCategoryTitle);
 
-            this._browserApi.runtime.sendMessage(MessageReceiver.combineEvents(msg, 
-                MessageReceiver.loadPreferences())).then(async settings => {
+            this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(msg, 
+                ReceiverMessage.loadPreferences())).then(async settings => {
                 try {
                     const preferences = Object.assign({}, settings);
 
@@ -132,27 +132,27 @@ void function() {
 
                 let hasRangeOrFocusedNode;
                 if (curColourClasses) {
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setMarkMenuReady());
+                    msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setMarkMenuReady());
                     hasRangeOrFocusedNode = true;
     
                     if (curColourClasses.length)
-                        msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
+                        msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
                 }
                 else if (RangeMarker.isNodeMarked(focusedNode)) {
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setUnmarkMenuReady());
+                    msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
                     this._activeNode = focusedNode;
                     hasRangeOrFocusedNode = true;
                 }
                 
                 if (RangeNote.hasNote(focusedNode)) {
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setRemoveNoteMenuReady());
+                    msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setRemoveNoteMenuReady());
                     this._activeNode = focusedNode;
                 }
                 else if (hasRangeOrFocusedNode)
-                    msg = MessageReceiver.combineEvents(msg, MessageReceiver.setAddNoteMenuReady());
+                    msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setAddNoteMenuReady());
 
-                msg = MessageReceiver.combineEvents(msg, MessageReceiver.updateShortcuts(this._shortcuts),
-                    MessageReceiver.addNoteLinks(RangeNote.getNoteLinks()));
+                msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.updateShortcuts(this._shortcuts),
+                    ReceiverMessage.addNoteLinks(RangeNote.getNoteLinks()));
                 this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg))
                     .catch(error => console.error(errorPrefix + error.toString()));
     
@@ -168,12 +168,12 @@ void function() {
                 return msg;
     
             if (this._domIsPure === false)
-                msg = MessageReceiver.combineEvents(msg, 
-                    MessageReceiver.setSaveMenuReady());
+                msg = ReceiverMessage.combineEvents(msg, 
+                    ReceiverMessage.setSaveMenuReady());
     
             if (this._canLoad)
-                msg = MessageReceiver.combineEvents(msg, 
-                    MessageReceiver.setLoadMenuReady());
+                msg = ReceiverMessage.combineEvents(msg, 
+                    ReceiverMessage.setLoadMenuReady());
     
             return msg;
         }
@@ -188,7 +188,7 @@ void function() {
 
         async _processMessage(msg) {
             try {
-                const receiver = new MessageReceiver(msg);
+                const receiver = new ReceiverMessage(msg);
     
                 const curNode = this._activeNode;
                 this._activeNode = null;
@@ -223,7 +223,7 @@ void function() {
                 else if (receiver.shouldLoad())
                     await this._performStorageAction(this._load);
                 else if (receiver.shouldReturnTabState())
-                    return this._includeLoadSaveEvents(MessageReceiver.updateShortcuts(this._shortcuts));
+                    return this._includeLoadSaveEvents(ReceiverMessage.updateShortcuts(this._shortcuts));
                 else if (receiver.shouldGoToNote())
                     RangeNote.goToNote(receiver.noteLink.id);
                 else

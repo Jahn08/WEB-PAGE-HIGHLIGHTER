@@ -25,7 +25,7 @@
             "js": ["content_scripts/lzwCompressor.js", 
                 "content_scripts/browserAPI.js", "content_scripts/arrayExtension.js", 
                 "content_scripts/browserStorage.js", "content_scripts/pageInfo.js", 
-                "content_scripts/menuMessageEvent.js", "content_scripts/messageReceiver.js", 
+                "content_scripts/menuMessageEvent.js", "content_scripts/receiverMessage.js", 
                 "content_scripts/rangeBase.js", "content_scripts/rangeMarker.js", 
                 "content_scripts/rangeNote.js", "content_scripts/messageControl.js", 
                 "content_scripts/shortcut.js", "content_scripts/index.js"],

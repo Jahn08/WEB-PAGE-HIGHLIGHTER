@@ -1,5 +1,5 @@
 import { ContextMenu } from '../components/contextMenu.js';
-import { MessageSender } from '../components/messageSender.js';
+import { SenderMessage } from '../components/senderMessage.js';
 import { Preferences } from '../components/preferences.js';
 
 const menu = new ContextMenu();
@@ -10,43 +10,43 @@ const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, 
     browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`));
 
 menu.onMarking = (info) => sendMessageToTab(info.tabId,
-    MessageSender.startMarking(info.colourClass));
+    SenderMessage.startMarking(info.colourClass));
 
 menu.onChangingColour = (info) => sendMessageToTab(info.tabId, 
-    MessageSender.startChangingColour(info.colourClass));
+    SenderMessage.startChangingColour(info.colourClass));
 
-menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
+menu.onUnmarking = (info) => sendMessageToTab(info.tabId, SenderMessage.startUnmarking());
 
 menu.onSaving = info => {
-    const msg = info.categoryTitle === undefined ? MessageSender.startSaving():
-        MessageSender.startSavingToCategory(info.categoryTitle);
+    const msg = info.categoryTitle === undefined ? SenderMessage.startSaving():
+        SenderMessage.startSavingToCategory(info.categoryTitle);
     sendMessageToTab(info.tabId, msg);
 };
 
-menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
+menu.onLoading = (info) => sendMessageToTab(info.tabId, SenderMessage.startLoading());
 
 menu.onAddingNote = (info) => 
-    sendMessageToTab(info.tabId, MessageSender.startAddingNote())
+    sendMessageToTab(info.tabId, SenderMessage.startAddingNote())
         .then(outcome => {
             if (outcome)
                 menu.appendNoteLink(outcome.id, outcome.text);
         });
 
 menu.onRemovingNote = (info) =>
-    sendMessageToTab(info.tabId, MessageSender.startRemovingNote())
+    sendMessageToTab(info.tabId, SenderMessage.startRemovingNote())
         .then(noteId => menu.removeNoteLink(noteId));
 
 menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
-    MessageSender.startGoingToNote(info.noteId));
+    SenderMessage.startGoingToNote(info.noteId));
 
 browserApi.runtime.onMessage(async msg => {
     try {
-        const sender = new MessageSender(msg);
+        const senderMsg = new SenderMessage(msg);
     
-        if (sender.shouldAddCategories())
-            menu.renderPageCategories(sender.categories, sender.defaultCategory);
+        if (senderMsg.shouldAddCategories())
+            menu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
 
-        if (sender.shouldLoadPreferences()) {
+        if (senderMsg.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
             menu.checkColourRadio(preferences.defaultColourToken);
             menu.renderShortcuts(preferences.shortcuts);
@@ -54,46 +54,46 @@ browserApi.runtime.onMessage(async msg => {
             return preferences;
         }
 
-        if (sender.shouldUpdateShortcuts())
-            menu.renderShortcuts(sender.shortcuts);
+        if (senderMsg.shouldUpdateShortcuts())
+            menu.renderShortcuts(senderMsg.shortcuts);
 
-        if (sender.shouldSetSaveMenuReady())
+        if (senderMsg.shouldSetSaveMenuReady())
             menu.enableSaveBtn();
         else
             menu.disableSaveBtn();
 
-        if (sender.shouldSetLoadMenuReady())
+        if (senderMsg.shouldSetLoadMenuReady())
             menu.enableLoadBtn();
         else
             menu.disableLoadBtn();
 
-        if (sender.shouldSetMarkMenuReady())
+        if (senderMsg.shouldSetMarkMenuReady())
             menu.enableMarkingBtn();
         else
             menu.disableMarkingBtn();
         
-        if (sender.shouldSetUnmarkMenuReady())
+        if (senderMsg.shouldSetUnmarkMenuReady())
             menu.enableUnmarkingBtn();
         else
             menu.disableUnmarkingBtn();
 
-        if (sender.shouldSetAddNoteMenuReady())
+        if (senderMsg.shouldSetAddNoteMenuReady())
             menu.enableAddingNoteBtn();
         else
             menu.disableAddingNoteBtn();
 
-        if (sender.shouldSetRemoveNoteMenuReady())
+        if (senderMsg.shouldSetRemoveNoteMenuReady())
             menu.enableRemovingNoteBtn();
         else
             menu.disableRemovingNoteBtn();
             
-        if (sender.shouldEmitEvent()) {
-            menu.emitItemClick(sender.eventName);
+        if (senderMsg.shouldEmitEvent()) {
+            menu.emitItemClick(senderMsg.eventName);
             return true;
         }
 
-        if (sender.shouldAddNoteLinks())
-            menu.renderNoteLinks(sender.noteLinks);
+        if (senderMsg.shouldAddNoteLinks())
+            menu.renderNoteLinks(senderMsg.noteLinks);
 
         return true;
     }
