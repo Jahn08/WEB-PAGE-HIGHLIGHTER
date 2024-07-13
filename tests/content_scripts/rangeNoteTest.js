@@ -96,8 +96,7 @@ describe('content_script/rangeNote', function () {
                 });
 
                 return range.commonAncestorContainer.textContent;
-            }
-            else if (targetNode.classList.contains(RangeNote.SOLID_NOTE_CLASS_NAME))
+            } else if (targetNode.classList.contains(RangeNote.SOLID_NOTE_CLASS_NAME))
                 return targetNode.textContent;
 
             return null;

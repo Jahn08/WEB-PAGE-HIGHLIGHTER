@@ -96,8 +96,7 @@ class MenuMessageEvent {
 
     _createEvent(eventName) { return { event: [eventName] }; }
 
-    combineEvents(msgs = [])
-    {
+    combineEvents(msgs = []) {
         msgs = msgs || [];
 
         const validMsgs = msgs.filter(m => m);

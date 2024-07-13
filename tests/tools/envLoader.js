@@ -23,8 +23,7 @@ export class EnvLoader {
         return new Promise((resolve, reject) => {
             try {
                 callback(resolve);
-            }
-            catch (ex) {
+            } catch (ex) {
                 reject(ex);
             }
         });
@@ -194,8 +193,7 @@ class Range {
 
         let lengthSum = 0;
 
-        for (let i = 0; i < childNodes.length; ++i)
-        {
+        for (let i = 0; i < childNodes.length; ++i) {
             const curNode = childNodes[i];
 
             if (startFrom < (lengthSum += curNode.textContent.length))
@@ -255,8 +253,7 @@ class Range {
         if (textNodes.length > 1) {
             curContainer.replaceWith(textNodes[0]);
             startFragmentNode = textNodes[1];
-        }
-        else {
+        } else {
             curContainer.remove();
             startFragmentNode = curContainer;
         }
@@ -272,8 +269,7 @@ class Range {
                 (endTextNodes = this._splitTextNode(curContainer, this.endOffset).length > 1)) {
                 curContainer.replaceWith(endTextNodes[1]);
                 fragmentEndNode = endTextNodes[0];
-            }
-            else {
+            } else {
                 curContainer.remove();
                 fragmentEndNode = curContainer;
             }

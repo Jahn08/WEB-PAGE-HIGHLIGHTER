@@ -176,8 +176,7 @@ class BrowserAPI {
     _chooseApi() {
         try {
             return browser;
-        }
-        catch (ex) {
+        } catch (ex) {
             this._isFirefox = false;
             return chrome;
         }

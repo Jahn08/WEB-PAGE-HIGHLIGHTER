@@ -241,8 +241,7 @@ class PageInfo {
         try {
             new URL(uri);
             return true;
-        }
-        catch (ex) {
+        } catch (ex) {
             return false;
         }
     }
@@ -325,8 +324,7 @@ class PageInfo {
             uriObj.searchParams.set(this._LOADING_PARAM, true);
 
             return uriObj.toString();
-        }
-        catch (ex) {
+        } catch (ex) {
             return uri;       
         }
     }

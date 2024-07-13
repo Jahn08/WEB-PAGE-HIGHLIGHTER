@@ -512,8 +512,7 @@ describe('components/preferences/pageTable', function () {
                             action();
         
                         resolve();
-                    }
-                    catch(ex) {
+                    } catch(ex) {
                         reject(ex);
                     }
                 }, 100);
@@ -580,8 +579,7 @@ describe('components/preferences/pageTable', function () {
                 if (shouldUpdateExistentPages) {
                     assert.deepStrictEqual(savedPage, imp);
                     assert.notDeepStrictEqual(imp, pageToUpdate);
-                }
-                else {
+                } else {
                     assert.notDeepStrictEqual(savedPage, imp);
                     assert.deepStrictEqual(savedPage, pageToUpdate);
                 }

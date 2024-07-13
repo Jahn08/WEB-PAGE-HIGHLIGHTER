@@ -22,8 +22,7 @@ export class ContextMenu {
             try {
                 await this._passTabInfoToCallback(this.onMarking, 
                     {colourClass: this._curColourClass });
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to mark: ' + ex.toString());
             }
         }, new MenuIcon('colourful-brush'));
@@ -32,8 +31,7 @@ export class ContextMenu {
         this._unmarkBtn.addToMenu(async () => { 
             try {
                 await this._passTabInfoToCallback(this.onUnmarking);
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to unmark: ' + ex.toString());
             }
         }, new MenuIcon('white-brush'));
@@ -46,8 +44,7 @@ export class ContextMenu {
 
                 await this._passTabInfoToCallback(this.onChangingColour, 
                     { colourClass: this._curColourClass });
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to change mark colour: ' + ex.toString());
             }
         };
@@ -72,8 +69,7 @@ export class ContextMenu {
         this._addNoteBtn.addToMenu(async () => { 
             try {
                 await this._passTabInfoToCallback(this.onAddingNote);
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to add a note: ' + ex.toString());
             }
         }, new MenuIcon('in-note'));
@@ -82,8 +78,7 @@ export class ContextMenu {
         this._removeNoteBtn.addToMenu(async () => { 
             try {
                 await this._passTabInfoToCallback(this.onRemovingNote);
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to remove a note: ' + ex.toString());
             }
         }, new MenuIcon('out-note'));
@@ -122,8 +117,7 @@ export class ContextMenu {
         this._noteNavigation = new NoteNavigation(async info => {
             try {
                 await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
                     + ex.toString());
             }
@@ -137,8 +131,7 @@ export class ContextMenu {
         const onSavingFn = async (categoryTitle) => { 
             try {
                 await this._passTabInfoToCallback(this.onSaving, { categoryTitle });
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to save: ' + ex.toString());
             }
         };
@@ -146,8 +139,7 @@ export class ContextMenu {
         const onLoadingFn = async () => { 
             try {
                 await this._passTabInfoToCallback(this.onLoading);
-            }
-            catch (ex) {
+            } catch (ex) {
                 console.error('Error while trying to load: ' + ex.toString());
             }
         };
@@ -275,8 +267,7 @@ class LinkMenu {
             if (!existentLink) {
                 this.appendLink(li.id, li.text);
                 wasUpdated = true;
-            }
-            else if (existentLink.updateTitle(li.text))
+            } else if (existentLink.updateTitle(li.text))
                 wasUpdated = true;
 
             updatedBtnIds.push(li.id);

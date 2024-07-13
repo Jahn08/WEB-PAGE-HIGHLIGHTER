@@ -96,8 +96,7 @@ browserApi.runtime.onMessage(async msg => {
             menu.renderNoteLinks(senderMsg.noteLinks);
 
         return true;
-    }
-    catch (ex) {
+    } catch (ex) {
         console.error('Error while trying to set menu visibility: ' + ex.toString());
         throw ex;
     }

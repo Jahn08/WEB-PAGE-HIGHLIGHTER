@@ -140,8 +140,7 @@ class ShortcutSelector extends Control {
             }
 
             this._keyTempCombination.push(unifiedKey);
-        }
-        else {
+        } else {
             const shortcut = new Shortcut(this._keyTempCombination);
 
             if (shortcut.key) {
@@ -367,8 +366,7 @@ class BaseTable extends Control {
 
             cell.classList.add(ascSortClass);
             shouldBeAscending = true;
-        }
-        else {
+        } else {
             shouldBeAscending = this._isSortDescending();
 
             if (shouldBeAscending)
@@ -527,17 +525,14 @@ class CategoryTable extends BaseTable {
         if (!name) {
             this._showStatus(this._locale.getString('preferences-unnamed-category-warning'));
             return;
-        }
-        else if (name.length > nameMaxLength) {
+        } else if (name.length > nameMaxLength) {
             this._showStatus(this._locale.getStringWithArgs(
                 'preferences-long-category-name-warning', nameMaxLength));
             return;
-        }
-        else if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
+        } else if (name.toUpperCase() === this._NONE_CATEGORY_NAME.toUpperCase()) {
             this._showStatus(this._locale.getString('preferences-none-category-warning'));
             return;
-        }
-        else if (this._tableData.find(i => i.title === name)) {
+        } else if (this._tableData.find(i => i.title === name)) {
             this._showStatus(
                 this._locale.getStringWithArgs('preferences-duplicated-category-warning', name));
             return;
@@ -587,8 +582,7 @@ class CategoryTable extends BaseTable {
 
             this._defaultCategoryTitle = markedCheckBox.dataset.title;
             this._tableData.find(c => c.title === this._defaultCategoryTitle).default = true;
-        }
-        else
+        } else
             this._defaultCategoryTitle = null;
         
         this._makeDirty();
@@ -912,8 +906,7 @@ class PageTable extends BaseTable {
                 if (!result || !(pagesToImport = JSON.parse(result)) || !pagesToImport.length)
                     throw new PagePackageError(PagePackageError.EMPTY_IMPORT_PACKAGE_TYPE);
 
-                if (this._originalData.length)
-                {
+                if (this._originalData.length) {
                     if (this._importIsUpsertable)
                         this._originalData = this._originalData.filter(imp => 
                             !pagesToImport.find(pi => pi.uri === imp.uri));
@@ -952,11 +945,9 @@ class PageTable extends BaseTable {
                 this._showStatus(
                     this._locale.getStringWithArgs('import-inserted-page-count', importedPages.length),
                     false);
-            }
-            catch (err) {
+            } catch (err) {
                 this._showStatus(this._locale.getStringWithArgs('import-error', err.toString()));
-            }
-            finally {
+            } finally {
                 this._importIsUpsertable = false;
                 this._updateImportBtnsAvailability(true);
                 this._filePageBtn.value = null;
@@ -1008,8 +999,7 @@ class PageTable extends BaseTable {
 
         try {
             callback(archiveUrl = URL.createObjectURL(this._pagesArchive));
-        }
-        finally {
+        } finally {
             if (archiveUrl)
                 URL.revokeObjectURL(archiveUrl);
         }
@@ -1039,8 +1029,7 @@ class PageTable extends BaseTable {
             try {
                 const archive = new Blob([JSON.stringify(pagesInfo)]);
                 resolve(archive);
-            }
-            catch(err) {
+            } catch(err) {
                 reject(err);
             }
         });

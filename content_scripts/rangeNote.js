@@ -77,8 +77,7 @@ class RangeNote extends RangeBase {
 
                     noteNode.append(nodeToReplace.textContent);
                     nodeToReplace.replaceWith(noteNode);
-                }
-                else {
+                } else {
                     noteNode.append(range.extractContents());
                     range.insertNode(noteNode);
                 }
@@ -108,8 +107,7 @@ class RangeNote extends RangeBase {
                     
                     firstElParent.insertBefore(fragment, firstNode.nextSibling);
                 }
-            }
-            else {
+            } else {
                 if (isFirstNodeMarked)
                     this._insertNodeBefore(startNoteEl, firstElParent);
                 else
@@ -127,8 +125,7 @@ class RangeNote extends RangeBase {
                 if (isLastNodeMarked) {
                     RangeMarker.splitMarkerNode(lastElParent, endOffset);
                     this._insertNodeAfter(endNoteEl, lastElParent);
-                }
-                else {
+                } else {
                     const val = lastNode.nodeValue;
                     lastNode.nodeValue = val.substring(endOffset);
         
@@ -137,8 +134,7 @@ class RangeNote extends RangeBase {
                     
                     lastElParent.insertBefore(fragment, lastNode);
                 }
-            }
-            else {
+            } else {
                 if (isLastNodeMarked)
                     this._insertNodeAfter(endNoteEl, lastElParent);
                 else

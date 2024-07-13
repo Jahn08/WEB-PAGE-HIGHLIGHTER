@@ -70,8 +70,7 @@ describe('components/preferences/categoryTable', function () {
                         onWarning(input);
                     else
                         assert.fail('A status message wasn\'t expected');
-                }
-                else {
+                } else {
                     assert(!titleTxt.value,
                         'A field with a new category name should be emptied after successfull input');
                     inputs.push(input);

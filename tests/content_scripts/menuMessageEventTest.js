@@ -66,13 +66,11 @@ describe('content_script/menuMessageEvent', function () {
             if (Array.isArray(arg)) {
                 assert.strictEqual(actualArgs.length, arg.length);
                 assert(actualArgs.every(ac => arg.includes(ac)));
-            }
-            else {
+            } else {
                 assert.strictEqual(actualArgs.length, 1);
                 assert(actualArgs.includes(arg));
             }    
-        }
-        else
+        } else
             assert.strictEqual(actualArgs, arg);
     };
     

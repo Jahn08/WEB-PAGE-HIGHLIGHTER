@@ -56,8 +56,7 @@ export class BrowserMocked {
         if (global.browser.storage) {
             syncStorage = global.browser.storage;
             syncStorage.local.clear();
-        }
-        else {
+        } else {
             syncStorage = { 
                 local: new StorageMocked() 
             };

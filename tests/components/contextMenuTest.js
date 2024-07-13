@@ -52,8 +52,7 @@ describe('components/ContextMenu', () => {
                 try {
                     assert(tabInfo.tabId);
                     passedOptions = tabInfo;
-                }
-                catch (err) {
+                } catch (err) {
                     error = err;
                     throw err;
                 }

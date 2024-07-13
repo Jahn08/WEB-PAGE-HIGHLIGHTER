@@ -93,8 +93,7 @@ class Popup {
             
             Popup._browser.runtime.logLastError(msgPrefix);
             window.close();
-        }
-        catch (ex) {
+        } catch (ex) {
             console.error(`${msgPrefix}: ${ex.toString()}`);
         }
     }
