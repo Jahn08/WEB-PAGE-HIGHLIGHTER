@@ -12,7 +12,8 @@ export class EnvLoader {
                     throw err;
 
                 const globalInitialiser = classNames.map(cl => `global.${cl}=${cl};`).join('');
-                eval(data.toString('utf8').replace('export class', 'class') + globalInitialiser);
+                const commonJsFileData = data.toString('utf8').replace('export class', 'class').replace('import ', '//import ');
+                eval(commonJsFileData + globalInitialiser);
 
                 resolve();
             });

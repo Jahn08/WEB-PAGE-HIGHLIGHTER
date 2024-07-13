@@ -11,6 +11,7 @@ export class BrowserMocked {
         this._menuOptions = [];
 
         this._tabQueries = [];
+        this._tabMessages = {};
     }
 
     static get _localeMessages() {
@@ -46,6 +47,9 @@ export class BrowserMocked {
 
                     return msgContent;
                 }
+            },
+            runtime: {
+                logLastError: () => {}
             }
         };
     }
@@ -85,7 +89,7 @@ export class BrowserMocked {
 
     get menuOptions() { return this._menuOptions; }
 
-    setBrowserTab() {
+    setBrowserTab(sendMessageOutcome = {}) {
         global.browser.tabs = {
             query: body => {
                 return new Promise((resolve, reject) => {
@@ -95,9 +99,22 @@ export class BrowserMocked {
                     this._tabQueries.push(body);
                     resolve([{ id: Randomiser.getRandomNumberUpToMax() }]); 
                 });
+            },
+            sendMessage: (tabId, msgBody) => {
+                return new Promise((resolve) => {
+                    const msgs = this._tabMessages[tabId] || [];
+                    msgs.push(msgBody);
+
+                    this._tabMessages[tabId] = msgs;
+                    resolve(sendMessageOutcome);
+                });
             }
         };
     }
 
     get tabQueries() { return this._tabQueries; }
+
+    getTabMessages(tabId) { 
+        return this._tabMessages[tabId];
+    }
 }

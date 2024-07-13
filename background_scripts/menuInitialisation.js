@@ -1,45 +1,27 @@
 import { ContextMenu } from '../components/contextMenu.js';
 import { SenderMessage } from '../components/senderMessage.js';
 import { Preferences } from '../components/preferences.js';
+import { MessageSender } from '../components/messageSender.js';
 
 const menu = new ContextMenu();
 
-const browserApi = new BrowserAPI();
+menu.onMarking = MessageSender.sendMarking;
 
-const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody).then(() =>
-    browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`));
+menu.onChangingColour = MessageSender.sendChangingColour;
 
-menu.onMarking = (info) => sendMessageToTab(info.tabId,
-    SenderMessage.startMarking(info.colourClass));
+menu.onUnmarking = MessageSender.sendUnmarking;
 
-menu.onChangingColour = (info) => sendMessageToTab(info.tabId, 
-    SenderMessage.startChangingColour(info.colourClass));
+menu.onSaving = MessageSender.sendSaving;
 
-menu.onUnmarking = (info) => sendMessageToTab(info.tabId, SenderMessage.startUnmarking());
+menu.onLoading = MessageSender.sendLoading;
 
-menu.onSaving = info => {
-    const msg = info.categoryTitle === undefined ? SenderMessage.startSaving():
-        SenderMessage.startSavingToCategory(info.categoryTitle);
-    sendMessageToTab(info.tabId, msg);
-};
+menu.onAddingNote = (info) => MessageSender.sendAddingNote(info, menu);
 
-menu.onLoading = (info) => sendMessageToTab(info.tabId, SenderMessage.startLoading());
+menu.onRemovingNote = (info) => MessageSender.sendRemovingNote(info, menu);
 
-menu.onAddingNote = (info) => 
-    sendMessageToTab(info.tabId, SenderMessage.startAddingNote())
-        .then(outcome => {
-            if (outcome)
-                menu.appendNoteLink(outcome.id, outcome.text);
-        });
+menu.onGoingToNote = MessageSender.sendGoingToNote;
 
-menu.onRemovingNote = (info) =>
-    sendMessageToTab(info.tabId, SenderMessage.startRemovingNote())
-        .then(noteId => menu.removeNoteLink(noteId));
-
-menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
-    SenderMessage.startGoingToNote(info.noteId));
-
-browserApi.runtime.onMessage(async msg => {
+new BrowserAPI().runtime.onMessage(async msg => {
     try {
         const senderMsg = new SenderMessage(msg);
     

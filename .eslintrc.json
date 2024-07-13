@@ -18,6 +18,7 @@
         "MenuMessageEvent": "readonly",
         "ReceiverMessage": "readonly",
         "SenderMessage": "readonly",
+        "MessageSender": "readonly",
         "MessageControl": "readonly",
         "BrowserStorage": "readonly",
         "PageInfo": "readonly",
