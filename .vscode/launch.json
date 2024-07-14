@@ -10,8 +10,7 @@
             "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
             "request": "launch",
 			"stopOnEntry": false,
-            "args": ["tests/**/*.js", "--file", "tests/setup.js",
-                "--require", "babel-core/register"],
+            "args": ["tests/**/*.js", "--require", "babel-core/register"],
 			"runtimeExecutable": null,
 			"env": { "NODE_ENV": "testing"}
         }

@@ -6,7 +6,7 @@ import { Expectation } from '../tools/expectation.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { Preferences } from '../../components/preferences.js';
 
-describe('components/preferences/pageTable', function () {
+describe('components/preferences/shortcuts', function () {
     this.timeout(0);
 
     const browserMocked = new BrowserMocked();
@@ -15,11 +15,6 @@ describe('components/preferences/pageTable', function () {
         browserMocked.resetBrowserStorage();
 
         ShortcutPreferencesDOM.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo')
-            .then(() => done()).catch(done);
     });
 
     afterEach('releaseResources', () => {        

@@ -1,8 +1,8 @@
 import assert from 'assert';
-import { Randomiser } from '../tools/randomiser';
+import { Randomiser } from '../tools/randomiser.js';
+import { ArrayExtension } from '../../content_scripts/arrayExtension.js';
 
 describe('content_script/arrayExtension', function() {
-
     const buildRandomArray = () => {
         const length = Randomiser.getRandomNumber(100) || 10;
         const array = new Array(length);

@@ -1,4 +1,5 @@
-import { SenderMessage } from '../components/senderMessage.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
+import { SenderMessage } from './senderMessage.js';
 
 export class MessageSender {
     static sendMarking(info) {

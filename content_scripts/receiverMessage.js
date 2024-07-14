@@ -1,4 +1,6 @@
-class ReceiverMessage {
+import { MenuMessageEvent } from './menuMessageEvent.js';
+
+export class ReceiverMessage {
     constructor (msg) {
         this._msg = msg;       
         this._markColourClass = null;

@@ -1,12 +1,6 @@
 import assert from 'assert';
-import { Randomiser } from '../tools/randomiser';
-import { EnvLoader } from '../tools/envLoader';
-
-before((done) => {
-    EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'MenuMessageEvent')
-        .then(() => done())
-        .catch(done);
-});
+import { Randomiser } from '../tools/randomiser.js';
+import { MenuMessageEvent } from '../../content_scripts/menuMessageEvent.js';
 
 describe('content_script/menuMessageEvent', function () {
     const IS_MARK_EVENT_METHOD_NAME = 'isMarkEvent';

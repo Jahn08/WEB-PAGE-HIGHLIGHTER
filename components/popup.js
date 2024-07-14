@@ -1,6 +1,8 @@
 import { SenderMessage } from './senderMessage.js';
 import { PageLocalisation } from './pageLocalisation.js';
 import { Preferences } from './preferences.js';
+import { OptionList } from '../content_scripts/menuMessageEvent.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
 class Popup {
     static initialise() {

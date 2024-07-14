@@ -3,23 +3,6 @@ import fs from 'fs';
 import _path from 'path';
 
 export class EnvLoader {
-    static loadClass(scriptPath, ...classNames) {
-        return this._wrapWithPromise(resolve => {
-            this._checkPathExistence(scriptPath);
-            
-            fs.readFile(scriptPath, (err, data) => {
-                if (err)
-                    throw err;
-
-                const globalInitialiser = classNames.map(cl => `global.${cl}=${cl};`).join('');
-                const commonJsFileData = data.toString('utf8').replace('export class', 'class').replace('import ', '//import ');
-                eval(commonJsFileData + globalInitialiser);
-
-                resolve();
-            });
-        });
-    }
-
     static _wrapWithPromise(callback) {
         return new Promise((resolve, reject) => {
             try {
@@ -43,7 +26,6 @@ export class EnvLoader {
             this._checkPathExistence(path);
 
             fs.readFile(path, (err, data) => {
-            
                 if (err)
                     throw err;
             

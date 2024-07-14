@@ -2,6 +2,7 @@ import { Randomiser } from './randomiser.js';
 import { PageInfoHelper } from './pageInfoHelper.js';
 import { ShortcutPreferencesDOM } from './preferencesDOM.js';
 import { Preferences } from '../../components/preferences.js';
+import { BrowserStorage } from '../../content_scripts/browserStorage.js';
 
 export class StorageHelper {
     static saveRandomObjects(numberOfItems = 3) {

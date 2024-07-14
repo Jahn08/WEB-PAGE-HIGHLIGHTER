@@ -1,5 +1,7 @@
-// eslint-disable-next-line no-unused-vars
-class RangeMarker extends RangeBase {    
+import { RangeBase } from './rangeBase.js';
+import { RangeNote } from './rangeNote.js';
+
+export class RangeMarker extends RangeBase {    
     static isNodeMarked(node) {
         return node && node.classList && node.classList.contains(this.MARKER_CLASS_NAME);
     }

@@ -2,16 +2,11 @@ import assert from 'assert';
 import { Randomiser } from '../tools/randomiser.js';
 import { Expectation } from '../tools/expectation.js';
 import { EnvLoader } from '../tools/envLoader.js';
+import { MessageControl } from '../../content_scripts/messageControl.js';
 
 describe('content_script/messageControl', function () {
     this.timeout(0);
     
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/messageControl.js', 'MessageControl')
-            .then(() => done())
-            .catch(done);
-    });
-
     beforeEach('loadResources', done => {
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });

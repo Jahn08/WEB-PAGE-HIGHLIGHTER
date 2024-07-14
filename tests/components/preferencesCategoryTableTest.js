@@ -8,6 +8,8 @@ import { CategoryPreferencesDOM, PagePreferencesDOM } from '../tools/preferences
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
+import { ArrayExtension } from '../../content_scripts/arrayExtension.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
 
 describe('components/preferences/categoryTable', function () {
     this.timeout(0);
@@ -18,11 +20,6 @@ describe('components/preferences/categoryTable', function () {
         browserMocked.resetBrowserStorage();
 
         CategoryPreferencesDOM.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => done()).catch(done);
     });
 
     afterEach('releaseResources', () => {        

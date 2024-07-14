@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-class RangeBase {
+export class RangeBase {
     static _getSelectionRanges() {
         const sel = window.getSelection();
         

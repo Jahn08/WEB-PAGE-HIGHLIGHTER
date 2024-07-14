@@ -1,4 +1,5 @@
 import { ContextMenu } from '../components/contextMenu.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
 import { SenderMessage } from '../components/senderMessage.js';
 import { Preferences } from '../components/preferences.js';
 import { MessageSender } from '../components/messageSender.js';

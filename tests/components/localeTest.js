@@ -1,6 +1,6 @@
 import assert from 'assert';
 import fs from 'fs';
-import { EnvLoader } from '../tools/envLoader.js';
+import { EnvLoader } from '../tools/envLoader';
 import { Expectation } from '../tools/expectation.js';
 
 describe('components/locale', function () {

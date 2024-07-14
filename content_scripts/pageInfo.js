@@ -1,3 +1,7 @@
+import { ArrayExtension } from './arrayExtension.js';
+import { BrowserStorage } from './browserStorage.js';
+import { LZWCompressor } from './lzwCompressor.js';
+
 class Category {
     static async upsert(categorisedUris = {}) {
         if (!Object.getOwnPropertyNames(categorisedUris).length)
@@ -41,7 +45,6 @@ class Category {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class CategoryView {
     constructor(categories = []) {
         this.categoryTitles = [];
@@ -138,7 +141,6 @@ class PageCategory {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class PageInfo {
     constructor () {
         this._uri = this._computeUri();
@@ -405,3 +407,5 @@ class PageInfo {
         return PageCategory.save(data);
     }
 }
+
+export { PageInfo, CategoryView };

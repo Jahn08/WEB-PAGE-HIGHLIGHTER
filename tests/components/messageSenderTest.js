@@ -1,17 +1,10 @@
 import assert from 'assert';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Randomiser } from '../tools/randomiser.js';
-import { EnvLoader } from '../tools/envLoader.js';
+import { MenuMessageEvent } from '../../content_scripts/menuMessageEvent.js';
+import { MessageSender } from '../../components/messageSender.js';
 
 describe('components/MessageSender', () => {
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'MenuMessageEvent')
-            .then(() => EnvLoader.loadClass('./components/senderMessage.js', 'SenderMessage')
-                .then(() => EnvLoader.loadClass('./components/messageSender.js', 'MessageSender')
-                    .then(() => done())))
-            .catch(done);
-    });
-
     const initMockedBrowser = sendMessageOutcome => {
         const browserMocked = new BrowserMocked();
         browserMocked.setBrowserTab(sendMessageOutcome);

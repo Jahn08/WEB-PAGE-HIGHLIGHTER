@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-class Shortcut {
+export class Shortcut {
     constructor(keyCombination) {
         const combination = keyCombination.reduce((prev, cur) => {
             if (!prev.includes(cur))

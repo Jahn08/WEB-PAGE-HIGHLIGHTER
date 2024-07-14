@@ -1,3 +1,5 @@
+import { MenuMessageEvent } from '../content_scripts/menuMessageEvent.js';
+
 const msgEvent = new MenuMessageEvent();
 
 export class SenderMessage {

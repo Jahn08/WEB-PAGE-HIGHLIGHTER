@@ -1,4 +1,5 @@
 import { MenuIcon } from './menuIcon.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
 class BaseMenuItem {
     constructor(id, type) {

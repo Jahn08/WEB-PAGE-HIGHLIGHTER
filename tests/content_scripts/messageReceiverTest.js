@@ -1,17 +1,10 @@
 import assert from 'assert';
 import { Randomiser } from '../tools/randomiser.js';
-import { EnvLoader } from '../tools/envLoader.js';
+import { ReceiverMessage } from '../../content_scripts/receiverMessage.js';
+import { SenderMessage } from '../../components/senderMessage.js';
 
 describe('content_script/receiverMessage', function () {
     this.timeout(0);
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'MenuMessageEvent')
-            .then(() => EnvLoader.loadClass('./content_scripts/receiverMessage.js', 'ReceiverMessage')
-                .then(() => EnvLoader.loadClass('./components/senderMessage.js', 'SenderMessage')
-                    .then(() => done())))
-            .catch(done);
-    });
 
     const testReceivingEvents = (senderEvent, receiverEvent, arg = null) => {
         const receiver = new ReceiverMessage(SenderMessage[senderEvent](arg));

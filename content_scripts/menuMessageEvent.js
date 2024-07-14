@@ -1,4 +1,5 @@
-// eslint-disable-next-line no-unused-vars
+import { ArrayExtension } from './arrayExtension.js';
+
 class OptionList {
     static get storage() {
         return {
@@ -34,7 +35,6 @@ class OptionList {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class MenuMessageEvent {
     constructor () {
         const markingOptions = OptionList.marking;
@@ -228,3 +228,5 @@ class MenuMessageEvent {
     isUpdateShortcuts(msg) { return this._isEvent(msg, this._updateShortcuts); }
     getShortcuts(msg) { return msg ? msg[this._props.shortcuts]: null; }
 }
+
+export { MenuMessageEvent, OptionList };

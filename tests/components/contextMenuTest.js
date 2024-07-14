@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { ContextMenu } from '../../components/contextMenu.js';
+import { OptionList } from '../../content_scripts/menuMessageEvent.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { ShortcutPreferencesDOM } from '../tools/preferencesDOM.js';
 import { Randomiser } from '../tools/randomiser.js';

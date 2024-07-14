@@ -5,6 +5,8 @@ import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
+import { BrowserStorage } from '../../content_scripts/browserStorage.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
@@ -17,12 +19,6 @@ describe('content_script/pageInfo', function () {
         storage = browser.resetBrowserStorage();
 
         EnvLoader.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => done())
-            .catch(done);
     });
     
     afterEach('releaseResources', () => {        

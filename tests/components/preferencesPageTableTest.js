@@ -1,4 +1,5 @@
 import assert from 'assert';
+import fs from 'fs';
 import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked';
 import { Randomiser } from '../tools/randomiser.js';
@@ -8,8 +9,10 @@ import { PagePreferencesDOM, CategoryPreferencesDOM } from '../tools/preferences
 import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { FileTransfer } from '../tools/fileTransfer.js';
-import fs from 'fs';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { ArrayExtension } from '../../content_scripts/arrayExtension.js';
+import { LZWCompressor } from '../../content_scripts/lzwCompressor.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
 
 describe('components/preferences/pageTable', function () {
     this.timeout(0);
@@ -20,13 +23,6 @@ describe('components/preferences/pageTable', function () {
         browserMocked.resetBrowserStorage();
 
         PagePreferencesDOM.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => EnvLoader.loadClass('./content_scripts/lzwCompressor.js', 'LZWCompressor')
-                .then(() => done()))
-            .catch(done);
     });
 
     afterEach('releaseResources', () => {        

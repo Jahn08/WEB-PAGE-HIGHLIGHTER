@@ -1,4 +1,10 @@
 import { ColourList } from './colourList.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
+import { Shortcut } from '../content_scripts/shortcut.js';
+import { BrowserStorage } from '../content_scripts/browserStorage.js';
+import { OptionList } from '../content_scripts/menuMessageEvent.js';
+import { PageInfo, CategoryView } from '../content_scripts/pageInfo.js';
+import { ArrayExtension } from '../content_scripts/arrayExtension.js';
 import { PageLocalisation } from './pageLocalisation.js';
 
 class PagePackageError extends Error {
