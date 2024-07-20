@@ -11,16 +11,16 @@ export class ReceiverMessage {
     get markColourClass() { return this._markColourClass; }
 
     shouldMark() {
-        return ReceiverMessage.msgEvent.isMarkEvent(this._msg) && this._setColourClass();
-    }
-
-    _setColourClass() { 
-        this._markColourClass = ReceiverMessage.msgEvent.getMarkColourClass(this._msg);
-        return this._markColourClass ? true: false;
+        return ReceiverMessage.msgEvent.isMarkEvent(this._msg);
     }
 
     shouldChangeColour() { 
         return ReceiverMessage.msgEvent.isChangeColourEvent(this._msg) && this._setColourClass(); 
+    }
+
+    _setColourClass() { 
+        this._markColourClass = ReceiverMessage.msgEvent.getMarkColourClass(this._msg);
+        return !!this._markColourClass;
     }
 
     shouldUnmark() { return ReceiverMessage.msgEvent.isUnmarkEvent(this._msg); }

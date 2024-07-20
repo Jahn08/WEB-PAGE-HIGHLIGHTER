@@ -1,82 +1,70 @@
 import { ContextMenu } from '../components/contextMenu.js';
+import { Preferences } from '../components/preferences.js';
 import { BrowserAPI } from '../content_scripts/browserAPI.js';
 import { SenderMessage } from '../components/senderMessage.js';
-import { Preferences } from '../components/preferences.js';
-import { MessageSender } from '../components/messageSender.js';
 
-const menu = new ContextMenu();
+const gBrowserApi = new BrowserAPI();
+gBrowserApi.runtime.onInstalled(() => {
+    new ContextMenu().render();
+});
 
-menu.onMarking = MessageSender.sendMarking;
-
-menu.onChangingColour = MessageSender.sendChangingColour;
-
-menu.onUnmarking = MessageSender.sendUnmarking;
-
-menu.onSaving = MessageSender.sendSaving;
-
-menu.onLoading = MessageSender.sendLoading;
-
-menu.onAddingNote = (info) => MessageSender.sendAddingNote(info, menu);
-
-menu.onRemovingNote = (info) => MessageSender.sendRemovingNote(info, menu);
-
-menu.onGoingToNote = MessageSender.sendGoingToNote;
-
-new BrowserAPI().runtime.onMessage(async msg => {
+gBrowserApi.runtime.onMessage(async msg => {
     try {
         const senderMsg = new SenderMessage(msg);
+        const contextMenu = new ContextMenu();
     
+        // TODO: render page categories when installed/updated and only after changing preferences
         if (senderMsg.shouldAddCategories())
-            menu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
+            contextMenu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
 
         if (senderMsg.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
-            menu.checkColourRadio(preferences.defaultColourToken);
-            menu.renderShortcuts(preferences.shortcuts);
+            preferences.defaultColourToken = contextMenu.checkColourRadio(preferences.defaultColourToken);
+            contextMenu.renderShortcuts(preferences.shortcuts);
 
             return preferences;
         }
 
         if (senderMsg.shouldUpdateShortcuts())
-            menu.renderShortcuts(senderMsg.shortcuts);
+            contextMenu.renderShortcuts(senderMsg.shortcuts);
 
         if (senderMsg.shouldSetSaveMenuReady())
-            menu.enableSaveBtn();
+            contextMenu.enableSaveBtn();
         else
-            menu.disableSaveBtn();
+            contextMenu.disableSaveBtn();
 
         if (senderMsg.shouldSetLoadMenuReady())
-            menu.enableLoadBtn();
+            contextMenu.enableLoadBtn();
         else
-            menu.disableLoadBtn();
+            contextMenu.disableLoadBtn();
 
         if (senderMsg.shouldSetMarkMenuReady())
-            menu.enableMarkingBtn();
+            contextMenu.enableMarkingBtn();
         else
-            menu.disableMarkingBtn();
+            contextMenu.disableMarkingBtn();
         
         if (senderMsg.shouldSetUnmarkMenuReady())
-            menu.enableUnmarkingBtn();
+            contextMenu.enableUnmarkingBtn();
         else
-            menu.disableUnmarkingBtn();
+            contextMenu.disableUnmarkingBtn();
 
         if (senderMsg.shouldSetAddNoteMenuReady())
-            menu.enableAddingNoteBtn();
+            contextMenu.enableAddingNoteBtn();
         else
-            menu.disableAddingNoteBtn();
+            contextMenu.disableAddingNoteBtn();
 
         if (senderMsg.shouldSetRemoveNoteMenuReady())
-            menu.enableRemovingNoteBtn();
+            contextMenu.enableRemovingNoteBtn();
         else
-            menu.disableRemovingNoteBtn();
+            contextMenu.disableRemovingNoteBtn();
             
         if (senderMsg.shouldEmitEvent()) {
-            menu.emitItemClick(senderMsg.eventName);
+            contextMenu.emitItemClick(senderMsg.eventName);
             return true;
         }
 
         if (senderMsg.shouldAddNoteLinks())
-            menu.renderNoteLinks(senderMsg.noteLinks);
+            contextMenu.renderNoteLinks(senderMsg.noteLinks);
 
         return true;
     } catch (ex) {

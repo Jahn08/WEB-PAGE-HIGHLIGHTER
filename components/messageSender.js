@@ -3,7 +3,7 @@ import { SenderMessage } from './senderMessage.js';
 
 export class MessageSender {
     static sendMarking(info) {
-        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startMarking(info.colourClass));
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startMarking());
     }
 
     static sendChangingColour(info) {
@@ -15,7 +15,7 @@ export class MessageSender {
     }
 
     static sendSaving(info) {
-        const msg = info.categoryTitle === undefined ? SenderMessage.startSaving():
+        const msg = info.categoryTitle == null ? SenderMessage.startSaving():
             SenderMessage.startSavingToCategory(info.categoryTitle);
         return MessageSender._sendMessageToTab(info.tabId, msg);
     }

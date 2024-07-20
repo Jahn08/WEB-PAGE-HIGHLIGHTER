@@ -18,7 +18,7 @@ export class Highlighter {
 
         this._pageInfo = new PageInfo();
         this._defaultCategoryTitle;
-        this._initUnloadEvent();
+        this._initPreferences();
 
         document.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
         this._tempFocusedNode;
@@ -26,6 +26,8 @@ export class Highlighter {
         this._keyTempCombination = [];
         this._shortcuts = {};
         this._keyDownEventName = 'keydown';
+
+        this._curColourClass;
     }
 
     _watchShortcuts(event) {
@@ -39,17 +41,16 @@ export class Highlighter {
             const commandIds = shortcut.getCommandsInUse(this._shortcuts, true);
 
             if (commandIds.length) {
-                this._setUpContextMenu(this._tempFocusedNode, 
-                    ReceiverMessage.emitEvent(commandIds[0]));
+                this._setUpContextMenu(this._tempFocusedNode, ReceiverMessage.emitEvent(commandIds[0]));
 
                 this._keyTempCombination = [];
                 event.preventDefault();
             }
         } else
             this._keyTempCombination = [];
-    }    
+    }
 
-    async _initUnloadEvent() {
+    async _initPreferences() {
         const beforeUnloadEvent = 'beforeunload';
 
         const eventCallback = this._warnIfDomIsDirty.bind(this);
@@ -59,11 +60,9 @@ export class Highlighter {
         const categoryView = new CategoryView(categories);
 
         this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
-        const msg = ReceiverMessage.addCategories(categoryView.categoryTitles, 
-            this._defaultCategoryTitle);
+        const msg = ReceiverMessage.addCategories(categoryView.categoryTitles, this._defaultCategoryTitle);
 
-        this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(msg, 
-            ReceiverMessage.loadPreferences())).then(async settings => {
+        this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(msg, ReceiverMessage.loadPreferences())).then(async settings => {
             try {
                 const preferences = Object.assign({}, settings);
 
@@ -77,6 +76,8 @@ export class Highlighter {
                     window.addEventListener(this._keyDownEventName, callback);
                     window.addEventListener('keyup', callback);
                 }
+
+                this._curColourClass = preferences.defaultColourToken;
 
                 this._canLoad = await this._pageInfo.canLoad();
     
@@ -151,6 +152,7 @@ export class Highlighter {
             } else if (hasRangeOrFocusedNode)
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setAddNoteMenuReady());
 
+            // TODO: set up note links once and after they changed
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.updateShortcuts(this._shortcuts),
                 ReceiverMessage.addNoteLinks(RangeNote.getNoteLinks()));
             this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg))
@@ -167,12 +169,10 @@ export class Highlighter {
             return msg;
 
         if (this._domIsPure === false)
-            msg = ReceiverMessage.combineEvents(msg, 
-                ReceiverMessage.setSaveMenuReady());
+            msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setSaveMenuReady());
 
         if (this._canLoad)
-            msg = ReceiverMessage.combineEvents(msg, 
-                ReceiverMessage.setLoadMenuReady());
+            msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setLoadMenuReady());
 
         return msg;
     }
@@ -187,7 +187,6 @@ export class Highlighter {
 
     async _processMessage(msg) {
         try {
-            debugger
             const receiver = new ReceiverMessage(msg);
 
             const curNode = this._activeNode;
@@ -199,14 +198,14 @@ export class Highlighter {
             let noteInfo;
             
             if (receiver.shouldMark())
-                domWasChanged = RangeMarker.markSelectedNodes(receiver.markColourClass);
+                domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass);
             else if (receiver.shouldUnmark()) {
                 if (RangeMarker.unmarkSelectedNodes(curNode))
                     isElementRemoval = true;
-            } else if (receiver.shouldChangeColour())
-                domWasChanged = RangeMarker.changeSelectedNodesColour(receiver.markColourClass, 
-                    curNode);
-            else if (receiver.shouldAddNote()) {
+            } else if (receiver.shouldChangeColour()) {
+                this._curColourClass = receiver.markColourClass;
+                domWasChanged = RangeMarker.changeSelectedNodesColour(this._curColourClass, curNode);
+            } else if (receiver.shouldAddNote()) {
                 if ((noteInfo = RangeNote.createNote(
                     prompt(this._browserApi.locale.getString('note-add-prompt')), curNode)))
                     domWasChanged = true;
@@ -243,16 +242,14 @@ export class Highlighter {
     }
 
     _save() {
-        return this._processSaving(this._pageInfo.save.bind(this._pageInfo),
-            this._defaultCategoryTitle);
+        return this._processSaving(this._pageInfo.save.bind(this._pageInfo), this._defaultCategoryTitle);
     }
 
     async _processSaving(savingFn, arg = null) {
         try {
             const category = await savingFn(arg);
             MessageControl.show(category ? 
-                this._browserApi.locale.getStringWithArgs(
-                    'save-to-category-success-msg', category):
+                this._browserApi.locale.getStringWithArgs('save-to-category-success-msg', category):
                 this._browserApi.locale.getString('save-success-msg'));
         } catch (err) {
             alert(this._browserApi.locale.getStringWithArgs('save-error', err.toString()));
@@ -260,7 +257,6 @@ export class Highlighter {
     }
 
     _saveToCategory(categoryTitle) {
-        return this._processSaving(this._pageInfo.saveToCategory.bind(this._pageInfo), 
-            categoryTitle);
+        return this._processSaving(this._pageInfo.saveToCategory.bind(this._pageInfo), categoryTitle);
     }
 }

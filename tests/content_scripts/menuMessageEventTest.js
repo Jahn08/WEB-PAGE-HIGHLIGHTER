@@ -77,8 +77,6 @@ describe('content_script/menuMessageEvent', function () {
         );
     };
 
-    createTestForCheckingEventWithColour('createMarkEvent', IS_MARK_EVENT_METHOD_NAME);
-
     createTestForCheckingEventWithColour('createChangeColourEvent', IS_CHANGE_COLOUR_EVENT_METHOD_NAME);
 
     const createRandomLink = () => {
@@ -88,14 +86,12 @@ describe('content_script/menuMessageEvent', function () {
         };
     };
 
-    const createTestForCheckingEventWithNoteLink = (createEventMethodName, checkEventMethodName, 
-        useSeveralNoteLinks = false) => {
+    const createTestForCheckingEventWithNoteLink = (createEventMethodName, checkEventMethodName, useSeveralNoteLinks = false) => {
         describe('#' + createEventMethodName, () =>
             it('should build a certain type of an event with passed note links', () => {
                 const noteLinks = useSeveralNoteLinks ? [createRandomLink(), createRandomLink()] :
                     createRandomLink();
-                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 
-                    'getNoteLinks', noteLinks);
+                createEventWithArgAndCheckIt(createEventMethodName, checkEventMethodName, 'getNoteLinks', noteLinks);
             })
         );
     };
@@ -117,11 +113,9 @@ describe('content_script/menuMessageEvent', function () {
         );
     };
 
-    createTestForCheckingEventWithCategories('createAddCategoriesEvent', 
-        IS_ADD_CATEGORIES_EVENT_METHOD_NAME, true);
+    createTestForCheckingEventWithCategories('createAddCategoriesEvent', IS_ADD_CATEGORIES_EVENT_METHOD_NAME, true);
 
-    createTestForCheckingEventWithCategories('createSaveToCategoryEvent', 
-        IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME);
+    createTestForCheckingEventWithCategories('createSaveToCategoryEvent', IS_SAVE_TO_CATEGORY_EVENT_METHOD_NAME);
     
     const createTestForCheckingEventWithEventName = (createEventMethodName, checkEventMethodName) => {
         describe('#' + createEventMethodName, () =>
@@ -162,6 +156,8 @@ describe('content_script/menuMessageEvent', function () {
 
     createTestForCheckingEvent('createUnmarkReadyEvent', IS_SET_UNMARK_READY_EVENT_METHOD_NAME);
 
+    createTestForCheckingEvent('createMarkEvent', IS_MARK_EVENT_METHOD_NAME);
+
     createTestForCheckingEvent('createUnmarkEvent', IS_UNMARK_EVENT_METHOD_NAME);
 
     createTestForCheckingEvent('createLoadReadyEvent', IS_SET_LOAD_READY_EVENT_METHOD_NAME);
@@ -191,8 +187,7 @@ describe('content_script/menuMessageEvent', function () {
             const changeColourClass = Randomiser.getRandomNumberUpToMax();
             const changeColourEvent = msgEvent.createChangeColourEvent(changeColourClass); 
 
-            const markColourClass = Randomiser.getRandomNumberUpToMax();
-            const markEvent = msgEvent.createMarkEvent(markColourClass);
+            const markEvent = msgEvent.createMarkEvent();
             
             const unmarkReadyEvent = msgEvent.createUnmarkReadyEvent(); 
             const unmarkEvent = msgEvent.createUnmarkEvent();
@@ -212,11 +207,9 @@ describe('content_script/menuMessageEvent', function () {
             const expectedShortcuts = [Randomiser.getRandomString(), Randomiser.getRandomString()];
             const updateShortcutsEvent = msgEvent.createUpdateShortcutsEvent(expectedShortcuts);
 
-            const expectedCategoryTitles = [Randomiser.getRandomString(), 
-                Randomiser.getRandomString()];
+            const expectedCategoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
             const expectedDefaultCategoryTitle = Randomiser.getRandomString();
-            const addCategoriesEvent = msgEvent.createAddCategoriesEvent(expectedCategoryTitles,
-                expectedDefaultCategoryTitle);
+            const addCategoriesEvent = msgEvent.createAddCategoriesEvent(expectedCategoryTitles, expectedDefaultCategoryTitle);
 
             const _events = msgEvent.combineEvents([changeColourEvent, markEvent, 
                 unmarkReadyEvent, unmarkEvent, saveEvent, saveReadyEvent, 
@@ -247,9 +240,8 @@ describe('content_script/menuMessageEvent', function () {
             assert(msgEvent.isUpdateShortcuts(_events));
 
             assert.deepStrictEqual(msgEvent.getEventName(_events), eventName);
-            assert.deepStrictEqual(msgEvent.getMarkColourClass(_events), markColourClass);
-            assert.strictEqual(msgEvent.getDefaultCategory(_events), 
-                expectedDefaultCategoryTitle);
+            assert.deepStrictEqual(msgEvent.getMarkColourClass(_events), changeColourClass);
+            assert.strictEqual(msgEvent.getDefaultCategory(_events), expectedDefaultCategoryTitle);
 
             assert.deepStrictEqual(msgEvent.getNoteLinks(_events), expectedNoteLinks);
             assert.deepStrictEqual(msgEvent.getCategories(_events), expectedCategoryTitles);

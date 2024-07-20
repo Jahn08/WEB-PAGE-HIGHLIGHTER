@@ -1,6 +1,7 @@
 import { MenuIcon } from './menuIcon.js';
 import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
+// TODO: make all the classes stateless
 class BaseMenuItem {
     constructor(id, type) {
         this._id = id;
@@ -76,13 +77,12 @@ class RadioSubMenuItem extends BaseMenuItem {
 
     static get TYPE() { return 'radio'; }
 
-    addToMenu(onchange, icon = new MenuIcon(), checked = false) {
+    addToMenu(icon = new MenuIcon(), checked = false) {
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             checked: this._isChecked = checked,
             parentId: this._parentId,
-            title: this._title,
-            onclick: onchange
+            title: this._title
         });
     }
 
@@ -113,8 +113,6 @@ class ButtonMenuItem extends BaseMenuItem {
 
         this._parentId = parentId;
 
-        this._onclick = null;
-
         this._shortcut = null;
     }
 
@@ -134,19 +132,16 @@ class ButtonMenuItem extends BaseMenuItem {
     
     get isEnabled() { return this._enabled; }
 
-    addToMenu(onclick, icon = new MenuIcon(), enabled = false) {
+    addToMenu(icon = new MenuIcon(), enabled = false) {
         this._enabled = enabled;
 
-        this._addToMenu(onclick, icon);
+        this._addToMenu(icon);
     }
 
-    _addToMenu(onclick, icon) {
-        this._onclick = info => onclick(Object.assign(info, { title: this._title }));
-
+    _addToMenu(icon) {
         super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
-            onclick: this._onclick,
             title: this._title,
             enabled: this._enabled
         });
@@ -183,11 +178,6 @@ class ButtonMenuItem extends BaseMenuItem {
         this.updateItem({ title: this._compileTitle() });
 
         return true;
-    }
-
-    emitClick() {
-        if (this.isEnabled && this._onclick)
-            this._onclick({});
     }
 }
 

@@ -12,6 +12,8 @@ export class BrowserMocked {
 
         this._tabQueries = [];
         this._tabMessages = {};
+
+        this._onClickCallback = null;
     }
 
     static get _localeMessages() {
@@ -76,15 +78,20 @@ export class BrowserMocked {
             update: (id, options) => Object.assign(this._menuOptions.find(i => i.id === id), options),
             remove: (id) => {
                 this._menuOptions = this._menuOptions.filter(i => i.id !== id);
+            },
+            onClicked: {
+                addListener: (callback) => this._onClickCallback = callback
             }
         };
     }
 
-    dispatchMenuClick(id) {
-        const clickFn = (this._menuOptions.find(i => i.id === id) || {}).onclick;
+    async dispatchMenuClick(id) {
+        if(!this._onClickCallback)
+            return;
 
-        if (clickFn)
-            clickFn({ menuItemId: id });
+        const menuOption = this._menuOptions.find(i => i.id === id) || {};
+        if (menuOption)
+            await this._onClickCallback({ menuItemId: id, parentMenuItemId: menuOption.parentId });
     }
 
     get menuOptions() { return this._menuOptions; }

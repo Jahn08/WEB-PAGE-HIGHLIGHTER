@@ -16,7 +16,7 @@ export class SenderMessage {
 
     shouldSetUnmarkMenuReady() { return msgEvent.isSetUnmarkReadyEvent(this._msg); }
 
-    static startMarking(colourClass) { return msgEvent.createMarkEvent(colourClass); }
+    static startMarking() { return msgEvent.createMarkEvent(); }
 
     static startChangingColour(colourClass) { return msgEvent.createChangeColourEvent(colourClass); }
 

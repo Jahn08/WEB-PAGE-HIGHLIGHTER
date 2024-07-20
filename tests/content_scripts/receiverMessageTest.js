@@ -21,18 +21,23 @@ describe('content_script/receiverMessage', function () {
 
     describe('#shouldMark', () => 
         it('should recognise an event as marking', () => {
-            const colourClass = Randomiser.getRandomNumberUpToMax();
-            const receiver = testReceivingEvents('startMarking', 'shouldMark', colourClass);
-            
-            assert.strictEqual(receiver.markColourClass, colourClass);
+            const receiver = testReceivingEvents('startMarking', 'shouldMark');
+
+            assert(!receiver.markColourClass);
             assert(!receiver.noteLink);
             assert(!receiver.category);
         })
     );
 
     describe('#shouldChangeColour', () => 
-        it('should recognise an event as changing colour', () =>
-            testReceivingEvents('startChangingColour', 'shouldChangeColour', Randomiser.getRandomNumberUpToMax()))
+        it('should recognise an event as changing colour', () => {
+            const colourClass = Randomiser.getRandomString();
+            const receiver = testReceivingEvents('startChangingColour', 'shouldChangeColour', colourClass);
+            
+            assert.strictEqual(receiver.markColourClass, colourClass);
+            assert(!receiver.noteLink);
+            assert(!receiver.category);
+        })
     );
 
     describe('#shouldUnmark', () => 
@@ -48,8 +53,7 @@ describe('content_script/receiverMessage', function () {
     describe('#shouldSaveToCategory', () => 
         it('should recognise an event as saving a page to a category', () => {
             const categoryTitle = Randomiser.getRandomString();
-            const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', 
-                categoryTitle);
+            const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', categoryTitle);
             
             assert.deepStrictEqual(receiver.category, categoryTitle);
             assert(!receiver.noteLink);

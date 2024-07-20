@@ -4,6 +4,7 @@ import { ColourList } from './colourList.js';
 import { ArrayExtension } from '../content_scripts/arrayExtension.js';
 import { BrowserAPI } from '../content_scripts/browserAPI.js';
 import { OptionList } from '../content_scripts/menuMessageEvent.js';
+import { MessageSender } from './messageSender.js';
 
 export class ContextMenu {
     constructor() {
@@ -15,97 +16,149 @@ export class ContextMenu {
         this._addNoteBtn = new ButtonMenuItem(notingOptions.add);
         this._removeNoteBtn = new ButtonMenuItem(notingOptions.remove);
 
-        const colours = ColourList.colours;
+        this._colourRadios = new Array(ContextMenu._colours.length);
 
-        this._defaultColourClass = colours[0].token;
-        this._curColourClass = this._defaultColourClass;
+        this._setColourBtn = new ButtonMenuItem(markingOptions.setColour);
 
-        this.onMarking = null;
-        this._markBtn.addToMenu(async () => {
-            try {
-                await this._passTabInfoToCallback(this.onMarking, 
-                    {colourClass: this._curColourClass });
-            } catch (ex) {
-                console.error('Error while trying to mark: ' + ex.toString());
-            }
-        }, new MenuIcon('colourful-brush'));
-
-        this.onUnmarking = null;
-        this._unmarkBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onUnmarking);
-            } catch (ex) {
-                console.error('Error while trying to unmark: ' + ex.toString());
-            }
-        }, new MenuIcon('white-brush'));
-
-        this.onChangingColour = null;
-        const changeColour = async (info) => {
-            try {
-                this._curColourClass = info.menuItemId;
-                this.checkColourRadio(this._curColourClass);
-
-                await this._passTabInfoToCallback(this.onChangingColour, 
-                    { colourClass: this._curColourClass });
-            } catch (ex) {
-                console.error('Error while trying to change mark colour: ' + ex.toString());
-            }
-        };
-
-        const setColourBtn = new ButtonMenuItem(markingOptions.setColour);
-        setColourBtn.addToMenu(null, null, true);
-
-        this._colourRadios = new Array(colours.length);
-
-        ArrayExtension.runForEach(colours, (v, index) => {
-            const radio = new RadioSubMenuItem(v.token, setColourBtn.id);
-            this._colourRadios[index] = radio;
-            
-            radio.addToMenu(changeColour, v.icon, index === 0);
+        ArrayExtension.runForEach(ContextMenu._colours, (v, index) => {
+            this._colourRadios[index] = new RadioSubMenuItem(v.token, this._setColourBtn.id);
         });
         
-        this._browser = new BrowserAPI();
+        this._noteNavigation = new NoteNavigation();
 
-        new SeparatorMenuItem().addToMenu();
-
-        this.onAddingNote = null;
-        this._addNoteBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onAddingNote);
-            } catch (ex) {
-                console.error('Error while trying to add a note: ' + ex.toString());
-            }
-        }, new MenuIcon('in-note'));
-
-        this.onRemovingNote = null;
-        this._removeNoteBtn.addToMenu(async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onRemovingNote);
-            } catch (ex) {
-                console.error('Error while trying to remove a note: ' + ex.toString());
-            }
-        }, new MenuIcon('out-note'));
-
-        this.onGoingToNote = null;
-        this._initNoteNavigation();
-
-        this.onSaving = null;
-        this.onLoading = null;
-        this._initStorageOptions();
+        const noneCategoryName = new BrowserAPI().locale.getString(OptionList.storage.noneCategory);
+        this._storageMenu = new PageStorageMenu(noneCategoryName);
 
         this._emittableButtons = null;
     }
 
-    async _passTabInfoToCallback(callback, options = {}) {
+    render() {
+        this._markBtn.addToMenu(new MenuIcon('colourful-brush'));
+        
+        this._unmarkBtn.addToMenu(new MenuIcon('white-brush'));
+
+        this._setColourBtn.addToMenu(null, true);
+
+        ArrayExtension.runForEach(ContextMenu._colours, (v, index) => {
+            const radio = this._colourRadios[index];
+            radio.addToMenu(v.icon, index === 0);
+        });
+
+        new SeparatorMenuItem().addToMenu();
+
+        this._addNoteBtn.addToMenu(new MenuIcon('in-note'));
+
+        this._removeNoteBtn.addToMenu(new MenuIcon('out-note'));
+
+        this._noteNavigation.render();
+
+        this._storageMenu.render();
+
+        new BrowserAPI().menus.onClicked(ContextMenu._onClick);
+    }
+
+    static _onClick(info) {
+        const menu = new ContextMenu();
+        switch(info.menuItemId) {
+            case menu._markBtn.id:
+                return ContextMenu._onMarking();
+            case menu._unmarkBtn.id:
+                return ContextMenu._onUnmarking();
+            case menu._addNoteBtn.id:
+                return ContextMenu._onAddingNote();
+            case menu._removeNoteBtn.id:
+                return ContextMenu._onRemovingNote();
+            case menu._storageMenu.saveBtnId:
+                return ContextMenu._onSaving();
+            case menu._storageMenu.loadBtnId:
+                return ContextMenu._onLoading();
+            default:
+                if(info.parentMenuItemId === menu._setColourBtn.id)
+                    return ContextMenu._onChangingColour(info);
+                else if(info.parentMenuItemId === menu._noteNavigation.parentId)
+                    return ContextMenu._onGoingToNote(info);
+                else if(info.parentMenuItemId === menu._storageMenu.parentId)
+                    return ContextMenu._onSaving(PageStorageMenu.getCategoryTitle(info));
+        }
+    }
+
+    static async _onMarking() {
+        try {
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendMarking);
+        } catch (ex) {
+            console.error('Error while marking: ' + ex.toString());
+        }
+    }
+
+    static async _onUnmarking() {
+        try {
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendUnmarking);
+        } catch (ex) {
+            console.error('Error while unmarking: ' + ex.toString());
+        }
+    }
+
+    static async _onChangingColour(info) {
+        try {
+            const changedColourClass = info.menuItemId;
+            new ContextMenu().checkColourRadio(changedColourClass);
+
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendChangingColour, { colourClass: changedColourClass });
+        } catch (ex) {
+            console.error('Error while changing a mark colour: ' + ex.toString());
+        }
+    }
+
+    static async _onAddingNote() {
+        try {
+            await ContextMenu._passTabInfoToCallback(info => MessageSender.sendAddingNote(info, new ContextMenu()));
+        } catch (ex) {
+            console.error('Error while adding a note: ' + ex.toString());
+        }
+    }
+
+    static async _onRemovingNote() {
+        try {
+            await ContextMenu._passTabInfoToCallback(info => MessageSender.sendRemovingNote(info, new ContextMenu()));
+        } catch (ex) {
+            console.error('Error while removing a note: ' + ex.toString());
+        }
+    }
+
+    static async _onSaving(categoryTitle = null) {
+        try {
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendSaving, { categoryTitle });
+        } catch (ex) {
+            console.error('Error while saving: ' + ex.toString());
+        }
+    }
+
+    static async _onLoading() {
+        try {
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendLoading);
+        } catch (ex) {
+            console.error('Error while loading: ' + ex.toString());
+        }
+    }
+
+    static async _onGoingToNote(info) {
+        try {
+            await ContextMenu._passTabInfoToCallback(MessageSender.sendGoingToNote, { noteId: info.menuItemId });
+        } catch (ex) {
+            console.error(`Error while going to a note link with id=${info.menuItemId}: ${ex.toString()}`);
+        }
+    }
+
+    static async _passTabInfoToCallback(callback, options = {}) {
         if (!callback)
             return;
 
-        const tabId = await this._getCurrentTabId();
+        const tabId = await ContextMenu._getCurrentTabId();
         callback(Object.assign({ tabId }, options));
     }
     
-    async _getCurrentTabId() {
-        const activeTabs = await this._browser.tabs.getActiveTabs();
+    static async _getCurrentTabId() {
+        const activeTabs = await new BrowserAPI().tabs.getActiveTabs();
 
         if (!activeTabs || !activeTabs.length)
             throw new Error('No active tab was obtained');
@@ -113,45 +166,9 @@ export class ContextMenu {
         return activeTabs[0].id;
     }
 
-    _initNoteNavigation() {
-        if (this._noteNavigation) 
-            return;    
-        
-        this._noteNavigation = new NoteNavigation(async info => {
-            try {
-                await this._passTabInfoToCallback(this.onGoingToNote, { noteId: info.menuItemId });
-            } catch (ex) {
-                console.error(`Error while trying to going to a note link with id=${info.menuItemId}: ` 
-                    + ex.toString());
-            }
-        });
-    }
+    static get _defaultColourClass() { return ContextMenu._colours[0].token; }
 
-    _initStorageOptions() {
-        if (this._storageMenu)
-            return;
-
-        const onSavingFn = async (categoryTitle) => { 
-            try {
-                await this._passTabInfoToCallback(this.onSaving, { categoryTitle });
-            } catch (ex) {
-                console.error('Error while trying to save: ' + ex.toString());
-            }
-        };
-
-        const onLoadingFn = async () => { 
-            try {
-                await this._passTabInfoToCallback(this.onLoading);
-            } catch (ex) {
-                console.error('Error while trying to load: ' + ex.toString());
-            }
-        };
-
-        const noneCategoryName = this._browser.locale.getString(OptionList.storage.noneCategory);
-        this._storageMenu = new PageStorageMenu(onSavingFn, onLoadingFn, noneCategoryName);
-    }
-
-    get currentColourClass() { return this._curColourClass; }
+    static get _colours() { return ColourList.colours; }
 
     disableMarkingBtn() { this._markBtn.disable(); }
 
@@ -177,25 +194,22 @@ export class ContextMenu {
     
     enableLoadBtn() { this._storageMenu.enableLoadBtn(); }
 
-    checkColourRadio(colourClass = this._defaultColourClass) {
+    checkColourRadio(colourClass = ContextMenu._defaultColourClass) {
         const colourRadio = this._colourRadios.find(r => r.id === colourClass);
-
         if (!colourRadio)
             return;
-
-        this._curColourClass = colourClass;
         
         if (colourRadio.check())
             ArrayExtension.runForEach(
-                this._colourRadios.filter(r => r.id !== colourClass && r.isChecked), 
-                c => c.uncheck());
+                this._colourRadios.filter(r => r.id !== colourClass && r.isChecked), c => c.uncheck()
+            );
+
+        return colourClass;
     }
 
     renderShortcuts(shortcuts) {
         shortcuts = shortcuts || {};
-
-        ArrayExtension.runForEach(this._getEmittableButtons(), btn =>
-            btn.renderShortcut((shortcuts[btn.id] || {}).key));
+        ArrayExtension.runForEach(this._getEmittableButtons(), btn => btn.renderShortcut((shortcuts[btn.id] || {}).key));
     }
 
     _getEmittableButtons() {
@@ -209,7 +223,9 @@ export class ContextMenu {
         return this._emittableButtons;
     }
 
-    renderNoteLinks(noteLinks) { this._noteNavigation.render(noteLinks); }
+    renderNoteLinks(noteLinks) { 
+        this._noteNavigation.renderLinks(noteLinks); 
+    }
 
     appendNoteLink(noteId, noteText) {
         this._noteNavigation.appendLink(noteId, noteText);
@@ -220,20 +236,18 @@ export class ContextMenu {
     }
 
     renderPageCategories(categoryTitles, defaultCategoryTitle) { 
-        this._storageMenu.render(categoryTitles, defaultCategoryTitle); 
+        this._storageMenu.renderLinks(categoryTitles, defaultCategoryTitle); 
     }
 
-    emitItemClick(itemId) {
-        const btn = this._getEmittableButtons().find(b => b.id === itemId && b.isEnabled);
-
-        if (btn)
-            btn.emitClick();
+    async emitItemClick(itemId) {
+        const btn = this._getEmittableButtons().find(b => b.id === itemId);
+        if (btn && btn.isEnabled)
+            await ContextMenu._onClick({ menuItemId: itemId });
     }
 }
 
 class LinkMenu {
-    constructor(menuId, onClickFn, parentMenuId = null) {
-        this._onClickFn = onClickFn;
+    constructor(menuId, parentMenuId = null) {
         this._menuBtn = new ButtonMenuItem(menuId, parentMenuId);
 
         this._menuLinks = [];
@@ -246,15 +260,19 @@ class LinkMenu {
     }
     
     _setMenuLinkBtnAvailability() {
-        return this._isMenuLinkBtnAvailable() ? this._menuBtn.enable() : 
-            this._menuBtn.disable();
+        return this._isMenuLinkBtnAvailable ? this._menuBtn.enable() : this._menuBtn.disable();
     }
 
-    _isMenuLinkBtnAvailable() {
+    get parentId() {
+        return this._menuBtn.id;        
+    }
+
+    get _isMenuLinkBtnAvailable() {
         return this._menuLinks.length > 0;
     }
 
-    render(links) {
+    // TODO: Shouldn't rely on _menuLinks: remove the parent menu and recreate afresh
+    renderLinks(links) {
         links = links || [];
         
         if (!links.length)
@@ -292,7 +310,7 @@ class LinkMenu {
         const linkBtn = new ButtonMenuItem(noteId, this._menuBtn.id, noteText);
         this._menuLinks.push(linkBtn);
         
-        linkBtn.addToMenu(this._onClickFn, null, true);
+        linkBtn.addToMenu(null, true);
 
         this._setMenuLinkBtnAvailability();
     }
@@ -318,64 +336,70 @@ class LinkMenu {
 }
 
 class NoteNavigation extends LinkMenu {
-    constructor(onGoingToNoteFn) {
-        super(OptionList.noting.navigation, onGoingToNoteFn);
+    constructor() {
+        super(OptionList.noting.navigation);
+    }
 
+    render() {
         this._appendLinkMenuBtn();
     }
 }
 
 class PageStorageMenu extends LinkMenu {
-    constructor(onSavingFn, onLoadingFn, noneCategoryName) {
-        super(OptionList.storage.saveTo, async (info) => {
-            const title = (this._defaultCategory || {})[info.menuItemId] || info.title;
-            await onSavingFn(title === this._noneCategoryName ? null: title);
-        }, PageStorageMenu._PARENT_MENU_ID);
+    constructor(noneCategoryName) {
+        super(OptionList.storage.saveTo, PageStorageMenu._storageOptionId);
 
         this._noneCategoryName = noneCategoryName;
 
         this._defaultCategory = null;
 
-        this._storageBtn = null;
-        this._saveBtn = null;
-        this._loadBtn = null;
+        this._storageBtn = new ButtonMenuItem(PageStorageMenu._storageOptionId);
 
-        this._init(onSavingFn, onLoadingFn);
+        this._saveBtn = new ButtonMenuItem(this._storageOptions.save, PageStorageMenu._storageOptionId);
+        this._loadBtn = new ButtonMenuItem(this._storageOptions.load, PageStorageMenu._storageOptionId);
     }
 
-    get emittableButtons() { return [this._saveBtn, this._loadBtn]; }
-    
-    _isMenuLinkBtnAvailable() {
-        return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable();
-    }
-
-    static get _PARENT_MENU_ID() { return OptionList.storage.section; }
-
-    _init(onSavingFn, onLoadingFn) {
-        if (this._storageBtn)
-            return;
-
+    render() {
         new SeparatorMenuItem().addToMenu();
 
-        const storageOptionId = PageStorageMenu._PARENT_MENU_ID;
-        this._storageBtn = new ButtonMenuItem(storageOptionId);
         this._storageBtn.addToMenu();
 
-        this._storageOptions = OptionList.storage;
         const saveIcon = new MenuIcon(this._storageOptions.save);
-        this._saveBtn = new ButtonMenuItem(this._storageOptions.save, storageOptionId);
-        this._saveBtn.addToMenu(async () => await onSavingFn(), saveIcon);
+        this._saveBtn.addToMenu(saveIcon);
 
         this._appendLinkMenuBtn();
 
-        this._loadBtn = new ButtonMenuItem(this._storageOptions.load, storageOptionId);
-        this._loadBtn.addToMenu(onLoadingFn, new MenuIcon(this._storageOptions.load));
+        this._loadBtn.addToMenu(new MenuIcon(this._storageOptions.load));
     }
 
-    render(categoryTitles, defaultCategoryTitle) {
-        super.render(this._getCategoryLinks(categoryTitles, defaultCategoryTitle));
+    get emittableButtons() { return [this._saveBtn, this._loadBtn]; }
+
+    get saveBtnId() {
+        return this._saveBtn.id;
+    }
+    
+    get loadBtnId() {
+        return this._loadBtn.id;
     }
 
+    get _storageOptions() { return OptionList.storage; }
+
+    get _isMenuLinkBtnAvailable() {
+        return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable;
+    }
+
+    static get _storageOptionId() { return OptionList.storage.section; }
+
+    // TODO: shouldn't rely on _defaultCategory, parse a title from menuItemId
+    static getCategoryTitle(info) {
+        const title = (this._defaultCategory || {})[info.menuItemId] || info.title;
+        return title === this._noneCategoryName ? null: title;
+    }
+
+    renderLinks(categoryTitles, defaultCategoryTitle) {
+        super.renderLinks(this._getCategoryLinks(categoryTitles, defaultCategoryTitle));
+    }
+    
     _getCategoryLinks(categoryTitles, defaultCategoryTitle) {
         defaultCategoryTitle = defaultCategoryTitle || this._noneCategoryName;
 
@@ -386,17 +410,17 @@ class PageStorageMenu extends LinkMenu {
         if (!categories.length)
             return [];
 
-        return [this._noneCategoryName].concat(categories)
-            .map((title, index) => {
-                const isDefaultOption = title === defaultCategoryTitle;
+        return [this._noneCategoryName].concat(categories).map((title, index) => {
+            const isDefaultOption = title === defaultCategoryTitle;
 
-                const optionId = this._storageOptions.getCategoryId(index);
+            // TODO: save additional info into optionId to retrieve it on click
+            const optionId = this._storageOptions.getCategoryId(index);
 
-                if (isDefaultOption)
-                    this._defaultCategory = { [optionId]: defaultCategoryTitle };
+            if (isDefaultOption)
+                this._defaultCategory = { [optionId]: defaultCategoryTitle };
 
-                return this._createLink(optionId, (isDefaultOption ? '✓ ': '') + title);
-            });
+            return this._createLink(optionId, (isDefaultOption ? '✓ ': '') + title);
+        });
     }
 
     disableSaveBtn() { 

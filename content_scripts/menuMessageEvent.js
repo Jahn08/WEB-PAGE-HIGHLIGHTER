@@ -82,7 +82,7 @@ class MenuMessageEvent {
         };
     }
 
-    createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
+    createMarkEvent() { return this._createEvent(this._markEvent); }
 
     _createEventWithColour(eventName, colourClass) {
         return this._createEventWithArgs(eventName, {
