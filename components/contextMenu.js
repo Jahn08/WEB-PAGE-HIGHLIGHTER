@@ -235,7 +235,7 @@ export class ContextMenu {
         this._noteNavigation.removeLink(noteId);
     }
 
-    renderPageCategories(categoryTitles, defaultCategoryTitle) { 
+    renderPageCategories(categoryTitles, defaultCategoryTitle) {
         this._storageMenu.renderLinks(categoryTitles, defaultCategoryTitle); 
     }
 
@@ -351,12 +351,10 @@ class PageStorageMenu extends LinkMenu {
 
         this._noneCategoryName = noneCategoryName;
 
-        this._defaultCategory = null;
-
         this._storageBtn = new ButtonMenuItem(PageStorageMenu._storageOptionId);
 
-        this._saveBtn = new ButtonMenuItem(this._storageOptions.save, PageStorageMenu._storageOptionId);
-        this._loadBtn = new ButtonMenuItem(this._storageOptions.load, PageStorageMenu._storageOptionId);
+        this._saveBtn = new ButtonMenuItem(PageStorageMenu._storageOptions.save, PageStorageMenu._storageOptionId);
+        this._loadBtn = new ButtonMenuItem(PageStorageMenu._storageOptions.load, PageStorageMenu._storageOptionId);
     }
 
     render() {
@@ -364,12 +362,12 @@ class PageStorageMenu extends LinkMenu {
 
         this._storageBtn.addToMenu();
 
-        const saveIcon = new MenuIcon(this._storageOptions.save);
+        const saveIcon = new MenuIcon(this.saveBtnId);
         this._saveBtn.addToMenu(saveIcon);
 
         this._appendLinkMenuBtn();
 
-        this._loadBtn.addToMenu(new MenuIcon(this._storageOptions.load));
+        this._loadBtn.addToMenu(new MenuIcon(this.loadBtnId));
     }
 
     get emittableButtons() { return [this._saveBtn, this._loadBtn]; }
@@ -382,7 +380,7 @@ class PageStorageMenu extends LinkMenu {
         return this._loadBtn.id;
     }
 
-    get _storageOptions() { return OptionList.storage; }
+    static get _storageOptions() { return OptionList.storage; }
 
     get _isMenuLinkBtnAvailable() {
         return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable;
@@ -390,10 +388,8 @@ class PageStorageMenu extends LinkMenu {
 
     static get _storageOptionId() { return OptionList.storage.section; }
 
-    // TODO: shouldn't rely on _defaultCategory, parse a title from menuItemId
     static getCategoryTitle(info) {
-        const title = (this._defaultCategory || {})[info.menuItemId] || info.title;
-        return title === this._noneCategoryName ? null: title;
+        return PageStorageMenu._storageOptions.getCategoryTitleFromId(info.menuItemId);
     }
 
     renderLinks(categoryTitles, defaultCategoryTitle) {
@@ -403,8 +399,6 @@ class PageStorageMenu extends LinkMenu {
     _getCategoryLinks(categoryTitles, defaultCategoryTitle) {
         defaultCategoryTitle = defaultCategoryTitle || this._noneCategoryName;
 
-        this._defaultCategory = null;
-
         const categories = (categoryTitles || []);
 
         if (!categories.length)
@@ -412,13 +406,7 @@ class PageStorageMenu extends LinkMenu {
 
         return [this._noneCategoryName].concat(categories).map((title, index) => {
             const isDefaultOption = title === defaultCategoryTitle;
-
-            // TODO: save additional info into optionId to retrieve it on click
-            const optionId = this._storageOptions.getCategoryId(index);
-
-            if (isDefaultOption)
-                this._defaultCategory = { [optionId]: defaultCategoryTitle };
-
+            const optionId = PageStorageMenu._storageOptions.getCategoryId(index, title);
             return this._createLink(optionId, (isDefaultOption ? '✓ ': '') + title);
         });
     }

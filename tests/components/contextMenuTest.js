@@ -323,10 +323,9 @@ describe('components/ContextMenu', () => {
         });
 
         const assureDefaultCategory = (actualOptions, expectedDefaultCategory) => {
-            const actualNoneCategory = actualOptions
-                .find(op => op.title.endsWith(expectedDefaultCategory));
-            assert(actualNoneCategory);
-            assert.notStrictEqual(actualNoneCategory, expectedDefaultCategory);
+            const actualNoneCategories = actualOptions.filter(op => op.title.endsWith(expectedDefaultCategory));
+            assert.equal(actualNoneCategories.length, 1);
+            assert.notStrictEqual(actualNoneCategories[0], expectedDefaultCategory);
         };
 
         it('should mark a menu item for saving to the none category when there is no default category', () => {
@@ -349,8 +348,31 @@ describe('components/ContextMenu', () => {
             assureDefaultCategory(browserMocked.menuOptions, expectedDefaultCategory);
         });
         
-        // TODO: unskip it when svaing to categories gets stateless too
-        it.skip('should return an original title of a default category when clicking', () => {
+        it('should pass a title of a non-default category when clicking its menu item', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = renderContextMenu();
+            const categoryLinks = createTestCategoryTitles(contextMenu);
+
+            const expectedCategory = categoryLinks[1];
+            
+            return new Promise((resolve, reject) => {
+                const menuCallbackNameToTest = 'sendSaving';
+                msgSenderChangedPropName = menuCallbackNameToTest;
+                MessageSender[menuCallbackNameToTest] = info => {
+                    if (info.categoryTitle === expectedCategory)
+                        resolve();
+                    else
+                        reject(new Error(`'${info.categoryTitle}' !== '${expectedCategory}'`));
+                };
+
+                contextMenu.renderPageCategories(categoryLinks, categoryLinks[0]);
+    
+                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedCategory));
+                browserMocked.dispatchMenuClick(menuToClick.id);
+            });
+        });
+
+        it('should pass a default category title when clicking its menu item', () => {
             const browserMocked = mockBrowserWithTab();
             const contextMenu = renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
@@ -369,10 +391,52 @@ describe('components/ContextMenu', () => {
 
                 contextMenu.renderPageCategories(categoryLinks, expectedDefaultCategory);
     
-                const defaultCategoryMenu = browserMocked.menuOptions
-                    .find(op => op.title.endsWith(expectedDefaultCategory));
-    
-                browserMocked.dispatchMenuClick(defaultCategoryMenu.id);
+                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedDefaultCategory));
+                browserMocked.dispatchMenuClick(menuToClick.id);
+            });
+        });
+
+        it('should pass the NONE category title when saving with no default category', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = renderContextMenu();
+            const categoryLinks = createTestCategoryTitles(contextMenu);
+
+            return new Promise((resolve, reject) => {
+                const menuCallbackNameToTest = 'sendSaving';
+                msgSenderChangedPropName = menuCallbackNameToTest;
+                MessageSender[menuCallbackNameToTest] = info => {
+                    if (info.categoryTitle === NONE_CATEGORY_NAME)
+                        resolve();
+                    else
+                        reject(new Error(`'${info.categoryTitle}' !== '${NONE_CATEGORY_NAME}'`));
+                };
+
+                contextMenu.renderPageCategories(categoryLinks, null);
+
+                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(NONE_CATEGORY_NAME));
+                browserMocked.dispatchMenuClick(menuToClick.id);
+            });
+        });
+
+        it('should pass no category title when clicking on save', () => {
+            const browserMocked = mockBrowserWithTab();
+            const contextMenu = renderContextMenu();
+            const categoryLinks = createTestCategoryTitles(contextMenu);
+
+            const defaultCategory = Randomiser.getRandomArrayItem(categoryLinks);
+
+            return new Promise((resolve, reject) => {
+                const menuCallbackNameToTest = 'sendSaving';
+                msgSenderChangedPropName = menuCallbackNameToTest;
+                MessageSender[menuCallbackNameToTest] = info => {
+                    if (info.categoryTitle === null)
+                        resolve();
+                    else
+                        reject(new Error(`'${info.categoryTitle}' should be null`));
+                };
+
+                contextMenu.renderPageCategories(categoryLinks, defaultCategory);
+                browserMocked.dispatchMenuClick(OptionList.storage.save);
             });
         });
     });
@@ -405,16 +469,13 @@ describe('components/ContextMenu', () => {
         const createTestNoteLinks = () => [createRandomNoteLink(), createRandomNoteLink()];
 
         it('should render note links in menu', 
-            () => testRenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, 
-                menuHasAvailableNoteLinks));
+            () => testRenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, menuHasAvailableNoteLinks));
 
         it('should remove all previous note links in menu while rendering afresh', 
-            () => testRerenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, 
-                menuHasAvailableNoteLinks));
+            () => testRerenderingLinks(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, menuHasAvailableNoteLinks));
 
         it('should disable the navigational note submenu when rendering an empty list of notes and enable it otherwise', 
-            () => testDisablingParentLinkMenuWhenEmpty(NOTE_LINK_RENDERING_METHOD_NAME, 
-                createTestNoteLinks, 'note-navigation'));
+            () => testDisablingParentLinkMenuWhenEmpty(NOTE_LINK_RENDERING_METHOD_NAME, createTestNoteLinks, 'note-navigation'));
     });
 
     describe('#appendNoteLink', () => {

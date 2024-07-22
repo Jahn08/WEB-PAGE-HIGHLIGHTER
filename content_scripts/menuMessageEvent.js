@@ -8,7 +8,11 @@ class OptionList {
             save: 'save',
             saveTo: 'save-to',
             noneCategory: 'preferences-none-category',
-            getCategoryId: (index) => 'category-' + index
+            getCategoryId: (index, title) => `category-${index}-${title}`,
+            getCategoryTitleFromId: id => {
+                const parts = (id || '').split('-');
+                return parts.splice(2).join('-');
+            }
         };
     }
 
@@ -48,8 +52,6 @@ class MenuMessageEvent {
         const storageOptions = OptionList.storage;
         this._saveReadyEvent = 'setSaveReady';
         this._saveEvent = storageOptions.save;
-
-        this._addCategoriesEvent = 'addCategories';
         this._saveToCategoryEvent = storageOptions.saveTo;
 
         this._loadReadyEvent = 'setLoadReady';
@@ -150,13 +152,14 @@ class MenuMessageEvent {
     isSetSaveReadyEvent(msg) { return this._isEvent(msg, this._saveReadyEvent); }
 
     createSaveEvent() { return this._createEvent(this._saveEvent); }
-    isSaveEvent(msg) { return this._isEvent(msg, this._saveEvent); }   
+    isSaveEvent(msg) { return this._isEvent(msg, this._saveEvent); }
 
-    createAddCategoriesEvent(categoryTitles, defaultCategoryTitle) { 
-        return this._createEventWithCategories(this._addCategoriesEvent, categoryTitles,
-            defaultCategoryTitle); 
+    getCategories(msg) { return msg ? msg[this._props.category]: []; }
+    
+    createSaveToCategoryEvent(categoryTitle) {
+        return this._createEventWithCategories(this._saveToCategoryEvent, [categoryTitle]); 
     }
-
+    
     _createEventWithCategories(eventName, categoryTitles, defaultCategoryTitle = null) {
         return this._createEventWithArgs(eventName, { 
             [this._props.category]: categoryTitles,
@@ -164,15 +167,6 @@ class MenuMessageEvent {
         });
     }
 
-    isAddCategoriesEvent(msg) { return this._isEvent(msg, this._addCategoriesEvent); }
-
-    getCategories(msg) { return msg ? msg[this._props.category]: []; }
-    
-    getDefaultCategory(msg) { return msg ? msg[this._props.defaultCategory]: null; }
-
-    createSaveToCategoryEvent(categoryTitle) {
-        return this._createEventWithCategories(this._saveToCategoryEvent, [categoryTitle]); 
-    }
     isSaveToCategoryEvent(msg) { return this._isEvent(msg, this._saveToCategoryEvent); }
 
     createLoadReadyEvent() { return this._createEvent(this._loadReadyEvent); }

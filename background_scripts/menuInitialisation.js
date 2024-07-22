@@ -1,11 +1,18 @@
 import { ContextMenu } from '../components/contextMenu.js';
 import { Preferences } from '../components/preferences.js';
 import { BrowserAPI } from '../content_scripts/browserAPI.js';
+import { CategoryView, PageInfo } from '../content_scripts/pageInfo.js';
 import { SenderMessage } from '../components/senderMessage.js';
 
 const gBrowserApi = new BrowserAPI();
-gBrowserApi.runtime.onInstalled(() => {
-    new ContextMenu().render();
+gBrowserApi.runtime.onInstalled(async () => {
+    const contextMenu = new ContextMenu();
+    contextMenu.render();
+    
+    // TODO: render page categories when installed/updated and only after changing preferences
+    const categories = await PageInfo.getAllSavedCategories();
+    const categoryView = new CategoryView(categories);
+    contextMenu.renderPageCategories(categoryView.categoryTitles, categoryView.defaultCategoryTitle);
 });
 
 gBrowserApi.runtime.onMessage(async msg => {
@@ -13,10 +20,6 @@ gBrowserApi.runtime.onMessage(async msg => {
         const senderMsg = new SenderMessage(msg);
         const contextMenu = new ContextMenu();
     
-        // TODO: render page categories when installed/updated and only after changing preferences
-        if (senderMsg.shouldAddCategories())
-            contextMenu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
-
         if (senderMsg.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
             preferences.defaultColourToken = contextMenu.checkColourRadio(preferences.defaultColourToken);

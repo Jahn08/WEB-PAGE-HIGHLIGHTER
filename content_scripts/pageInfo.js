@@ -146,7 +146,7 @@ class PageInfo {
         this._uri = this._computeUri();
         this._storage = null;
 
-        this._pageIsStored = false;
+        this._pageIsStored;
 
         this._pageCategory = new PageCategory(this._uri);
     }
@@ -174,12 +174,17 @@ class PageInfo {
 
     async _saveInternally() {
         await this._browserStorage.set(this._serialise());
+
+        this._pageIsStored = true;
         return this._pageCategory.category;
     }
 
-    async save(defaultCategoryTitle = null) {
-        if (!this._pageIsStored && defaultCategoryTitle)
+    async save(defaultCategoryTitleGetter = null) {
+        const canLoad = await this.canLoad();
+        if (!canLoad && defaultCategoryTitleGetter) {
+            const defaultCategoryTitle = await defaultCategoryTitleGetter();
             await this._pageCategory.update(defaultCategoryTitle);
+        }
 
         return this._saveInternally();
     }
@@ -205,7 +210,10 @@ class PageInfo {
     }
 
     async canLoad() {
-        return (this._pageIsStored = await this._browserStorage.contains());
+        if(this._pageIsStored === undefined)
+            this._pageIsStored = await this._browserStorage.contains();
+
+        return this._pageIsStored;
     }
 
     async load() {

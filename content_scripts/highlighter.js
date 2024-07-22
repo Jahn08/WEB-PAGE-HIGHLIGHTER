@@ -17,7 +17,6 @@ export class Highlighter {
         this._browserApi.runtime.onMessage(this._processMessage.bind(this));
 
         this._pageInfo = new PageInfo();
-        this._defaultCategoryTitle;
         this._initPreferences();
 
         document.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
@@ -56,13 +55,7 @@ export class Highlighter {
         const eventCallback = this._warnIfDomIsDirty.bind(this);
         window.addEventListener(beforeUnloadEvent, eventCallback);
 
-        const categories = await PageInfo.getAllSavedCategories();
-        const categoryView = new CategoryView(categories);
-
-        this._defaultCategoryTitle = categoryView.defaultCategoryTitle;
-        const msg = ReceiverMessage.addCategories(categoryView.categoryTitles, this._defaultCategoryTitle);
-
-        this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(msg, ReceiverMessage.loadPreferences())).then(async settings => {
+        this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(ReceiverMessage.loadPreferences())).then(async settings => {
             try {
                 const preferences = Object.assign({}, settings);
 
@@ -242,7 +235,7 @@ export class Highlighter {
     }
 
     _save() {
-        return this._processSaving(this._pageInfo.save.bind(this._pageInfo), this._defaultCategoryTitle);
+        return this._processSaving(this._pageInfo.save.bind(this._pageInfo), Highlighter._getDefaultCategoryTitle);
     }
 
     async _processSaving(savingFn, arg = null) {
@@ -258,5 +251,10 @@ export class Highlighter {
 
     _saveToCategory(categoryTitle) {
         return this._processSaving(this._pageInfo.saveToCategory.bind(this._pageInfo), categoryTitle);
+    }
+
+    static async _getDefaultCategoryTitle() {
+        const categories = await PageInfo.getAllSavedCategories();
+        return new CategoryView(categories).defaultCategoryTitle;
     }
 }

@@ -23,8 +23,7 @@ export class StorageHelper {
         };
     }
 
-    static async saveTestPageEnvironment(pageNumber = 3, hasDefaultCategory = true, 
-        predeterminedUri = null) {
+    static async saveTestPageEnvironment(pageNumber = 3, hasDefaultCategory = true, predeterminedUri = null) {
         const expectedPageData = await this.saveTestPageInfo(pageNumber, predeterminedUri); 
         
         const defaultCategoryIndex = hasDefaultCategory ? undefined: -1;
