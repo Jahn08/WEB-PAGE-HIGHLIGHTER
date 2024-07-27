@@ -1,8 +1,9 @@
 class ContextMenuAPI {
-    constructor(api, iconsSupported) {
+    constructor(api, iconsSupported, runtimeApi) {
         this._menus = api.contextMenus;
 
         this._iconsSupported = iconsSupported;
+        this._runtimeApi = runtimeApi;
     }
 
     onClicked(callback) {
@@ -13,11 +14,19 @@ class ContextMenuAPI {
         if (!this._iconsSupported)
             delete options.icons;
 
-        this._menus.create(options);
+        return new Promise((resolve, reject) => {
+            this._menus.create(options, () => {
+                const error = this._runtimeApi.logLastError();
+                if(error)
+                    reject(error);
+                else
+                    resolve();
+            });
+        });
     }
 
     remove(id) {
-        this._menus.remove(id);
+        return this._menus.remove(id);
     }
 
     update(id, options) {
@@ -83,9 +92,10 @@ class RuntimeAPI {
         const error = this._getLastError();
 
         if (!error)
-            return;
+            return null;
 
         console.error(`${msgPrefix}: ${error.toString()}`);
+        return error;
     }
 }
 
@@ -155,7 +165,7 @@ export class BrowserAPI {
     get menus() { 
         if (!this._menus) {
             const menuIconsSupported = this._isFirefox;
-            this._menus = new ContextMenuAPI(this._api, menuIconsSupported);
+            this._menus = new ContextMenuAPI(this._api, menuIconsSupported, this.runtime);
         }
 
         return this._menus; 

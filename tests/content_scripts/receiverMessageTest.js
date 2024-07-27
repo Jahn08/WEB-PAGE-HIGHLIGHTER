@@ -100,7 +100,7 @@ describe('content_script/receiverMessage', function () {
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
             sender.shouldSetSaveMenuReady(), sender.shouldSetLoadMenuReady(), sender.shouldLoadPreferences(),
             sender.shouldSetAddNoteMenuReady(), sender.shouldSetRemoveNoteMenuReady(), 
-            sender.shouldAddNoteLinks()].filter(e => e).length, 1);
+            sender.shouldAddNoteLinks(), sender.shouldAddCategories()].filter(e => e).length, 1);
 
         return sender;
     };
@@ -155,6 +155,18 @@ describe('content_script/receiverMessage', function () {
         })
     );
 
+    describe('#addCategories', () =>
+        it('should recognise an event as adding categories to menu', () => {
+            const categoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
+            const defaultCategoryTitle = Randomiser.getRandomString();
+            
+            const sender = testSendingEvents('addCategories', 'shouldAddCategories', 
+                categoryTitles, defaultCategoryTitle);
+            assert.deepStrictEqual(sender.categories, categoryTitles);
+            assert.deepStrictEqual(sender.defaultCategory, defaultCategoryTitle);
+        })
+    );
+
     describe('#combineEvents', function () {
         it('should return null when combining undefined events', () =>
             assert.strictEqual(
@@ -162,22 +174,28 @@ describe('content_script/receiverMessage', function () {
 
         it('should filter out null events and combine the rest correctly', () => {
             const expectedNoteLinks = [createRandomLink(), createRandomLink()];
+            const expectedCategoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
+            const expectedDefaultCategoryTitles = Randomiser.getRandomString();
+
             const msg = ReceiverMessage.combineEvents(undefined, 
                 ReceiverMessage.setLoadMenuReady(), undefined, 
                 ReceiverMessage.setSaveMenuReady(), null, 
                 ReceiverMessage.setMarkMenuReady(),
                 ReceiverMessage.setRemoveNoteMenuReady(),
-                ReceiverMessage.addNoteLinks(expectedNoteLinks));
+                ReceiverMessage.addNoteLinks(expectedNoteLinks),
+                ReceiverMessage.addCategories(expectedCategoryTitles, 
+                    expectedDefaultCategoryTitles));
 
             assert(msg);
 
             assert(msg.event);
-            assert.strictEqual(msg.event.length, 5);
+            assert.strictEqual(msg.event.length, 6);
 
             assert(msg.noteLink);
             assert.deepStrictEqual(msg.noteLink, expectedNoteLinks);
 
-            assert(msg.category === undefined);
+            assert(msg.category);
+            assert.deepStrictEqual(msg.category, expectedCategoryTitles);
 
             const sender = new SenderMessage(msg);
             assert(sender.shouldSetSaveMenuReady());
@@ -188,6 +206,10 @@ describe('content_script/receiverMessage', function () {
             
             assert(sender.shouldAddNoteLinks());
             assert.deepStrictEqual(sender.noteLinks, expectedNoteLinks);
+
+            assert(sender.shouldAddCategories());
+            assert.deepStrictEqual(sender.categories, expectedCategoryTitles);
+            assert.deepStrictEqual(sender.defaultCategory, expectedDefaultCategoryTitles);
         });
     });
 });

@@ -35,6 +35,11 @@ export class ReceiverMessage {
 
     shouldSave() { return ReceiverMessage.msgEvent.isSaveEvent(this._msg); }
 
+    static addCategories(categoryTitles, defauflCategoryTitle) { 
+        return ReceiverMessage.msgEvent.createAddCategoriesEvent(categoryTitles, 
+            defauflCategoryTitle); 
+    }
+
     shouldSaveToCategory() {
         return ReceiverMessage.msgEvent.isSaveToCategoryEvent(this._msg) && this._setCategory();
     }

@@ -5,6 +5,7 @@ import { BrowserStorage } from '../content_scripts/browserStorage.js';
 import { OptionList } from '../content_scripts/menuMessageEvent.js';
 import { PageInfo, CategoryView } from '../content_scripts/pageInfo.js';
 import { ArrayExtension } from '../content_scripts/arrayExtension.js';
+import { ReceiverMessage } from '../content_scripts/receiverMessage.js';
 import { PageLocalisation } from './pageLocalisation.js';
 
 class PagePackageError extends Error {
@@ -1188,11 +1189,19 @@ class Preferences {
             PageInfo.savePageCategories(changedData) : Promise.resolve();
     }
 
-    _updateCategoriesInStorage() {
-        let changedData;
+    async _updateCategoriesInStorage() {
+        if(this._categoryTable) {
+            const changedData = this._categoryTable.categories;
+            if(changedData) {
+                await PageInfo.saveCategories(changedData);
 
-        return this._categoryTable && (changedData = this._categoryTable.categories) ? 
-            PageInfo.saveCategories(changedData) : Promise.resolve();
+                const categoryView = new CategoryView(changedData);
+                const addCategoriesMsg = ReceiverMessage.addCategories(categoryView.categoryTitles, categoryView.defaultCategoryTitle);
+                return new BrowserAPI().runtime.sendMessage(addCategoriesMsg);
+            }
+        }
+
+        return Promise.resolve();
     }
 
     get _shouldWarn() {

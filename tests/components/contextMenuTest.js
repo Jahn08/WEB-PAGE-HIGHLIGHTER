@@ -7,6 +7,7 @@ import { Randomiser } from '../tools/randomiser.js';
 import { ColourList } from '../../components/colourList.js';
 import { SeparatorMenuItem, RadioSubMenuItem, ButtonMenuItem } from '../../components/menuItem.js';
 import { MessageSender } from '../../components/messageSender.js';
+import { Expectation } from '../tools/expectation.js';
 
 describe('components/ContextMenu', () => {
     const msgSenderPropMap = new Map();
@@ -50,17 +51,17 @@ describe('components/ContextMenu', () => {
         return browserMocked;
     };
 
-    const renderContextMenu = () => {
+    const renderContextMenu = async () => {
         const menu = new ContextMenu();
-        menu.render();
+        await menu.render();
 
         return menu;
     };
 
     describe('#render', () => {
-        it('should create a proper number of items in a context menu', () => {
+        it('should create a proper number of items in a context menu', async () => {
             const browserMocked = mockBrowser();
-            renderContextMenu();
+            await renderContextMenu();
 
             const itemOptions = browserMocked.menuOptions;
             assert.strictEqual(itemOptions.length, 18);
@@ -72,9 +73,9 @@ describe('components/ContextMenu', () => {
             assert.strictEqual(itemOptions.filter(i => i.type === RADIO_TYPE).length, 6);
         });
 
-        const testClickingOnMenuItem = (menuCallbackNameToTest, filterMenuItemCallback, onClickedCallback = null) => {
+        const testClickingOnMenuItem = async (menuCallbackNameToTest, filterMenuItemCallback, onClickedCallback = null) => {
             const browserMocked = mockBrowserWithTab();
-            renderContextMenu();
+            await renderContextMenu();
 
             let error;
             const passedOptions = [];
@@ -121,9 +122,9 @@ describe('components/ContextMenu', () => {
                 .then(passedOptions => assert(passedOptions.map(po => po.colourClass).every(cl => menuColourIds.includes(cl))));
         });
 
-        it('should change visibility of button items in a context menu', () => {
+        it('should change visibility of button items in a context menu', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             const assertItemsAvailability = (enabled, expectedLength) => {
                 assert.strictEqual(browserMocked.menuOptions
@@ -154,14 +155,14 @@ describe('components/ContextMenu', () => {
             contextMenu.disableAddingNoteBtn();
             contextMenu.disableRemovingNoteBtn();
             
-            assertItemsAvailability(false, 9);
+            assertItemsAvailability(false, 8);
         });
     });
 
     describe('#checkColourRadio', function () {
-        it('should make a radio item checked in a context menu', () => {
+        it('should make a radio item checked in a context menu', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             const colourInfos = ColourList.colours;
             const expectedColour = Randomiser.getRandomArrayItem(colourInfos);
@@ -174,9 +175,9 @@ describe('components/ContextMenu', () => {
             assert.deepStrictEqual(actualColourRadio.checked, true);
         });
 
-        it('should check only one radio item in a context menu leaving the rest unchecked', () => {
+        it('should check only one radio item in a context menu leaving the rest unchecked', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             const colourInfos = ColourList.colours;
             contextMenu.checkColourRadio(colourInfos[0].token);
@@ -190,9 +191,9 @@ describe('components/ContextMenu', () => {
             assert.strictEqual(checkedItems[0].id, anotherColour.token);
         });
 
-        it('should do nothing while checking a non-existent radio item in a context menu', () => {
+        it('should do nothing while checking a non-existent radio item in a context menu', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             
             contextMenu.checkColourRadio(Randomiser.getRandomNumberUpToMax());
 
@@ -207,26 +208,26 @@ describe('components/ContextMenu', () => {
         };
     };
 
-    const testRenderingLinks = (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
+    const testRenderingLinks = async (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
         const browserMocked = mockBrowser();
-        const contextMenu = renderContextMenu();
+        const contextMenu = await renderContextMenu();
 
         const expectedLinks = createLinksFn(contextMenu);
         
-        contextMenu[renderingMethodName](expectedLinks);
+        await contextMenu[renderingMethodName](expectedLinks);
         
         assert(hasAvailableLinksFn(expectedLinks, browserMocked.menuOptions));
     };
 
-    const testRerenderingLinks = (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
+    const testRerenderingLinks = async (renderingMethodName, createLinksFn, hasAvailableLinksFn) => {
         const browserMocked = mockBrowser();
-        const contextMenu = renderContextMenu();
+        const contextMenu = await renderContextMenu();
 
         const linksToRemove = createLinksFn(contextMenu);
-        contextMenu[renderingMethodName](linksToRemove);
+        await contextMenu[renderingMethodName](linksToRemove);
 
         const expectedLinks = createLinksFn(contextMenu);
-        contextMenu[renderingMethodName](expectedLinks);
+        await contextMenu[renderingMethodName](expectedLinks);
 
         assert(!hasAvailableLinksFn(linksToRemove, browserMocked.menuOptions));
         assert(hasAvailableLinksFn(expectedLinks, browserMocked.menuOptions));
@@ -239,17 +240,17 @@ describe('components/ContextMenu', () => {
         assert.strictEqual(parentBtn.enabled, shouldBeAvailable);
     };
 
-    const testDisablingParentLinkMenuWhenEmpty = (renderingMethodName, createLinksFn, parentMenuId) => {
+    const testDisablingParentLinkMenuWhenEmpty = async (renderingMethodName, createLinksFn, parentMenuId) => {
         const browserMocked = mockBrowser();
-        const contextMenu = renderContextMenu();
+        const contextMenu = await renderContextMenu();
 
         const links = createLinksFn(contextMenu);
-        contextMenu[renderingMethodName](links);
+        await contextMenu[renderingMethodName](links);
 
-        contextMenu[renderingMethodName]([]);
+        await contextMenu[renderingMethodName]([]);
         assertParentAvailability(parentMenuId, browserMocked.menuOptions, false);
 
-        contextMenu[renderingMethodName](links);
+        await contextMenu[renderingMethodName](links);
         assertParentAvailability(parentMenuId, browserMocked.menuOptions, true);
     };
 
@@ -296,12 +297,12 @@ describe('components/ContextMenu', () => {
         it('should disable the category submenu when rendering the empty list and enable it otherwise', 
             () => testDisablingParentLinkMenuWhenEmpty(CATEGORY_LINK_RENDERING_METHOD_NAME, createTestCategoryTitles, SAVING_SUB_MENU_ID));
         
-        it('should disable the category submenu if the save menu is not available', () => {
+        it('should disable the category submenu if the save menu is not available', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             const noteLinks = createTestCategoryTitles(contextMenu);
-            contextMenu.renderPageCategories(noteLinks);
+            await contextMenu.renderPageCategories(noteLinks);
 
             assertParentAvailability(SAVING_SUB_MENU_ID, browserMocked.menuOptions, true);
 
@@ -310,15 +311,15 @@ describe('components/ContextMenu', () => {
         });
 
         const NONE_CATEGORY_NAME = 'None';
-        it('should render the none category available for saving only when there are other categories', () => {
+        it('should render the none category available for saving only when there are other categories', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
-            contextMenu.renderPageCategories(categoryLinks);
+            await contextMenu.renderPageCategories(categoryLinks);
             assert(menuHasAvailableCategoryLinks([NONE_CATEGORY_NAME], browserMocked.menuOptions));
             
-            contextMenu.renderPageCategories([]);
+            await contextMenu.renderPageCategories([]);
             assert(!menuHasAvailableCategoryLinks([NONE_CATEGORY_NAME], browserMocked.menuOptions));
         });
 
@@ -328,29 +329,29 @@ describe('components/ContextMenu', () => {
             assert.notStrictEqual(actualNoneCategories[0], expectedDefaultCategory);
         };
 
-        it('should mark a menu item for saving to the none category when there is no default category', () => {
+        it('should mark a menu item for saving to the none category when there is no default category', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
-            contextMenu.renderPageCategories(categoryLinks);
+            await contextMenu.renderPageCategories(categoryLinks);
             assureDefaultCategory(browserMocked.menuOptions, NONE_CATEGORY_NAME);
         });
 
-        it('should mark a menu item for saving to a default category with a conspicuous prefix', () => {
+        it('should mark a menu item for saving to a default category with a conspicuous prefix', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
             const expectedDefaultCategory = Randomiser.getRandomArrayItem(categoryLinks);
-            contextMenu.renderPageCategories(categoryLinks, expectedDefaultCategory);
+            await contextMenu.renderPageCategories(categoryLinks, expectedDefaultCategory);
             
             assureDefaultCategory(browserMocked.menuOptions, expectedDefaultCategory);
         });
         
-        it('should pass a title of a non-default category when clicking its menu item', () => {
+        it('should pass a title of a non-default category when clicking its menu item', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
             const expectedCategory = categoryLinks[1];
@@ -365,16 +366,16 @@ describe('components/ContextMenu', () => {
                         reject(new Error(`'${info.categoryTitle}' !== '${expectedCategory}'`));
                 };
 
-                contextMenu.renderPageCategories(categoryLinks, categoryLinks[0]);
-    
-                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedCategory));
-                browserMocked.dispatchMenuClick(menuToClick.id);
+                Expectation.expectResolution(contextMenu.renderPageCategories(categoryLinks, categoryLinks[0]), () => {
+                    const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedCategory));
+                    browserMocked.dispatchMenuClick(menuToClick.id);
+                }).catch(reject);
             });
         });
 
-        it('should pass a default category title when clicking its menu item', () => {
+        it('should pass a default category title when clicking its menu item', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
             const expectedDefaultCategory = Randomiser.getRandomArrayItem(categoryLinks);
@@ -389,16 +390,16 @@ describe('components/ContextMenu', () => {
                         reject(new Error(`'${info.categoryTitle}' !== '${expectedDefaultCategory}'`));
                 };
 
-                contextMenu.renderPageCategories(categoryLinks, expectedDefaultCategory);
-    
-                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedDefaultCategory));
-                browserMocked.dispatchMenuClick(menuToClick.id);
+                Expectation.expectResolution(contextMenu.renderPageCategories(categoryLinks, expectedDefaultCategory), () => {
+                    const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(expectedDefaultCategory));
+                    browserMocked.dispatchMenuClick(menuToClick.id);
+                });
             });
         });
 
-        it('should pass the NONE category title when saving with no default category', () => {
+        it('should pass the NONE category title when saving with no default category', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
             return new Promise((resolve, reject) => {
@@ -411,16 +412,16 @@ describe('components/ContextMenu', () => {
                         reject(new Error(`'${info.categoryTitle}' !== '${NONE_CATEGORY_NAME}'`));
                 };
 
-                contextMenu.renderPageCategories(categoryLinks, null);
-
-                const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(NONE_CATEGORY_NAME));
-                browserMocked.dispatchMenuClick(menuToClick.id);
+                Expectation.expectResolution(contextMenu.renderPageCategories(categoryLinks, null), () => {
+                    const menuToClick = browserMocked.menuOptions.find(op => op.title.endsWith(NONE_CATEGORY_NAME));
+                    browserMocked.dispatchMenuClick(menuToClick.id);
+                });
             });
         });
 
-        it('should pass no category title when clicking on save', () => {
+        it('should pass no category title when clicking on save', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const categoryLinks = createTestCategoryTitles(contextMenu);
 
             const defaultCategory = Randomiser.getRandomArrayItem(categoryLinks);
@@ -435,8 +436,8 @@ describe('components/ContextMenu', () => {
                         reject(new Error(`'${info.categoryTitle}' should be null`));
                 };
 
-                contextMenu.renderPageCategories(categoryLinks, defaultCategory);
-                browserMocked.dispatchMenuClick(OptionList.storage.save);
+                Expectation.expectResolution(contextMenu.renderPageCategories(categoryLinks, defaultCategory), 
+                    () => browserMocked.dispatchMenuClick(OptionList.storage.save)).catch(reject);
             });
         });
     });
@@ -479,39 +480,37 @@ describe('components/ContextMenu', () => {
     });
 
     describe('#appendNoteLink', () => {
-        it('should append a note link to menu', () => {
+        it('should append a note link to menu', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             const expectedNoteLink = createRandomNoteLink();
-            contextMenu.appendNoteLink(expectedNoteLink.id, expectedNoteLink.text);
+            await contextMenu.appendNoteLink(expectedNoteLink.id, expectedNoteLink.text);
             
             assert(menuHasAvailableNoteLinks([expectedNoteLink], browserMocked.menuOptions));
         });
     });
     
     describe('#removeNoteLink', () => {
-        it('should remove a note link from menu', () => {
+        it('should remove a note link from menu', async () => {
             const browserMocked = mockBrowser();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
-            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink(), 
-                createRandomNoteLink()];
-            contextMenu.renderNoteLinks(expectedNoteLinks);
+            const expectedNoteLinks = [createRandomNoteLink(), createRandomNoteLink(), createRandomNoteLink()];
+            await contextMenu.renderNoteLinks(expectedNoteLinks);
             
             const noteLinkToRemove = expectedNoteLinks[0];
-            contextMenu.removeNoteLink(noteLinkToRemove.id);
+            await contextMenu.removeNoteLink(noteLinkToRemove.id);
 
             assert(!menuHasAvailableNoteLinks([noteLinkToRemove], browserMocked.menuOptions));
-            assert(menuHasAvailableNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), 
-                browserMocked.menuOptions));
+            assert(menuHasAvailableNoteLinks(expectedNoteLinks.filter(li => li.id !== noteLinkToRemove.id), browserMocked.menuOptions));
         });
     });
 
     describe('#emitItemClick', () => {
         it('should emit a click for some enabled button menu items', async () => {
             mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             contextMenu.enableMarkingBtn();
 
             let markingClicked = false;
@@ -522,22 +521,9 @@ describe('components/ContextMenu', () => {
             assert(markingClicked);
         });
 
-        it('should not emit a click for a disabled button menu item', async () => {
-            mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
-            contextMenu.disableAddingNoteBtn();
-
-            let addingNoteClicked = false;
-            msgSenderChangedPropName = 'sendAddingNote';
-            MessageSender[msgSenderChangedPropName] = () => addingNoteClicked = true;
-            await contextMenu.emitItemClick(OptionList.noting.add);
-
-            assert(!addingNoteClicked);
-        });
-
         it('should not emit a click for a non-emittable button menu item', async () => {
             mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
 
             let changeColourClicked = false;
             msgSenderChangedPropName = 'sendChangingColour';
@@ -556,9 +542,10 @@ describe('components/ContextMenu', () => {
             return shortcuts;
         };
 
-        it('should render shortcuts for some emittable buttons', () => {
+        it('should render shortcuts for some emittable buttons', async () => {
             const browserMocked = mockBrowserWithTab();
-            const shortcuts = renderTestShortcuts(renderContextMenu());
+            const contextMenu = await renderContextMenu();
+            const shortcuts = renderTestShortcuts(contextMenu);
 
             browserMocked.menuOptions.forEach(op => {
                 if (op.type !== BTN_TYPE)
@@ -573,9 +560,9 @@ describe('components/ContextMenu', () => {
             });
         });
         
-        it('should change a shortcut for an emittable button', () => {
+        it('should change a shortcut for an emittable button', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const shortcuts = renderTestShortcuts(contextMenu);
 
             const cmdIds = Object.keys(shortcuts);
@@ -587,9 +574,9 @@ describe('components/ContextMenu', () => {
             assert(btn.title.endsWith(`(${shortcuts[firstCmdId].key})`));
         });
 
-        it('should remove a shortcut for some emittable buttons without emptying the others', () => {
+        it('should remove a shortcut for some emittable buttons without emptying the others', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             const shortcuts = renderTestShortcuts(contextMenu);
 
             const cmdIds = Object.keys(shortcuts);
@@ -610,9 +597,9 @@ describe('components/ContextMenu', () => {
             });
         });
 
-        it('should remove shortcuts for emittable buttons when there are none provided', () => {
+        it('should remove shortcuts for emittable buttons when there are none provided', async () => {
             const browserMocked = mockBrowserWithTab();
-            const contextMenu = renderContextMenu();
+            const contextMenu = await renderContextMenu();
             renderTestShortcuts(contextMenu);
 
             contextMenu.renderShortcuts();

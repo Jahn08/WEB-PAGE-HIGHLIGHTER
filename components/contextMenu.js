@@ -32,27 +32,27 @@ export class ContextMenu {
         this._emittableButtons = null;
     }
 
-    render() {
-        this._markBtn.addToMenu(new MenuIcon('colourful-brush'));
+    async render() {
+        await this._markBtn.addToMenu(new MenuIcon('colourful-brush'));
         
-        this._unmarkBtn.addToMenu(new MenuIcon('white-brush'));
+        await this._unmarkBtn.addToMenu(new MenuIcon('white-brush'));
 
-        this._setColourBtn.addToMenu(null, true);
+        await this._setColourBtn.addToMenu(null, true);
 
-        ArrayExtension.runForEach(ContextMenu._colours, (v, index) => {
+        ArrayExtension.runForEach(ContextMenu._colours, async (v, index) => {
             const radio = this._colourRadios[index];
-            radio.addToMenu(v.icon, index === 0);
+            await radio.addToMenu(v.icon, index === 0);
         });
 
-        new SeparatorMenuItem().addToMenu();
+        await new SeparatorMenuItem().addToMenu();
 
-        this._addNoteBtn.addToMenu(new MenuIcon('in-note'));
+        await this._addNoteBtn.addToMenu(new MenuIcon('in-note'));
 
-        this._removeNoteBtn.addToMenu(new MenuIcon('out-note'));
+        await this._removeNoteBtn.addToMenu(new MenuIcon('out-note'));
 
-        this._noteNavigation.render();
+        await this._noteNavigation.render();
 
-        this._storageMenu.render();
+        await this._storageMenu.render();
 
         new BrowserAPI().menus.onClicked(ContextMenu._onClick);
     }
@@ -188,7 +188,7 @@ export class ContextMenu {
 
     disableSaveBtn() { this._storageMenu.disableSaveBtn(); }
     
-    enableSaveBtn() { this._storageMenu.enableSaveBtn(); }
+    enableSaveBtn(shouldEnableSaveToMenu) { this._storageMenu.enableSaveBtn(shouldEnableSaveToMenu); }
 
     disableLoadBtn() { this._storageMenu.disableLoadBtn(); }
     
@@ -224,24 +224,25 @@ export class ContextMenu {
     }
 
     renderNoteLinks(noteLinks) { 
-        this._noteNavigation.renderLinks(noteLinks); 
+        return this._noteNavigation.renderLinks(noteLinks); 
     }
 
     appendNoteLink(noteId, noteText) {
-        this._noteNavigation.appendLink(noteId, noteText);
+        return this._noteNavigation.appendLink(noteId, noteText);
     }
 
     removeNoteLink(noteId) {
-        this._noteNavigation.removeLink(noteId);
+        return new BrowserAPI().menus.remove(noteId);
     }
 
     renderPageCategories(categoryTitles, defaultCategoryTitle) {
-        this._storageMenu.renderLinks(categoryTitles, defaultCategoryTitle); 
+        return this._storageMenu.renderLinks(categoryTitles, defaultCategoryTitle); 
     }
 
+    // TODO: make sure that the action is valid on the client side - no reliance on availability of menu items any more
     async emitItemClick(itemId) {
         const btn = this._getEmittableButtons().find(b => b.id === itemId);
-        if (btn && btn.isEnabled)
+        if (btn)
             await ContextMenu._onClick({ menuItemId: itemId });
     }
 }
@@ -249,82 +250,34 @@ export class ContextMenu {
 class LinkMenu {
     constructor(menuId, parentMenuId = null) {
         this._menuBtn = new ButtonMenuItem(menuId, parentMenuId);
-
-        this._menuLinks = [];
     }
 
     _appendLinkMenuBtn() {
-        this._menuBtn.addToMenu();
-
-        this._setMenuLinkBtnAvailability();
-    }
-    
-    _setMenuLinkBtnAvailability() {
-        return this._isMenuLinkBtnAvailable ? this._menuBtn.enable() : this._menuBtn.disable();
+        return this._menuBtn.addToMenu();
     }
 
     get parentId() {
         return this._menuBtn.id;        
     }
 
-    get _isMenuLinkBtnAvailable() {
-        return this._menuLinks.length > 0;
-    }
-
-    // TODO: Shouldn't rely on _menuLinks: remove the parent menu and recreate afresh
-    renderLinks(links) {
+    async renderLinks(links) {
         links = links || [];
         
+        await this._menuBtn.removeFromMenu();
+        await this._menuBtn.addToMenu();
+
         if (!links.length)
             return this._menuBtn.disable();
 
-        const updatedBtnIds = [];
-
-        let wasUpdated = false;
-
-        ArrayExtension.runForEach(links, li => {
-            const existentLink = this._menuLinks.find(btn => btn.id === li.id);
-
-            if (!existentLink) {
-                this.appendLink(li.id, li.text);
-                wasUpdated = true;
-            } else if (existentLink.updateTitle(li.text))
-                wasUpdated = true;
-
-            updatedBtnIds.push(li.id);
-        });
-
-        ArrayExtension.runForEach(this._menuLinks, btn => {
-            const btnId = btn.id;
-
-            if (!updatedBtnIds.includes(btnId)) {
-                this.removeLink(btnId);
-                wasUpdated = true;
-            }
-        });
-
-        return wasUpdated || this._setMenuLinkBtnAvailability();
+        await Promise.all(links.map(li => this.appendLink(li.id, li.text)));
+        return this._menuBtn.enable();
     }
 
-    appendLink(noteId, noteText) {
+    async appendLink(noteId, noteText) {
         const linkBtn = new ButtonMenuItem(noteId, this._menuBtn.id, noteText);
-        this._menuLinks.push(linkBtn);
-        
-        linkBtn.addToMenu(null, true);
+        await linkBtn.addToMenu(null, true);
 
-        this._setMenuLinkBtnAvailability();
-    }
-
-    removeLink(noteId) {
-        const linkToRemove = this._menuLinks.find(li => li.id === noteId);
-
-        if (!linkToRemove)
-            return;
-
-        linkToRemove.removeFromMenu();
-        this._menuLinks = this._menuLinks.filter(li => li.id !== noteId);
-
-        this._setMenuLinkBtnAvailability();
+        this._menuBtn.enable();
     }
 
     _createLink(id, text) {
@@ -341,7 +294,7 @@ class NoteNavigation extends LinkMenu {
     }
 
     render() {
-        this._appendLinkMenuBtn();
+        return this._appendLinkMenuBtn();
     }
 }
 
@@ -357,17 +310,17 @@ class PageStorageMenu extends LinkMenu {
         this._loadBtn = new ButtonMenuItem(PageStorageMenu._storageOptions.load, PageStorageMenu._storageOptionId);
     }
 
-    render() {
-        new SeparatorMenuItem().addToMenu();
+    async render() {
+        await new SeparatorMenuItem().addToMenu();
 
-        this._storageBtn.addToMenu();
+        await this._storageBtn.addToMenu();
 
         const saveIcon = new MenuIcon(this.saveBtnId);
-        this._saveBtn.addToMenu(saveIcon);
+        await this._saveBtn.addToMenu(saveIcon);
 
-        this._appendLinkMenuBtn();
+        await this._appendLinkMenuBtn();
 
-        this._loadBtn.addToMenu(new MenuIcon(this.loadBtnId));
+        await this._loadBtn.addToMenu(new MenuIcon(this.loadBtnId));
     }
 
     get emittableButtons() { return [this._saveBtn, this._loadBtn]; }
@@ -382,10 +335,6 @@ class PageStorageMenu extends LinkMenu {
 
     static get _storageOptions() { return OptionList.storage; }
 
-    get _isMenuLinkBtnAvailable() {
-        return this._saveBtn.isEnabled && super._isMenuLinkBtnAvailable;
-    }
-
     static get _storageOptionId() { return OptionList.storage.section; }
 
     static getCategoryTitle(info) {
@@ -393,7 +342,7 @@ class PageStorageMenu extends LinkMenu {
     }
 
     renderLinks(categoryTitles, defaultCategoryTitle) {
-        super.renderLinks(this._getCategoryLinks(categoryTitles, defaultCategoryTitle));
+        return super.renderLinks(this._getCategoryLinks(categoryTitles, defaultCategoryTitle));
     }
     
     _getCategoryLinks(categoryTitles, defaultCategoryTitle) {
@@ -415,32 +364,22 @@ class PageStorageMenu extends LinkMenu {
         if (!this._saveBtn.disable())
             return;
 
-        this._changeSavingRelatedBtnsAvailability();
+        this._menuBtn.disable();
     }
 
-    _changeSavingRelatedBtnsAvailability() {
-        this._setParentBtnAvailability(true);
-        this._setMenuLinkBtnAvailability(); 
-    }
-    
-    _setParentBtnAvailability(availabilityChanged) {
-        if (!availabilityChanged)
-            return;
-
-        if (this._saveBtn.isEnabled || this._loadBtn.isEnabled)
-            this._storageBtn.enable();
-        else
-            this._storageBtn.disable();
-    }
-
-    enableSaveBtn() { 
+    enableSaveBtn(shouldEnableSaveToMenu = false) { 
         if (!this._saveBtn.enable())
             return;
 
-        this._changeSavingRelatedBtnsAvailability();
+        this._storageBtn.enable();
+        if(shouldEnableSaveToMenu)
+            this._menuBtn.enable();
     }
 
-    disableLoadBtn() { this._setParentBtnAvailability(this._loadBtn.disable()); }
+    disableLoadBtn() { this._loadBtn.disable(); }
     
-    enableLoadBtn() { this._setParentBtnAvailability(this._loadBtn.enable()); }
+    enableLoadBtn() { 
+        this._loadBtn.enable(); 
+        this._storageBtn.enable();
+    }
 }

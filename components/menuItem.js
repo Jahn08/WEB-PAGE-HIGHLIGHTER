@@ -16,7 +16,7 @@ class BaseMenuItem {
 
     get isAdded() { return this._isAdded; }
 
-    addToMenu(options = {}) {
+    async addToMenu(options = {}) {
         if (!this._isAdded) {
             options.id = this._id;
             options.type = this._type;
@@ -27,7 +27,7 @@ class BaseMenuItem {
             if (!options.title)
                 options.title = this._compileTitle(this._browser.locale.getString(this._id));
 
-            this._browser.menus.create(options);
+            await this._browser.menus.create(options);
 
             return this._isAdded = true, this._isAdded;
         }
@@ -39,8 +39,9 @@ class BaseMenuItem {
         return title;
     }
 
-    _removeFromMenu() {
-        this._browser.menus.remove(this._id);
+    async _removeFromMenu() {
+        await this._browser.menus.remove(this._id);
+        this._isAdded = false;
     }
 
     updateAvailability(isEnabled) {
@@ -62,7 +63,7 @@ class SeparatorMenuItem extends BaseMenuItem {
 
     static get TYPE() { return 'separator'; }
 
-    addToMenu() { super.addToMenu(); }
+    addToMenu() { return super.addToMenu(); }
 }
 
 class RadioSubMenuItem extends BaseMenuItem {
@@ -78,7 +79,7 @@ class RadioSubMenuItem extends BaseMenuItem {
     static get TYPE() { return 'radio'; }
 
     addToMenu(icon = new MenuIcon(), checked = false) {
-        super.addToMenu({
+        return super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             checked: this._isChecked = checked,
             parentId: this._parentId,
@@ -109,10 +110,7 @@ class ButtonMenuItem extends BaseMenuItem {
         super(id, ButtonMenuItem.TYPE);
     
         this._title = title;
-        this._enabled = false;
-
         this._parentId = parentId;
-
         this._shortcut = null;
     }
 
@@ -121,33 +119,28 @@ class ButtonMenuItem extends BaseMenuItem {
     disable() { return this._setAvailability(false); }
 
     _setAvailability(isEnabled) {
-        if (isEnabled === this._enabled)
-            return false;
-
-        this.updateAvailability(this._enabled = isEnabled);
+        this.updateAvailability(isEnabled);
         return true;
     }
 
     enable() { return this._setAvailability(true); }
     
-    get isEnabled() { return this._enabled; }
-
     addToMenu(icon = new MenuIcon(), enabled = false) {
-        this._enabled = enabled;
-
-        this._addToMenu(icon);
+        return this._addToMenu(icon, enabled);
     }
 
-    _addToMenu(icon) {
-        super.addToMenu({
+    _addToMenu(icon, enabled) {
+        return super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
             title: this._title,
-            enabled: this._enabled
+            enabled: enabled
         });
     }
 
-    removeFromMenu() { super._removeFromMenu(); }
+    removeFromMenu() { 
+        return super._removeFromMenu();
+    }
 
     updateTitle(newTitile) {
         if (this._title === newTitile)

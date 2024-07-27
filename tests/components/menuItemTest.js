@@ -14,16 +14,16 @@ const initMockedBrowser = () => {
 
 describe('components/SeparatorMenuItem', () => {
     describe('#addToMenu', () => {
-        it('should add separator items with distinct ids to a menu', () => {
+        it('should add separator items with distinct ids to a menu', async () => {
             const browserMocked = initMockedBrowser();
 
-            new SeparatorMenuItem().addToMenu();
-            new SeparatorMenuItem().addToMenu();
+            await new SeparatorMenuItem().addToMenu();
+            await new SeparatorMenuItem().addToMenu();
             new SeparatorMenuItem();
             
             const separator = new SeparatorMenuItem();
-            separator.addToMenu();
-            separator.addToMenu();
+            await separator.addToMenu();
+            await separator.addToMenu();
 
             const insertedOptions = browserMocked.menuOptions;
             assert.strictEqual(insertedOptions.length, 3);
@@ -46,7 +46,7 @@ describe('components/SeparatorMenuItem', () => {
 
 describe('components/RadioSubMenuItem', () => {
     describe('#addToMenu', () => {
-        it('should add radiobutton items with options to a menu', () => {
+        it('should add radiobutton items with options to a menu', async () => {
             const browserMocked = initMockedBrowser();
 
             const buildRandomRadioItem = () => {
@@ -60,12 +60,10 @@ describe('components/RadioSubMenuItem', () => {
             };
             
             const radio1 = buildRandomRadioItem();
-            new RadioSubMenuItem(radio1.id, radio1.parentId, radio1.title)
-                .addToMenu(radio1.icon, radio1.checked);
+            await new RadioSubMenuItem(radio1.id, radio1.parentId, radio1.title).addToMenu(radio1.icon, radio1.checked);
             
             const radio2 = buildRandomRadioItem();
-            new RadioSubMenuItem(radio2.id, radio2.parentId, radio2.title)
-                .addToMenu(radio2.icon, radio2.checked);
+            await new RadioSubMenuItem(radio2.id, radio2.parentId, radio2.title).addToMenu(radio2.icon, radio2.checked);
 
             const testRadios = [radio1, radio2];
             const radioOptions = browserMocked.menuOptions;
@@ -93,9 +91,9 @@ describe('components/ButtonMenuItem', () => {
         };
     };
 
-    const buildBtnWithOptions = btnOptions => {
+    const buildBtnWithOptions = async btnOptions => {
         const newBtn = new ButtonMenuItem(btnOptions.id, btnOptions.parentId, btnOptions.title);
-        newBtn.addToMenu(btnOptions.icon);
+        await newBtn.addToMenu(btnOptions.icon);
 
         return newBtn;
     };
@@ -106,7 +104,7 @@ describe('components/ButtonMenuItem', () => {
             const browserMocked = initMockedBrowser();
 
             const testOptions = [buildRandomBtnOptions(), buildRandomBtnOptions(false)];
-            testOptions.forEach(ops => buildBtnWithOptions(ops));
+            testOptions.forEach(async ops => await buildBtnWithOptions(ops));
 
             const newBtnOptions = browserMocked.menuOptions;
 
@@ -119,22 +117,21 @@ describe('components/ButtonMenuItem', () => {
         });
     });
 
-    const buildRandomBtn = () => { 
+    const buildRandomBtn = async () => { 
         const btn = new ButtonMenuItem(Randomiser.getRandomNumberUpToMax(), 
             Randomiser.getRandomNumberUpToMax());
-        btn.addToMenu();
+        await btn.addToMenu();
 
         return btn;
     };
 
-    const buildRandomBtnArray = () => [buildRandomBtn(), buildRandomBtn(), 
-        buildRandomBtn(), buildRandomBtn()];
+    const buildRandomBtnArray = () => Promise.all([buildRandomBtn(), buildRandomBtn(), buildRandomBtn(), buildRandomBtn()]);
 
     describe('#updateVisibility', () => {
-        it('should update button items visibility in a menu', () => {
+        it('should update button items visibility in a menu', async () => {
             const browserMocked = initMockedBrowser();
 
-            const buttons = buildRandomBtnArray();
+            const buttons = await buildRandomBtnArray();
             buttons.forEach(btn => btn.disable());
             buttons.forEach((btn, index) => {
                 if (index % 2)
@@ -147,13 +144,13 @@ describe('components/ButtonMenuItem', () => {
 
     describe('#removeFromMenu', () => {
 
-        it('should remove button items from menu', () => {
+        it('should remove button items from menu', async () => {
             const browserMocked = initMockedBrowser();
 
             const residualBtnIds = [];
-            buildRandomBtnArray().forEach((btn, index) => {
+            (await buildRandomBtnArray()).forEach(async (btn, index) => {
                 if (index % 2)
-                    btn.removeFromMenu();
+                    await btn.removeFromMenu();
                 else
                     residualBtnIds.push(btn.id);
             });
@@ -178,14 +175,14 @@ describe('components/ButtonMenuItem', () => {
             return randomShortcut;
         };
         
-        it('should change a shortcut for an emittable button', () => {
-            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+        it('should change a shortcut for an emittable button', async () => {
+            const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
             renderTestShortcut(btn);
             renderTestShortcut(btn);
         });
 
-        it('should remove a shortcut for an emittable button', () => {
-            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+        it('should remove a shortcut for an emittable button', async () => {
+            const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
             renderTestShortcut(btn);
 
             btn.updateItem = options => ShortcutPreferencesDOM.assertTitleHasNoShortcut(
@@ -193,8 +190,8 @@ describe('components/ButtonMenuItem', () => {
             assert(btn.renderShortcut(null));
         });
         
-        it('should not render the same shortcut for an emittable button', () => {
-            const btn = buildBtnWithOptions(buildRandomBtnOptions(true));
+        it('should not render the same shortcut for an emittable button', async () => {
+            const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
             const rendereShortcut = renderTestShortcut(btn);
             assert(!btn.renderShortcut(rendereShortcut.key));
         });

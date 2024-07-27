@@ -7,9 +7,8 @@ import { SenderMessage } from '../components/senderMessage.js';
 const gBrowserApi = new BrowserAPI();
 gBrowserApi.runtime.onInstalled(async () => {
     const contextMenu = new ContextMenu();
-    contextMenu.render();
+    await contextMenu.render();
     
-    // TODO: render page categories when installed/updated and only after changing preferences
     const categories = await PageInfo.getAllSavedCategories();
     const categoryView = new CategoryView(categories);
     contextMenu.renderPageCategories(categoryView.categoryTitles, categoryView.defaultCategoryTitle);
@@ -28,12 +27,17 @@ gBrowserApi.runtime.onMessage(async msg => {
             return preferences;
         }
 
+        if (senderMsg.shouldAddCategories())
+            contextMenu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
+
         if (senderMsg.shouldUpdateShortcuts())
             contextMenu.renderShortcuts(senderMsg.shortcuts);
 
-        if (senderMsg.shouldSetSaveMenuReady())
-            contextMenu.enableSaveBtn();
-        else
+        if (senderMsg.shouldSetSaveMenuReady()) {
+            const categories = await PageInfo.getAllSavedCategories();
+            const shouldEnableSaveToMenu = categories && categories.length;
+            contextMenu.enableSaveBtn(shouldEnableSaveToMenu);
+        } else
             contextMenu.disableSaveBtn();
 
         if (senderMsg.shouldSetLoadMenuReady())

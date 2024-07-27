@@ -49,11 +49,11 @@ export class StorageHelper {
             .then(() => { return expectedPageData; });
     }
 
-    static saveTestCategories(numberOfItems = 3) {
+    static saveTestCategories(numberOfItems = 3, defaultIndex = null) {
         if (!numberOfItems)
             return Promise.resolve();
 
-        return this._saveCategories(PageInfoHelper.createCategoryArray(numberOfItems));
+        return this._saveCategories(PageInfoHelper.createCategoryArray(numberOfItems, defaultIndex));
     }
 
     static _saveCategories(categories = []) {
