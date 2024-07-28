@@ -116,18 +116,19 @@ describe('content_script/pageInfo', function () {
                 let categoriesBySavedPages = savedInfo.pageCategories;
                 const expectedCategory = categoriesBySavedPages[pageInfoToLoad.uri];
 
+                await pageInfoToLoad.load();
+
                 const defaultCategory = Object.values(categoriesBySavedPages).find(c => c !== expectedCategory);
                 assert(defaultCategory);
                 
                 let defaultCategoryGetterActivated = false;
-                await pageInfoToLoad.save(() => {
+                const pageCategory = await pageInfoToLoad.save(() => {
                     defaultCategoryGetterActivated = true;
                     return defaultCategory;
                 });
-
+                assert.strictEqual(pageCategory, expectedCategory);
                 assert.strictEqual(defaultCategoryGetterActivated, false);
 
-                await pageInfoToLoad.load();
                 categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
                 assert.strictEqual(categoriesBySavedPages[pageInfoToLoad.uri], expectedCategory);
             });
@@ -140,12 +141,35 @@ describe('content_script/pageInfo', function () {
                 let categoriesBySavedPages = savedInfo.pageCategories;
                 const expectedCategory = categoriesBySavedPages[pageInfoToLoad.uri];
 
-                await pageInfoToLoad.save();
-
                 await pageInfoToLoad.load();
+
+                const pageCategory = await pageInfoToLoad.save();
+                assert.strictEqual(pageCategory, expectedCategory);
+
                 categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
                 const currentCategory = categoriesBySavedPages[pageInfoToLoad.uri];
                 assert.notStrictEqual(currentCategory, 'None');
+                assert.strictEqual(currentCategory, expectedCategory);
+            });
+        });
+        
+        it('should save to a changed category when it was changed prior to saving', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, pageInfoToLoad.uri), async savedInfo => {
+                const initialCategory = savedInfo.pageCategories[pageInfoToLoad.uri];
+
+                await pageInfoToLoad.load();
+
+                savedInfo = await StorageHelper.saveTestPageEnvironment(3, false, pageInfoToLoad.uri);
+                const expectedCategory = savedInfo.pageCategories[pageInfoToLoad.uri];
+
+                const pageCategory = await pageInfoToLoad.save();
+                assert.strictEqual(pageCategory, expectedCategory);
+                assert.notStrictEqual(pageCategory, initialCategory);
+
+                const categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
+                const currentCategory = categoriesBySavedPages[pageInfoToLoad.uri];
                 assert.strictEqual(currentCategory, expectedCategory);
             });
         });

@@ -176,6 +176,8 @@ class PageInfo {
         await this._browserStorage.set(this._serialise());
 
         this._pageIsStored = true;
+        
+        await this._pageCategory.load();
         return this._pageCategory.category;
     }
 
@@ -226,7 +228,7 @@ class PageInfo {
 
         this._renderHtml(this._deserialiseHtml(serialisedHtml, pageData[PageInfo.DIC_SIZE_PROP_NAME]));
 
-        this._pageCategory.load();
+        await this._pageCategory.load();
     }
 
     _throwNoContentError() {
