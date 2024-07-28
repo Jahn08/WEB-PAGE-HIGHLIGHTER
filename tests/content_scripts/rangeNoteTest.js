@@ -242,7 +242,6 @@ describe('content_script/rangeNote', function () {
     });
 
     describe('#getNoteLinks', function () {
-        
         it('should return an empty array when there are no note links on a page', () => {
             const noteLinks = RangeNote.getNoteLinks();
             assert(noteLinks);
@@ -262,11 +261,33 @@ describe('content_script/rangeNote', function () {
             assert(noteLinks.find(li => li.id === '1' && li.text.endsWith(firstNoteText)));
             assert(noteLinks.find(li => li.id === secondNoteId && li.text.endsWith(secondNoteText)));
         });
+        
+        it('should return unique note links left after removing/adding some of the other ones on a page', () => {
+            const firstNoteText = createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(), '1');
+            createNoteWithText(TestPageHelper.getLastParagraphSentenceNode(), '2');
+
+            TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedNodes);
+            const secondNoteText = createNoteWithText(null, '3');
+
+            let noteLinks = RangeNote.getNoteLinks();
+
+            RangeNote.removeNote(TestPageHelper.getLastParagraphSentenceNode());
+            noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 2);
+            assert(noteLinks.find(li => li.id === '1' && li.text.endsWith(firstNoteText)));
+            assert(noteLinks.find(li => li.id === '3' && li.text.endsWith(secondNoteText)));
+
+            const thirdNoteText = createNoteWithText(TestPageHelper.getLastParagraphSentenceNode(), '4');
+            noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 3);
+            assert(noteLinks.find(li => li.id === '4' && li.text.endsWith(thirdNoteText)));
+        });
 
         it('should shorten a too long note link text', () => {
             const longText = ('' + Randomiser.getRandomNumberUpToMax()).padStart(30, '0');
-            createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(),
-                undefined, longText);
+            createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(), undefined, longText);
 
             const noteLinks = RangeNote.getNoteLinks();
             assert.strictEqual(noteLinks.length, 1);
@@ -274,6 +295,7 @@ describe('content_script/rangeNote', function () {
             const noteLink = noteLinks[0];
             assert(noteLink && noteLink.text);
             assert(noteLink.text.length < longText.length);
+            assert.strictEqual(noteLink.text.length, 21);
         });
     });
 

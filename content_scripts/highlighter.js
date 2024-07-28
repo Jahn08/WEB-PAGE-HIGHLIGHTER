@@ -145,7 +145,6 @@ export class Highlighter {
             } else if (hasRangeOrFocusedNode)
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setAddNoteMenuReady());
 
-            // TODO: set up note links once and after they changed
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.updateShortcuts(this._shortcuts),
                 ReceiverMessage.addNoteLinks(RangeNote.getNoteLinks()));
             this._browserApi.runtime.sendMessage(this._includeLoadSaveEvents(msg))

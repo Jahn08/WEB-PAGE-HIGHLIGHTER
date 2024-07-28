@@ -30,7 +30,12 @@ export class RangeNote extends RangeBase {
         else
             success = this._appendNoteToNode(targetNode, noteId, text);
 
-        return success ? noteLink : null;
+        if (success) {
+            this._cachedNoteLinks = null;
+            return noteLink;
+        }
+
+        return null;
     }
 
     static get START_NOTE_CLASS_NAME() {
@@ -254,11 +259,15 @@ export class RangeNote extends RangeBase {
         }
 
         const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
-        ArrayExtension.runForEach(noteNodes, 
-            n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n):
-                n.remove());
-
-        return noteNodes.length > 0 ? noteId : null;        
+        if(noteNodes.length > 0) {
+            ArrayExtension.runForEach(noteNodes, 
+                n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n): n.remove());
+    
+            this._cachedNoteLinks = null;
+            return noteId;
+        }
+        
+        return null;        
     }
 
     static _extractNoteId(node) {
@@ -306,16 +315,19 @@ export class RangeNote extends RangeBase {
     static getNoteLinks() {
         const uniqueIds = [];
         
-        return [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
-            const noteId = n.dataset.noteId;
+        if(!this._cachedNoteLinks)
+            this._cachedNoteLinks = [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
+                const noteId = n.dataset.noteId;
 
-            if (noteId && !ArrayExtension.contains(uniqueIds, noteId)) {
-                uniqueIds.push(noteId);
-                return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
-            }
+                if (noteId && !ArrayExtension.contains(uniqueIds, noteId)) {
+                    uniqueIds.push(noteId);
+                    return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
+                }
 
-            return null;
-        }).filter(n => n).sort((a, b) => a.id > b.id ? 1 : (a.id < b.id ? -1 : 0));
+                return null;
+            }).filter(n => n).sort((a, b) => a.id > b.id ? 1 : (a.id < b.id ? -1 : 0));
+
+        return this._cachedNoteLinks;
     }
 }
 
