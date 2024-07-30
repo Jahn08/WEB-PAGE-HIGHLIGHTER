@@ -6,6 +6,7 @@ import { RangeMarker } from './rangeMarker.js';
 import { ReceiverMessage } from './receiverMessage.js';
 import { PageInfo, CategoryView } from './pageInfo.js';
 
+// TODO: should be tested
 export class Highlighter {
     constructor() {
         this._activeNode;
@@ -127,7 +128,7 @@ export class Highlighter {
             this._markingIsEnabled = false;
             this._unmarkingIsEnabled = false;
             this._addingNoteIsEnabled = false;
-            this._removingIsEnabled = false;
+            this._removingNoteIsEnabled = false;
 
             const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
 
@@ -152,7 +153,7 @@ export class Highlighter {
             
             if (RangeNote.hasNote(focusedNode)) {
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setRemoveNoteMenuReady());
-                this._removingIsEnabled = true;
+                this._removingNoteIsEnabled = true;
 
                 this._activeNode = focusedNode;
             } else if (hasRangeOrFocusedNode) {
@@ -211,28 +212,32 @@ export class Highlighter {
 
             let noteInfo;
             
-            if (this._markingIsEnabled && receiver.shouldMark())
-                domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass);
-            else if (this._unmarkingIsEnabled && receiver.shouldUnmark()) {
-                if (RangeMarker.unmarkSelectedNodes(curNode))
+            if (receiver.shouldMark()) {
+                if (this._markingIsEnabled)
+                    domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass);
+            } else if (receiver.shouldUnmark()) {
+                if (this._unmarkingIsEnabled && RangeMarker.unmarkSelectedNodes(curNode))
                     isElementRemoval = true;
             } else if (receiver.shouldChangeColour()) {
                 this._curColourClass = receiver.markColourClass;
                 domWasChanged = RangeMarker.changeSelectedNodesColour(this._curColourClass, curNode);
-            } else if (this._addingNoteIsEnabled && receiver.shouldAddNote()) {
-                if ((noteInfo = RangeNote.createNote(
+            } else if (receiver.shouldAddNote()) {
+                if (this._addingNoteIsEnabled && (noteInfo = RangeNote.createNote(
                     prompt(this._browserApi.locale.getString('note-add-prompt')), curNode)))
                     domWasChanged = true;
-            } else if (this._removingIsEnabled && receiver.shouldRemoveNote()) {
-                if ((noteInfo = RangeNote.removeNote(curNode)))
+            } else if (receiver.shouldRemoveNote()) {
+                if (this._removingNoteIsEnabled && (noteInfo = RangeNote.removeNote(curNode)))
                     isElementRemoval = true;
-            } else if (this._savingIsEnabled && receiver.shouldSave())
-                await this._performStorageAction(this._save);
-            else if (this._savingIsEnabled && receiver.shouldSaveToCategory())
-                await this._performStorageAction(this._saveToCategory, receiver.category);
-            else if (this._loadingIsEnabled && receiver.shouldLoad())
-                await this._performStorageAction(this._load);
-            else if (receiver.shouldReturnTabState())
+            } else if (receiver.shouldSave()) {
+                if (this._savingIsEnabled)
+                    await this._performStorageAction(this._save);
+            } else if (receiver.shouldSaveToCategory()) {
+                if (this._savingIsEnabled)
+                    await this._performStorageAction(this._saveToCategory, receiver.category);
+            } else if (receiver.shouldLoad()) {
+                if (this._loadingIsEnabled)
+                    await this._performStorageAction(this._load);
+            } else if (receiver.shouldReturnTabState())
                 return this._includeLoadSaveEvents(ReceiverMessage.updateShortcuts(this._shortcuts));
             else if (receiver.shouldGoToNote())
                 RangeNote.goToNote(receiver.noteLink.id);
