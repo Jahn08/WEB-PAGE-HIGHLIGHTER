@@ -239,7 +239,6 @@ export class ContextMenu {
         return this._storageMenu.renderLinks(categoryTitles, defaultCategoryTitle); 
     }
 
-    // TODO: make sure that the action is valid on the client side - no reliance on availability of menu items any more
     async emitItemClick(itemId) {
         const btn = this._getEmittableButtons().find(b => b.id === itemId);
         if (btn)

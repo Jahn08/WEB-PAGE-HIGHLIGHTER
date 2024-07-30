@@ -124,26 +124,41 @@ export class Highlighter {
         const errorPrefix = 'An error while setting menu visibility: ';
         
         try {
+            this._markingIsEnabled = false;
+            this._unmarkingIsEnabled = false;
+            this._addingNoteIsEnabled = false;
+            this._removingIsEnabled = false;
+
             const curColourClasses = RangeMarker.getColourClassesForSelectedNodes();
 
             let hasRangeOrFocusedNode;
             if (curColourClasses) {
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setMarkMenuReady());
+                this._markingIsEnabled = true;
+                
                 hasRangeOrFocusedNode = true;
 
-                if (curColourClasses.length)
+                if (curColourClasses.length) {
                     msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
-            } else if (RangeMarker.isNodeMarked(focusedNode)) {
+                    this._unmarkingIsEnabled = true;
+                }
+            } else if (RangeMarker.isNodeMarked(focusedNode)) { // TODO: enable marking of a node with different colour?
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
+                this._unmarkingIsEnabled = true;
+                
                 this._activeNode = focusedNode;
                 hasRangeOrFocusedNode = true;
             }
             
             if (RangeNote.hasNote(focusedNode)) {
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setRemoveNoteMenuReady());
+                this._removingIsEnabled = true;
+
                 this._activeNode = focusedNode;
-            } else if (hasRangeOrFocusedNode)
+            } else if (hasRangeOrFocusedNode) {
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setAddNoteMenuReady());
+                this._addingNoteIsEnabled = true;
+            }
 
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.updateShortcuts(this._shortcuts),
                 ReceiverMessage.addNoteLinks(RangeNote.getNoteLinks()));
@@ -157,14 +172,21 @@ export class Highlighter {
     }
 
     _includeLoadSaveEvents(msg = null) {
+        this._savingIsEnabled = false;
+        this._loadingIsEnabled = false;
+
         if (this._domIsPure)
             return msg;
 
-        if (this._domIsPure === false)
+        if (this._domIsPure === false) {
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setSaveMenuReady());
+            this._savingIsEnabled = true;
+        }
 
-        if (this._canLoad)
+        if (this._canLoad) {
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setLoadMenuReady());
+            this._loadingIsEnabled = true;
+        }
 
         return msg;
     }
@@ -189,26 +211,26 @@ export class Highlighter {
 
             let noteInfo;
             
-            if (receiver.shouldMark())
+            if (this._markingIsEnabled && receiver.shouldMark())
                 domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass);
-            else if (receiver.shouldUnmark()) {
+            else if (this._unmarkingIsEnabled && receiver.shouldUnmark()) {
                 if (RangeMarker.unmarkSelectedNodes(curNode))
                     isElementRemoval = true;
             } else if (receiver.shouldChangeColour()) {
                 this._curColourClass = receiver.markColourClass;
                 domWasChanged = RangeMarker.changeSelectedNodesColour(this._curColourClass, curNode);
-            } else if (receiver.shouldAddNote()) {
+            } else if (this._addingNoteIsEnabled && receiver.shouldAddNote()) {
                 if ((noteInfo = RangeNote.createNote(
                     prompt(this._browserApi.locale.getString('note-add-prompt')), curNode)))
                     domWasChanged = true;
-            } else if (receiver.shouldRemoveNote()) {
+            } else if (this._removingIsEnabled && receiver.shouldRemoveNote()) {
                 if ((noteInfo = RangeNote.removeNote(curNode)))
                     isElementRemoval = true;
-            } else if (receiver.shouldSave())
+            } else if (this._savingIsEnabled && receiver.shouldSave())
                 await this._performStorageAction(this._save);
-            else if (receiver.shouldSaveToCategory())
+            else if (this._savingIsEnabled && receiver.shouldSaveToCategory())
                 await this._performStorageAction(this._saveToCategory, receiver.category);
-            else if (receiver.shouldLoad())
+            else if (this._loadingIsEnabled && receiver.shouldLoad())
                 await this._performStorageAction(this._load);
             else if (receiver.shouldReturnTabState())
                 return this._includeLoadSaveEvents(ReceiverMessage.updateShortcuts(this._shortcuts));
