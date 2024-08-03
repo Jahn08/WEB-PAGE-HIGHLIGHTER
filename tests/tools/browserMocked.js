@@ -6,7 +6,9 @@ export class BrowserMocked {
     constructor() {
         global.browser = {};
         this._initLocaleApi();
+
         this._initRuntime();
+        this._onMessageCallback = null;
 
         this._menuOptions = [];
 
@@ -60,14 +62,30 @@ export class BrowserMocked {
         };
     }
 
-    resetRuntime() {
+    resetRuntime(sendMessageResultGetter = null) {
         this._runtimeMessages = [];
         global.browser.runtime = {
-            sendMessage: (_, msgBody) => new Promise((resolve) => {
-                this._runtimeMessages.push(msgBody);
-                resolve();
-            })
+            sendMessage: (_, msgBody) => new Promise((resolve, reject) => {
+                try {
+                    this._runtimeMessages.push(msgBody);
+                    resolve(sendMessageResultGetter ? sendMessageResultGetter(): null);
+                } catch(ex) {
+                    reject(ex);
+                }
+            }),
+            onMessage: {
+                addListener: (callback) => { 
+                    this._onMessageCallback = callback;
+                }
+            }
         };
+    }
+
+    callRuntimeOnMessageCallback(msg) {
+        if(this._onMessageCallback)
+            return new Promise(resolve => this._onMessageCallback(msg, null, resolve));
+    
+        return Promise.resolve();
     }
 
     resetBrowserStorage() {

@@ -1,4 +1,5 @@
 (async () => {
     const contentMain = await import('./highlighter.js'); 
-    new contentMain.Highlighter();
+    const highlighter = new contentMain.Highlighter();
+    await highlighter.initPreferences();
 })();

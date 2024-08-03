@@ -18,7 +18,6 @@ export class Highlighter {
         this._browserApi.runtime.onMessage(this._processMessage.bind(this));
 
         this._pageInfo = new PageInfo();
-        this._initPreferences();
 
         document.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
         this._tempFocusedNode;
@@ -50,13 +49,13 @@ export class Highlighter {
             this._keyTempCombination = [];
     }
 
-    async _initPreferences() {
+    initPreferences() {
         const beforeUnloadEvent = 'beforeunload';
 
         const eventCallback = this._warnIfDomIsDirty.bind(this);
         window.addEventListener(beforeUnloadEvent, eventCallback);
 
-        this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(ReceiverMessage.loadPreferences())).then(async settings => {
+        return this._browserApi.runtime.sendMessage(ReceiverMessage.combineEvents(ReceiverMessage.loadPreferences())).then(async settings => {
             try {
                 const preferences = Object.assign({}, settings);
 
@@ -78,8 +77,7 @@ export class Highlighter {
                 if (this._canLoad && (preferences.shouldLoad || this._pageInfo.shouldLoad()))
                     await this._performStorageAction(this._load);
             } catch (ex) {
-                console.error('An error occurred while applying the extension preferences: ' + 
-                    ex.toString());
+                console.error('An error occurred while applying the extension preferences: ' + ex.toString());
             }
         }).catch(error => console.error('An error while getting preferences: ' + error.toString()));
     }
