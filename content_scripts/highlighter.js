@@ -29,6 +29,8 @@ export class Highlighter {
         this._curColourClass;
     }
 
+    get domIsPure() { return this._domIsPure; }
+
     _watchShortcuts(event) {
         if (event.type === this._keyDownEventName) {
             const unifiedKey = Shortcut.extractKeyInfo(event);
@@ -83,7 +85,7 @@ export class Highlighter {
     }
 
     _warnIfDomIsDirty(event) {
-        if (this._domIsPure === false)
+        if (this.domIsPure === false)
             return event.returnValue = this._browserApi.locale.getString('page-unload-warn');
     }
 
@@ -120,7 +122,7 @@ export class Highlighter {
     }
 
     _setUpContextMenu(focusedNode, msg = null) {
-        const errorPrefix = 'An error while setting menu visibility: ';
+        const errorPrefix = 'An error while setting menu availability: ';
         
         try {
             this._markingIsEnabled = false;
@@ -174,10 +176,10 @@ export class Highlighter {
         this._savingIsEnabled = false;
         this._loadingIsEnabled = false;
 
-        if (this._domIsPure)
+        if (this.domIsPure)
             return msg;
 
-        if (this._domIsPure === false) {
+        if (this.domIsPure === false) {
             msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setSaveMenuReady());
             this._savingIsEnabled = true;
         }

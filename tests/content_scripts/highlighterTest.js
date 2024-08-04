@@ -9,6 +9,7 @@ import { TestPageHelper } from '../tools/testPageHelper.js';
 import { Expectation } from '../tools/expectation.js';
 import { PageInfo } from '../../content_scripts/pageInfo.js';
 import { RangeMarker } from '../../content_scripts/rangeMarker.js';
+import { RangeNote } from '../../content_scripts/rangeNote.js';
 
 describe('content_script/highlighter', function () { 
     this.timeout(0);
@@ -40,7 +41,47 @@ describe('content_script/highlighter', function () {
         }
     };
 
-    describe('#preferences', function () {
+    const getRandomColourClass = () => `${RangeMarker.MARKER_CLASS_NAME}_${Randomiser.getRandomString()}`;
+
+    const saveMarkedPage = async (colourClassName) => {
+        const pageInfoToLoad = new PageInfo();
+        markRange(colourClassName);
+
+        await pageInfoToLoad.save();
+
+        return pageInfoToLoad;
+    };
+
+    const markRange = (colourClassName) => {
+        TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+        RangeMarker.markSelectedNodes(colourClassName);
+
+        TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+    };
+    
+    const createNoteForRange = (text) => {
+        TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+        const note = RangeNote.createNote(text);
+        
+        TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+        return note;
+    };
+    
+    const markNode = (colourClassName) => {
+        TestPageHelper.setRange(TestPageHelper.setRangeForLastParagraphSentenceNode);
+        RangeMarker.markSelectedNodes(colourClassName);
+
+        return TestPageHelper.getLastParagraphSentenceNode();
+    };
+    
+    const createNoteForNode = (text) => {
+        TestPageHelper.setRange(TestPageHelper.setRangeForLastParagraphSentenceNode);
+        const note = RangeNote.createNote(text);
+
+        return { node: TestPageHelper.getLastParagraphSentenceNode(), noteLink: note };
+    };
+
+    describe('#initPreferences', function () {
         it('should send a message for loading preferences on initialization', async () => {
             await new Highlighter().initPreferences();
             const msg = browser.getRuntimeMessages()[0];
@@ -53,7 +94,6 @@ describe('content_script/highlighter', function () {
             browser.resetRuntime(() => { throw new Error(errorReason); });
             
             let consoleMsg;
-            
             await mockConsole('error', (msg) => consoleMsg = msg, () => new Highlighter().initPreferences());
 
             assert.notEqual(consoleMsg, null);
@@ -165,22 +205,8 @@ describe('content_script/highlighter', function () {
             assert.strictEqual(highlighter._curColourClass, expectedColourToken);
         });
 
-        const markElementOnPage = (colourClassName) => {
-            TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
-            RangeMarker.markSelectedNodes(colourClassName);
-        };
-
-        const saveMarkedPage = async (colourClassName) => {
-            const pageInfoToLoad = new PageInfo();
-            markElementOnPage(colourClassName);
-
-            await pageInfoToLoad.save();
-
-            return pageInfoToLoad;
-        };
-
         it('should load a loadable page when loaded settings request it', async () => {
-            const colourClassName = `${RangeMarker.MARKER_CLASS_NAME}_orange`;
+            const colourClassName = getRandomColourClass();
             await saveMarkedPage(colourClassName);
 
             const expectedHtml = document.body.outerHTML;
@@ -193,12 +219,14 @@ describe('content_script/highlighter', function () {
             const highlighter = new Highlighter();
             await highlighter.initPreferences();
 
+            assert.strictEqual(highlighter.domIsPure, true);
+
             assert.strictEqual(document.getElementsByClassName(colourClassName).length, 1);
             assert.strictEqual(document.body.outerHTML, expectedHtml);
         });
 
         it('should load a loadable page when its page info requests it', async () => {
-            const colourClassName = `${RangeMarker.MARKER_CLASS_NAME}_blue`;
+            const colourClassName = getRandomColourClass();
             await saveMarkedPage(colourClassName);
 
             const expectedHtml = document.body.outerHTML;
@@ -214,12 +242,14 @@ describe('content_script/highlighter', function () {
             const highlighter = new Highlighter();
             await highlighter.initPreferences();
 
+            assert.strictEqual(highlighter.domIsPure, true);
+
             assert.strictEqual(document.getElementsByClassName(colourClassName).length, 1);
             assert.strictEqual(document.body.outerHTML, expectedHtml);
         });
 
         it('should not load a loadable page without a request for it', async () => {
-            const colourClassName = `${RangeMarker.MARKER_CLASS_NAME}_green`;
+            const colourClassName = getRandomColourClass();
             await saveMarkedPage(colourClassName);
 
             const expectedHtml = document.body.outerHTML;
@@ -228,13 +258,15 @@ describe('content_script/highlighter', function () {
             const highlighter = new Highlighter();
             await highlighter.initPreferences();
 
+            assert.strictEqual(highlighter.domIsPure, undefined);
+
             assert.strictEqual(document.getElementsByClassName(colourClassName).length, 0);
             assert.notStrictEqual(document.body.outerHTML, expectedHtml);
         });
 
         it('should not load a page when it is non-loadable', async () => {
-            const colourClassName = `${RangeMarker.MARKER_CLASS_NAME}_yellow`;
-            markElementOnPage(colourClassName);
+            const colourClassName = getRandomColourClass();
+            markRange(colourClassName);
 
             const expectedHtml = document.body.outerHTML;
             document.getElementsByClassName(colourClassName)[0].remove();
@@ -246,8 +278,272 @@ describe('content_script/highlighter', function () {
             const highlighter = new Highlighter();
             await highlighter.initPreferences();
 
+            assert.strictEqual(highlighter.domIsPure, undefined);
+
             assert.strictEqual(document.getElementsByClassName(colourClassName).length, 0);
             assert.notStrictEqual(document.body.outerHTML, expectedHtml);
+        });
+    });
+
+    describe('#setUpContextMenu', function () {
+        const dispatchMouseRightBtnClickEvent = (targetNode = null) => {
+            (targetNode || document).dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
+        };
+
+        it('should not enable marking, unmarking, note and storage options when there is no selection and page has not changed', () => {
+            const highlighter = new Highlighter();
+            dispatchMouseRightBtnClickEvent();        
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, false);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, false);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
+                    assert.strictEqual(highlighter._savingIsEnabled, false);
+                    assert.strictEqual(highlighter._loadingIsEnabled, false);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable marking and adding a note for a non-marked selected range without a note', () => {
+            const highlighter = new Highlighter();
+
+            TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedItalicSentenceNode);
+            dispatchMouseRightBtnClickEvent();        
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, true);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, true);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable marking, unmarking and adding a note for a marked selected range without a note', () => {
+            const highlighter = new Highlighter();
+
+            const colourClassName = getRandomColourClass();
+            markRange(colourClassName);
+            
+            dispatchMouseRightBtnClickEvent();        
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, true);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, true);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, true);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable unmarking and adding a note for a marked selected node without a note', () => {
+            const highlighter = new Highlighter();
+
+            const colourClassName = getRandomColourClass();
+            const markedContainerNode = markNode(colourClassName);
+            
+            const markedNode = markedContainerNode.getElementsByClassName(colourClassName)[0];
+            dispatchMouseRightBtnClickEvent(markedNode);        
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, false);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, true);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, true);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable marking, removing a note for a selected range with a note', () => {
+            const highlighter = new Highlighter();
+
+            const noteText = Randomiser.getRandomString();
+            createNoteForRange(noteText);
+
+            dispatchMouseRightBtnClickEvent();        
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, true);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, false);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, true);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable removing a note for a selected node with a note', () => {
+            const highlighter = new Highlighter();
+
+            const noteText = Randomiser.getRandomString();
+            const notedContainerNode = createNoteForNode(noteText).node;
+
+            const notedNode = notedContainerNode.getElementsByClassName(RangeNote.NOTE_CLASS_NAME)[0];
+            dispatchMouseRightBtnClickEvent(notedNode);        
+
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    assert.strictEqual(highlighter._markingIsEnabled, false);
+                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
+                    assert.strictEqual(highlighter._addingNoteIsEnabled, false);
+                    assert.strictEqual(highlighter._removingNoteIsEnabled, true);
+
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should update shortcuts', async () => {
+            const expectedShortcuts = ShortcutPreferencesDOM.createTestShortcuts(2);
+            browser.resetRuntime(() => {
+                return { shortcuts: expectedShortcuts };
+            });
+
+            const highlighter = new Highlighter();
+            await highlighter.initPreferences();
+    
+            dispatchMouseRightBtnClickEvent();
+
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
+                    assert.strictEqual(senderMsg.shouldUpdateShortcuts(), true);
+                    assert.deepStrictEqual(senderMsg.shortcuts, expectedShortcuts);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should update note links', async () => {
+            const note1 = createNoteForRange(Randomiser.getRandomString());
+            const note2 = createNoteForNode(Randomiser.getRandomString()).noteLink;
+
+            new Highlighter();
+    
+            dispatchMouseRightBtnClickEvent();
+
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(senderMsg.shouldAddNoteLinks(), true);
+                    assert.deepStrictEqual(senderMsg.noteLinks, [note1, note2]);
+
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable saving when the page has changed', () => {
+            const highlighter = new Highlighter();
+            highlighter._domIsPure = false;
+
+            dispatchMouseRightBtnClickEvent();
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                    assert.strictEqual(highlighter._savingIsEnabled, true);
+                    assert.strictEqual(highlighter._loadingIsEnabled, false);
+
+                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), true);
+                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
+                    
+                    resolve();
+                });
+            }));
+        });
+
+        it('should enable loading when the page is loadable', async () => {
+            await saveMarkedPage(getRandomColourClass());
+
+            const highlighter = new Highlighter();
+            await highlighter.initPreferences();
+
+            dispatchMouseRightBtnClickEvent();
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(() => {
+                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
+                    assert.strictEqual(highlighter._savingIsEnabled, false);
+                    assert.strictEqual(highlighter._loadingIsEnabled, true);
+
+                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), true);
+                    
+                    resolve();
+                });
+            }));
+        });
+        
+        it('should log an error to console when setting up context menu failed', async () => {
+            const errorReason = Randomiser.getRandomString();
+            browser.resetRuntime(() => { throw new Error(errorReason); });
+            
+            new Highlighter();
+            dispatchMouseRightBtnClickEvent();
+
+            let consoleMsg;
+            await mockConsole('error', (msg) => consoleMsg = msg, 
+                () => Expectation.expectResolution(new Promise((resolve) => setImmediate(resolve)))
+            );
+
+            assert.notEqual(consoleMsg, null);
+            assert(consoleMsg.includes('setting menu availability'));
+            assert(consoleMsg.includes(errorReason));
         });
     });
 });

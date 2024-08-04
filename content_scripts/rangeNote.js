@@ -333,15 +333,14 @@ export class RangeNote extends RangeBase {
 
 class NoteLink {
     constructor(id, text) {
-        this._TEXT_LENGTH_LIMIT = 15;
-
         this.id = '' + id;
         this.text = this._formatText(id, text);
     }
 
     _formatText(id, text) {
-        return `${id}: ` + (text.length > this._TEXT_LENGTH_LIMIT ? 
-            `${text.substring(0, this._TEXT_LENGTH_LIMIT)}...` : 
-            text);
+        return `${id}: ` + (text.length > NoteLink._TEXT_LENGTH_LIMIT ? 
+            `${text.substring(0, NoteLink._TEXT_LENGTH_LIMIT)}...` : text);
     }
+
+    static get _TEXT_LENGTH_LIMIT() { return 15; }
 }
