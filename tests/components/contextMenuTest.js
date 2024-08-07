@@ -167,7 +167,7 @@ describe('components/ContextMenu', () => {
             const colourInfos = ColourList.colours;
             const expectedColour = Randomiser.getRandomArrayItem(colourInfos);
 
-            contextMenu.checkColourRadio(expectedColour.token);
+            await contextMenu.checkColourRadio(expectedColour.token);
 
             const actualColourRadio = browserMocked.menuOptions.find(
                 i => i.type === RADIO_TYPE && i.id === expectedColour.token);
@@ -175,27 +175,11 @@ describe('components/ContextMenu', () => {
             assert.deepStrictEqual(actualColourRadio.checked, true);
         });
 
-        it('should check only one radio item in a context menu leaving the rest unchecked', async () => {
-            const browserMocked = mockBrowser();
-            const contextMenu = await renderContextMenu();
-
-            const colourInfos = ColourList.colours;
-            contextMenu.checkColourRadio(colourInfos[0].token);
-
-            const anotherColour = colourInfos[colourInfos.length - 1];
-            contextMenu.checkColourRadio(anotherColour.token);
-
-            const checkedItems = browserMocked.menuOptions
-                .filter(i => i.type === RADIO_TYPE && i.checked);
-            assert.strictEqual(checkedItems.length, 1);
-            assert.strictEqual(checkedItems[0].id, anotherColour.token);
-        });
-
         it('should do nothing while checking a non-existent radio item in a context menu', async () => {
             const browserMocked = mockBrowser();
             const contextMenu = await renderContextMenu();
             
-            contextMenu.checkColourRadio(Randomiser.getRandomNumberUpToMax());
+            await contextMenu.checkColourRadio(Randomiser.getRandomNumberUpToMax());
 
             assert.strictEqual(browserMocked.menuOptions.filter(i => i.type === RADIO_TYPE && i.checked).length, 1);
         });
@@ -535,9 +519,9 @@ describe('components/ContextMenu', () => {
     });
     
     describe('#renderShortcuts', function () {
-        const renderTestShortcuts = (contextMenu) => {
+        const renderTestShortcuts = async (contextMenu) => {
             const shortcuts = ShortcutPreferencesDOM.createTestShortcuts();
-            contextMenu.renderShortcuts(shortcuts);
+            await contextMenu.renderShortcuts(shortcuts);
 
             return shortcuts;
         };
@@ -545,7 +529,7 @@ describe('components/ContextMenu', () => {
         it('should render shortcuts for some emittable buttons', async () => {
             const browserMocked = mockBrowserWithTab();
             const contextMenu = await renderContextMenu();
-            const shortcuts = renderTestShortcuts(contextMenu);
+            const shortcuts = await renderTestShortcuts(contextMenu);
 
             browserMocked.menuOptions.forEach(op => {
                 if (op.type !== BTN_TYPE)
@@ -563,13 +547,13 @@ describe('components/ContextMenu', () => {
         it('should change a shortcut for an emittable button', async () => {
             const browserMocked = mockBrowserWithTab();
             const contextMenu = await renderContextMenu();
-            const shortcuts = renderTestShortcuts(contextMenu);
+            const shortcuts = await renderTestShortcuts(contextMenu);
 
             const cmdIds = Object.keys(shortcuts);
             const firstCmdId = cmdIds[0];
             shortcuts[firstCmdId].key = shortcuts[cmdIds[cmdIds.length - 1]].key;
 
-            contextMenu.renderShortcuts(shortcuts);
+            await contextMenu.renderShortcuts(shortcuts);
             const btn = browserMocked.menuOptions.find(op => op.id === firstCmdId);
             assert(btn.title.endsWith(`(${shortcuts[firstCmdId].key})`));
         });
@@ -577,7 +561,7 @@ describe('components/ContextMenu', () => {
         it('should remove a shortcut for some emittable buttons without emptying the others', async () => {
             const browserMocked = mockBrowserWithTab();
             const contextMenu = await renderContextMenu();
-            const shortcuts = renderTestShortcuts(contextMenu);
+            const shortcuts = await renderTestShortcuts(contextMenu);
 
             const cmdIds = Object.keys(shortcuts);
             const firstCmdId = cmdIds[0];
@@ -586,7 +570,7 @@ describe('components/ContextMenu', () => {
             const lastCmdId = cmdIds[cmdIds.length - 1];
             shortcuts[lastCmdId] = null;
 
-            contextMenu.renderShortcuts(shortcuts);
+            await contextMenu.renderShortcuts(shortcuts);
             browserMocked.menuOptions.forEach(op => {
                 let shortcut;
 
@@ -600,9 +584,9 @@ describe('components/ContextMenu', () => {
         it('should remove shortcuts for emittable buttons when there are none provided', async () => {
             const browserMocked = mockBrowserWithTab();
             const contextMenu = await renderContextMenu();
-            renderTestShortcuts(contextMenu);
+            await renderTestShortcuts(contextMenu);
 
-            contextMenu.renderShortcuts();
+            await contextMenu.renderShortcuts();
             browserMocked.menuOptions.forEach(op => {
                 if (op.type === BTN_TYPE)
                     ShortcutPreferencesDOM.assertTitleHasNoShortcut(op.title);

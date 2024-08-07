@@ -30,7 +30,7 @@ class ContextMenuAPI {
     }
 
     update(id, options) {
-        this._menus.update(id, options);
+        return this._menus.update(id, options);
     }
 }
 

@@ -101,7 +101,7 @@ export class ContextMenu {
     static async _onChangingColour(info) {
         try {
             const changedColourClass = info.menuItemId;
-            new ContextMenu().checkColourRadio(changedColourClass);
+            await new ContextMenu().checkColourRadio(changedColourClass);
 
             await ContextMenu._passTabInfoToCallback(MessageSender.sendChangingColour, { colourClass: changedColourClass });
         } catch (ex) {
@@ -194,22 +194,18 @@ export class ContextMenu {
     
     enableLoadBtn() { this._storageMenu.enableLoadBtn(); }
 
-    checkColourRadio(colourClass = ContextMenu._defaultColourClass) {
+    async checkColourRadio(colourClass = ContextMenu._defaultColourClass) {
         const colourRadio = this._colourRadios.find(r => r.id === colourClass);
         if (!colourRadio)
             return;
         
-        if (colourRadio.check())
-            ArrayExtension.runForEach(
-                this._colourRadios.filter(r => r.id !== colourClass && r.isChecked), c => c.uncheck()
-            );
-
+        await colourRadio.check();
         return colourClass;
     }
 
-    renderShortcuts(shortcuts) {
+    async renderShortcuts(shortcuts) {
         shortcuts = shortcuts || {};
-        ArrayExtension.runForEach(this._getEmittableButtons(), btn => btn.renderShortcut((shortcuts[btn.id] || {}).key));
+        await Promise.all(this._getEmittableButtons().map(btn => btn.renderShortcut((shortcuts[btn.id] || {}).key)));
     }
 
     _getEmittableButtons() {
@@ -360,15 +356,12 @@ class PageStorageMenu extends LinkMenu {
     }
 
     disableSaveBtn() { 
-        if (!this._saveBtn.disable())
-            return;
-
+        this._saveBtn.disable();
         this._menuBtn.disable();
     }
 
     enableSaveBtn(shouldEnableSaveToMenu = false) { 
-        if (!this._saveBtn.enable())
-            return;
+        this._saveBtn.enable();
 
         this._storageBtn.enable();
         if(shouldEnableSaveToMenu)

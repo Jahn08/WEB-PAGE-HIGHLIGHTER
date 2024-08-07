@@ -21,8 +21,8 @@ gBrowserApi.runtime.onMessage(async msg => {
     
         if (senderMsg.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
-            preferences.defaultColourToken = contextMenu.checkColourRadio(preferences.defaultColourToken);
             contextMenu.renderShortcuts(preferences.shortcuts);
+            preferences.defaultColourToken = await contextMenu.checkColourRadio(preferences.defaultColourToken);
 
             return preferences;
         }

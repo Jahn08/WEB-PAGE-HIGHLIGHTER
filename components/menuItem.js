@@ -1,38 +1,27 @@
 import { MenuIcon } from './menuIcon.js';
 import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
-// TODO: make all the classes stateless
 class BaseMenuItem {
     constructor(id, type) {
         this._id = id;
         this._type = type;
-
-        this._isAdded = false;
 
         this._browser = new BrowserAPI();
     }
 
     get id() { return this._id; }
 
-    get isAdded() { return this._isAdded; }
-
     async addToMenu(options = {}) {
-        if (!this._isAdded) {
-            options.id = this._id;
-            options.type = this._type;
+        options.id = this._id;
+        options.type = this._type;
 
-            if (!options.contexts || !options.contexts.length)
-                options.contexts = ['all'];
+        if (!options.contexts || !options.contexts.length)
+            options.contexts = ['all'];
 
-            if (!options.title)
-                options.title = this._compileTitle(this._browser.locale.getString(this._id));
+        if (!options.title)
+            options.title = this._compileTitle(this._browser.locale.getString(this._id));
 
-            await this._browser.menus.create(options);
-
-            return this._isAdded = true, this._isAdded;
-        }
-
-        return false;
+        await this._browser.menus.create(options);
     }
 
     _compileTitle(title) {
@@ -41,17 +30,14 @@ class BaseMenuItem {
 
     async _removeFromMenu() {
         await this._browser.menus.remove(this._id);
-        this._isAdded = false;
     }
 
     updateAvailability(isEnabled) {
-        this.updateItem({
-            enabled: isEnabled === true
-        });
+        return this.updateItem({ enabled: isEnabled === true });
     }
 
-    updateItem(options) {
-        this._browser.menus.update(this._id, options);
+    async updateItem(options) {
+        await this._browser.menus.update(this._id, options);
     }
 }
 
@@ -72,8 +58,6 @@ class RadioSubMenuItem extends BaseMenuItem {
 
         this._parentId = parentId;
         this._title = title;
-
-        this._isChecked = false;
     }
 
     static get TYPE() { return 'radio'; }
@@ -81,28 +65,17 @@ class RadioSubMenuItem extends BaseMenuItem {
     addToMenu(icon = new MenuIcon(), checked = false) {
         return super.addToMenu({
             icons : icon ? icon.getSettings() : null,
-            checked: this._isChecked = checked,
+            checked: checked,
             parentId: this._parentId,
             title: this._title
         });
     }
 
-    get isChecked() { return this._isChecked; }
-
     check() { return this._updateCheckedState(true); }
 
-    _updateCheckedState(checked) {
-        if (checked === this._isChecked)
-            return false;
-
-        this.updateItem({
-            checked: this._isChecked = checked
-        });
-
-        return true;
+    _updateCheckedState(checked) { 
+        return this.updateItem({ checked: checked });
     }
-
-    uncheck() { return this._updateCheckedState(false); }
 }
 
 class ButtonMenuItem extends BaseMenuItem {
@@ -111,7 +84,6 @@ class ButtonMenuItem extends BaseMenuItem {
     
         this._title = title;
         this._parentId = parentId;
-        this._shortcut = null;
     }
 
     static get TYPE() { return 'normal'; }
@@ -119,8 +91,7 @@ class ButtonMenuItem extends BaseMenuItem {
     disable() { return this._setAvailability(false); }
 
     _setAvailability(isEnabled) {
-        this.updateAvailability(isEnabled);
-        return true;
+        return this.updateAvailability(isEnabled);
     }
 
     enable() { return this._setAvailability(true); }
@@ -142,17 +113,7 @@ class ButtonMenuItem extends BaseMenuItem {
         return super._removeFromMenu();
     }
 
-    updateTitle(newTitile) {
-        if (this._title === newTitile)
-            return false;
-
-        this._title = newTitile;
-        this.updateItem({ title: this._compileTitle() });
-        
-        return true;
-    }
-
-    _compileTitle(title = this._title) { 
+    _compileTitle(title, shortcut) { 
         if (!this._title) {
             if (!title)
                 return null;
@@ -160,17 +121,11 @@ class ButtonMenuItem extends BaseMenuItem {
             this._title = title;
         }
 
-        return title + (this._shortcut ? ` (${this._shortcut})` : '');
+        return title + (shortcut ? ` (${shortcut})` : '');
     }
 
     renderShortcut(shortcut) {
-        if (this._shortcut === shortcut)
-            return false;
-
-        this._shortcut = shortcut;
-        this.updateItem({ title: this._compileTitle() });
-
-        return true;
+        return this.updateItem({ title: this._compileTitle(this._title, shortcut) });
     }
 }
 

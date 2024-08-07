@@ -26,7 +26,7 @@ describe('components/SeparatorMenuItem', () => {
             await separator.addToMenu();
 
             const insertedOptions = browserMocked.menuOptions;
-            assert.strictEqual(insertedOptions.length, 3);
+            assert.strictEqual(insertedOptions.length, 4);
 
             const separatorType = SeparatorMenuItem.TYPE;
             assert(insertedOptions.every(o => o.type === separatorType));
@@ -81,7 +81,6 @@ describe('components/RadioSubMenuItem', () => {
 });
 
 describe('components/ButtonMenuItem', () => {
-
     const buildRandomBtnOptions = (withParent = true) => {
         return { 
             id: Randomiser.getRandomNumberUpToMax(), 
@@ -99,7 +98,6 @@ describe('components/ButtonMenuItem', () => {
     };
 
     describe('#addToMenu', () => {
-
         it('should add button items with options to a menu', () => {
             const browserMocked = initMockedBrowser();
 
@@ -143,7 +141,6 @@ describe('components/ButtonMenuItem', () => {
     });
 
     describe('#removeFromMenu', () => {
-
         it('should remove button items from menu', async () => {
             const browserMocked = initMockedBrowser();
 
@@ -161,39 +158,40 @@ describe('components/ButtonMenuItem', () => {
     });
     
     describe('#renderShortcut', () => {
-
-        const renderTestShortcut = btn => {
+        const renderTestShortcut = async btn => {
             const shortcuts = ShortcutPreferencesDOM.createTestShortcuts();
-            
-            const randomShortcut = shortcuts[Randomiser.getRandomArrayItem(
-                Object.keys(shortcuts))];
+            const randomShortcut = shortcuts[Randomiser.getRandomArrayItem(Object.keys(shortcuts))];
 
-            btn.updateItem = options => ShortcutPreferencesDOM.assertTitleHasShortcut(
-                options.title, randomShortcut);
-            assert(btn.renderShortcut(randomShortcut.key));
+            let updatedTitle;
+            btn.updateItem = options => {
+                updatedTitle = options.title;
+                return Promise.resolve();
+            };
+            
+            await btn.renderShortcut(randomShortcut.key);
+            ShortcutPreferencesDOM.assertTitleHasShortcut(updatedTitle, randomShortcut);
 
             return randomShortcut;
         };
         
         it('should change a shortcut for an emittable button', async () => {
             const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
-            renderTestShortcut(btn);
-            renderTestShortcut(btn);
+            await renderTestShortcut(btn);
+            await renderTestShortcut(btn);
         });
 
         it('should remove a shortcut for an emittable button', async () => {
             const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
-            renderTestShortcut(btn);
+            await renderTestShortcut(btn);
 
-            btn.updateItem = options => ShortcutPreferencesDOM.assertTitleHasNoShortcut(
-                options.title);
-            assert(btn.renderShortcut(null));
-        });
-        
-        it('should not render the same shortcut for an emittable button', async () => {
-            const btn = await buildBtnWithOptions(buildRandomBtnOptions(true));
-            const rendereShortcut = renderTestShortcut(btn);
-            assert(!btn.renderShortcut(rendereShortcut.key));
+            let updateTitle;
+            btn.updateItem = options => { 
+                updateTitle = options.title;
+                return Promise.resolve();
+            };
+
+            await btn.renderShortcut(null);
+            ShortcutPreferencesDOM.assertTitleHasNoShortcut(updateTitle);
         });
     });
 });
