@@ -83,8 +83,8 @@ export class BrowserMocked {
 
     callRuntimeOnMessageCallback(msg) {
         if(this._onMessageCallback)
-            return new Promise(resolve => this._onMessageCallback(msg, null, resolve));
-    
+            return this._onMessageCallback(msg);
+
         return Promise.resolve();
     }
 

@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { Randomiser } from '../tools/randomiser.js';
 import { EnvLoader } from '../tools/envLoader.js';
+import { runWithMockedScrollIntoView } from '../tools/globalMocks.js';
 import { TestPageHelper } from '../tools/testPageHelper.js';
 import { RangeNote } from '../../content_scripts/rangeNote.js';
 
@@ -300,24 +301,7 @@ describe('content_script/rangeNote', function () {
     });
 
     describe('#goToNote', function () {
-        
-        const runCallbackWithMockedScrolling = (callback) => {
-            const scrollIntoViewOriginal = Element.prototype.scrollIntoView;
-
-            let scrolledElement;
-    
-            Element.prototype.scrollIntoView = function() {
-                scrolledElement = this;
-            };
-
-            callback();
-
-            Element.prototype.scrollIntoView = scrollIntoViewOriginal;
-
-            return scrolledElement;
-        };
-
-        it('should scroll towards an existent link note', () => {
+        it('should scroll towards an existent link note', async () => {
             createNoteWithText(
                 TestPageHelper.getFirstItalicSentenceNode());
 
@@ -325,17 +309,16 @@ describe('content_script/rangeNote', function () {
             const secondNoteText = createNoteWithText(
                 TestPageHelper.getLastParagraphSentenceNode(), secondNoteId);
             
-            const scrolledElement = runCallbackWithMockedScrolling(() =>
-                RangeNote.goToNote(secondNoteId));
+            const scrolledElement = await runWithMockedScrollIntoView(() => RangeNote.goToNote(secondNoteId));
 
             assert(scrolledElement);
             assert.strictEqual(RangeNote.hasNote(scrolledElement), true);
             assert(scrolledElement.textContent.includes(secondNoteText));
         });
 
-        it('should not scroll when there is no passed link note', () =>
-            assert(!runCallbackWithMockedScrolling(() => 
-                RangeNote.goToNote(Randomiser.getRandomNumber(1000))))
-        );
+        it('should not scroll when there is no passed link note', async () => {
+            const scrolledElement = await runWithMockedScrollIntoView(() => RangeNote.goToNote(Randomiser.getRandomNumber(1000)));
+            assert(!scrolledElement);
+        });
     });
 });

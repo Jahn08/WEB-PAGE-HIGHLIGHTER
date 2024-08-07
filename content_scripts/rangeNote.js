@@ -31,12 +31,14 @@ export class RangeNote extends RangeBase {
             success = this._appendNoteToNode(targetNode, noteId, text);
 
         if (success) {
-            this._cachedNoteLinks = null;
+            this.clearCachedNoteLinks();
             return noteLink;
         }
 
         return null;
     }
+
+    static clearCachedNoteLinks() { this._cachedNoteLinks = null; }
 
     static get START_NOTE_CLASS_NAME() {
         return 'marker-start-note';
@@ -203,7 +205,7 @@ export class RangeNote extends RangeBase {
         return 'marker-has-note';
     }
 
-    static hasNote(targetNode) {
+    static hasNote(targetNode = null) {
         if (this._getNoteElement(targetNode))
             return true;
 
@@ -263,7 +265,7 @@ export class RangeNote extends RangeBase {
             ArrayExtension.runForEach(noteNodes, 
                 n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n): n.remove());
     
-            this._cachedNoteLinks = null;
+            this.clearCachedNoteLinks();
             return noteId;
         }
         
@@ -331,7 +333,7 @@ export class RangeNote extends RangeBase {
     }
 }
 
-class NoteLink {
+export class NoteLink {
     constructor(id, text) {
         this.id = '' + id;
         this.text = this._formatText(id, text);

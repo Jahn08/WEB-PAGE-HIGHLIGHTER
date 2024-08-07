@@ -6,7 +6,6 @@ import { RangeMarker } from './rangeMarker.js';
 import { ReceiverMessage } from './receiverMessage.js';
 import { PageInfo, CategoryView } from './pageInfo.js';
 
-// TODO: should be tested
 export class Highlighter {
     constructor() {
         this._activeNode;
