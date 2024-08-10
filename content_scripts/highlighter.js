@@ -142,10 +142,13 @@ export class Highlighter {
                     msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
                     this._unmarkingIsEnabled = true;
                 }
-            } else if (RangeMarker.isNodeMarked(focusedNode)) { // TODO: enable marking of a node with different colour?
+            } else if (RangeMarker.isNodeMarked(focusedNode)) {
+                msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setMarkMenuReady());
+                this._markingIsEnabled = true;
+
                 msg = ReceiverMessage.combineEvents(msg, ReceiverMessage.setUnmarkMenuReady());
                 this._unmarkingIsEnabled = true;
-                
+
                 this._activeNode = focusedNode;
                 hasRangeOrFocusedNode = true;
             }
@@ -213,13 +216,13 @@ export class Highlighter {
             
             if (receiver.shouldMark()) {
                 if (this._markingIsEnabled)
-                    domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass);
+                    domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass, curNode);
             } else if (receiver.shouldUnmark()) {
                 if (this._unmarkingIsEnabled && RangeMarker.unmarkSelectedNodes(curNode))
                     isElementRemoval = true;
             } else if (receiver.shouldChangeColour()) {
                 this._curColourClass = receiver.markColourClass;
-                domWasChanged = RangeMarker.changeSelectedNodesColour(this._curColourClass, curNode);
+                domWasChanged = RangeMarker.markSelectedNodes(this._curColourClass, curNode);
             } else if (receiver.shouldAddNote()) {
                 if (this._addingNoteIsEnabled && (noteInfo = RangeNote.createNote(
                     prompt(this._browserApi.locale.getString('note-add-prompt')), curNode)))

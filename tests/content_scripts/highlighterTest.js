@@ -298,18 +298,11 @@ describe('content_script/highlighter', function () {
 
     describe('#setUpContextMenu', function () {
         it('should not enable marking, unmarking, note and storage options when there is no selection and a page has not changed', () => {
-            const highlighter = new Highlighter();
+            new Highlighter();
             dispatchMouseRightBtnClickEvent();        
             
             return Expectation.expectResolution(new Promise((resolve) => {
                 setImmediate(() => {
-                    assert.strictEqual(highlighter._markingIsEnabled, false);
-                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
-                    assert.strictEqual(highlighter._addingNoteIsEnabled, false);
-                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
-                    assert.strictEqual(highlighter._savingIsEnabled, false);
-                    assert.strictEqual(highlighter._loadingIsEnabled, false);
-
                     const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
                     assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
                     assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
@@ -324,18 +317,13 @@ describe('content_script/highlighter', function () {
         });
 
         it('should enable marking and adding a note for a non-marked selected range without a note', () => {
-            const highlighter = new Highlighter();
+            new Highlighter();
 
             selectRange();
             dispatchMouseRightBtnClickEvent();        
             
             return Expectation.expectResolution(new Promise((resolve) => {
                 setImmediate(() => {
-                    assert.strictEqual(highlighter._markingIsEnabled, true);
-                    assert.strictEqual(highlighter._unmarkingIsEnabled, false);
-                    assert.strictEqual(highlighter._addingNoteIsEnabled, true);
-                    assert.strictEqual(highlighter._removingNoteIsEnabled, false);
-
                     const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
                     assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
                     assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
@@ -380,7 +368,7 @@ describe('content_script/highlighter', function () {
             return Expectation.expectResolution(new Promise((resolve) => {
                 setImmediate(() => {
                     const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
                     assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
                     assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
                     assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
@@ -544,6 +532,30 @@ describe('content_script/highlighter', function () {
 
                     assert.strictEqual(highlighter.domIsPure, false);
                     assert.strictEqual(document.getElementsByClassName(colourClass).length, 1);
+
+                    resolve();
+                });
+            }));
+        });
+        
+        it('should mark a selected marked node with another colour', () => {
+            const highlighter = new Highlighter();
+
+            const initColourClass = getRandomColourClass();
+            const markedContainerNode = markNode(initColourClass);
+            const markedNode = markedContainerNode.getElementsByClassName(initColourClass)[0];
+            
+            const newColourClass = getRandomColourClass();
+            highlighter._curColourClass = newColourClass;
+
+            dispatchMouseRightBtnClickEvent(markedNode);
+            
+            return Expectation.expectResolution(new Promise((resolve) => {
+                setImmediate(async () => {
+                    await browser.callRuntimeOnMessageCallback(SenderMessage.startMarking());
+
+                    assert.strictEqual(document.getElementsByClassName(initColourClass).length, 2);
+                    assert.strictEqual(document.getElementsByClassName(newColourClass).length, 1);
 
                     resolve();
                 });
