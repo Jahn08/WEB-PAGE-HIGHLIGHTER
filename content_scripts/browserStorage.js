@@ -1,5 +1,6 @@
-// eslint-disable-next-line no-unused-vars
-class BrowserStorage {
+import { BrowserAPI } from './browserAPI.js';
+
+export class BrowserStorage {
     constructor(key) {
         this._storage = BrowserStorage._syncStorage;
         

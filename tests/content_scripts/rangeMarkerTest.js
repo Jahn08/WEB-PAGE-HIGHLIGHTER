@@ -1,18 +1,12 @@
 import assert from 'assert';
-import { Randomiser } from '../tools/randomiser';
-import { EnvLoader } from '../tools/envLoader';
-import { TestPageHelper } from '../tools/testPageHelper';
+import { Randomiser } from '../tools/randomiser.js';
+import { EnvLoader } from '../tools/envLoader.js';
+import { TestPageHelper } from '../tools/testPageHelper.js';
+import { RangeMarker } from '../../content_scripts/rangeMarker.js';
+import { RangeNote } from '../../content_scripts/rangeNote.js';
 
 describe('content_script/rangeMarker', function () {
     this.timeout(0);
-
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/rangeBase.js', 'RangeBase')
-            .then(() => EnvLoader.loadClass('./content_scripts/rangeMarker.js', 'RangeMarker')
-                .then(() => EnvLoader.loadClass('./content_scripts/rangeNote.js', 'RangeNote')
-                    .then(() => done())))
-            .catch(done);
-    });
 
     beforeEach(done => {
         EnvLoader.loadDomModel().then(() => done()).catch(done);

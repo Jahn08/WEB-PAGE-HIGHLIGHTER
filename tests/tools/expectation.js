@@ -6,8 +6,7 @@ class Expectation {
 
         try {
             fn();
-        }
-        catch (err) {
+        } catch (err) {
             return this._assertExpectedProps(err, expectedProps);
         }
 
@@ -23,8 +22,7 @@ class Expectation {
                     this._assertExpectedProps(resultErr, expectedProps);
                     
                     return this._processCallback(assertionFn, resultErr, resolve, reject);
-                }
-                catch (err) {
+                } catch (err) {
                     reject(err);
                 }
             }).then(() => reject(new Error('The callback should\'ve been rejected')));
@@ -61,8 +59,7 @@ class Expectation {
             promise.then(result => {
                 try {
                     return this._processCallback(assertionFn, result, resolve, reject);
-                }
-                catch (err) {
+                } catch (err) {
                     reject(err);
                 }
             }).catch(err => reject(err));

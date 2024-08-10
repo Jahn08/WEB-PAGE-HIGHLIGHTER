@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { Randomiser } from './randomiser.js';
 import { EnvLoader } from './envLoader.js';
+import { OptionList } from '../../content_scripts/menuMessageEvent.js';
 
 class PreferencesDOM {
     constructor(sectionName) {

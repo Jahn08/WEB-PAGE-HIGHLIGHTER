@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-class LZWCompressor {
+export class LZWCompressor {
     constructor(dictionarySize) {
         this._initialCode = dictionarySize || LZWCompressor._X8_DICTIONARY_SIZE;
     }

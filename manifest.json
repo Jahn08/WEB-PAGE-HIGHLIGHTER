@@ -1,69 +1,59 @@
 {
-    "author": "Jahn08",
-
-    "background": {
-        "page": "views/background-loader.html"
-    },
-
-    "browser_action": {
-        "browser_style": true,
+    "action": {
         "default_title": "Highbrighter",
         "default_popup": "views/popup.html",
         "default_icon": "icons/highlighter48.png"
     },
-    
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "highlighter@mail.com",
-            "strict_min_version": "60.0"
-        }
+    "author": "Jahn08",
+    "background": {
+        "service_worker": "background_scripts/menuInitialisation.js",
+        "type": "module"
     },
-
+    "content_security_policy": {},
     "content_scripts": [
         {
-            "matches": ["*://*/*"],
-            "js": ["content_scripts/lzwCompressor.js", 
-                "content_scripts/browserAPI.js", "content_scripts/arrayExtension.js", 
-                "content_scripts/browserStorage.js", "content_scripts/pageInfo.js", 
-                "content_scripts/menuMessageEvent.js", "content_scripts/messageReceiver.js", 
-                "content_scripts/rangeBase.js", "content_scripts/rangeMarker.js", 
-                "content_scripts/rangeNote.js", "content_scripts/messageControl.js", 
-                "content_scripts/shortcut.js", "content_scripts/index.js"],
-            "css": ["content/index.css"]
+            "matches": [
+                "*://*/*"
+            ],
+            "js": [
+                "content_scripts/index.js"
+            ],
+            "css": [
+                "content/index.css"
+            ]
         }
     ],
-
     "default_locale": "en",
-    
     "description": "__MSG_description__",
-
     "homepage_url": "https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER",
-
     "icons": {
-        "48" : "icons/highlighter48.png",
-        "96" : "icons/highlighter96.png"
+        "48": "icons/highlighter48.png",
+        "96": "icons/highlighter96.png"
     },
-
-    "manifest_version": 2,
-
+    "manifest_version": 3,
     "name": "Highbrighter",
-    
     "omnibox": {
         "keyword": "highbrighter"
     },
-
     "options_ui": {
         "page": "views/preferences.html",
-        "browser_style": true,
         "open_in_tab": false
     },
-
     "permissions": [
         "activeTab",
         "contextMenus",
         "storage",
         "unlimitedStorage"
     ],
-
-    "version": "1.2.1"
+    "version": "2.0.1",
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "content_scripts/*.js"
+            ],
+            "matches": [
+                "*://*/*"
+            ]
+        }
+    ]
 }

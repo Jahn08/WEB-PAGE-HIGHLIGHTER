@@ -1,16 +1,12 @@
 import assert from 'assert';
-import { Randomiser } from '../tools/randomiser';
-import { EnvLoader } from '../tools/envLoader';
-import { TestPageHelper } from '../tools/testPageHelper';
+import { Randomiser } from '../tools/randomiser.js';
+import { EnvLoader } from '../tools/envLoader.js';
+import { runWithMockedScrollIntoView } from '../tools/globalMocks.js';
+import { TestPageHelper } from '../tools/testPageHelper.js';
+import { RangeNote } from '../../content_scripts/rangeNote.js';
 
 describe('content_script/rangeNote', function () {
     this.timeout(0);
-
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/rangeBase.js', 'RangeBase')
-            .then(() => EnvLoader.loadClass('./content_scripts/rangeNote.js', 'RangeNote').then(() => done()))
-            .catch(done);
-    });
 
     beforeEach(done => {
         EnvLoader.loadDomModel().then(() => done()).catch(done);
@@ -96,8 +92,7 @@ describe('content_script/rangeNote', function () {
                 });
 
                 return range.commonAncestorContainer.textContent;
-            }
-            else if (targetNode.classList.contains(RangeNote.SOLID_NOTE_CLASS_NAME))
+            } else if (targetNode.classList.contains(RangeNote.SOLID_NOTE_CLASS_NAME))
                 return targetNode.textContent;
 
             return null;
@@ -248,7 +243,6 @@ describe('content_script/rangeNote', function () {
     });
 
     describe('#getNoteLinks', function () {
-        
         it('should return an empty array when there are no note links on a page', () => {
             const noteLinks = RangeNote.getNoteLinks();
             assert(noteLinks);
@@ -268,11 +262,33 @@ describe('content_script/rangeNote', function () {
             assert(noteLinks.find(li => li.id === '1' && li.text.endsWith(firstNoteText)));
             assert(noteLinks.find(li => li.id === secondNoteId && li.text.endsWith(secondNoteText)));
         });
+        
+        it('should return unique note links left after removing/adding some of the other ones on a page', () => {
+            const firstNoteText = createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(), '1');
+            createNoteWithText(TestPageHelper.getLastParagraphSentenceNode(), '2');
+
+            TestPageHelper.setRange(TestPageHelper.setRangeForPartlySelectedNodes);
+            const secondNoteText = createNoteWithText(null, '3');
+
+            let noteLinks = RangeNote.getNoteLinks();
+
+            RangeNote.removeNote(TestPageHelper.getLastParagraphSentenceNode());
+            noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 2);
+            assert(noteLinks.find(li => li.id === '1' && li.text.endsWith(firstNoteText)));
+            assert(noteLinks.find(li => li.id === '3' && li.text.endsWith(secondNoteText)));
+
+            const thirdNoteText = createNoteWithText(TestPageHelper.getLastParagraphSentenceNode(), '4');
+            noteLinks = RangeNote.getNoteLinks();
+            assert(noteLinks);
+            assert.strictEqual(noteLinks.length, 3);
+            assert(noteLinks.find(li => li.id === '4' && li.text.endsWith(thirdNoteText)));
+        });
 
         it('should shorten a too long note link text', () => {
             const longText = ('' + Randomiser.getRandomNumberUpToMax()).padStart(30, '0');
-            createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(),
-                undefined, longText);
+            createNoteWithText(TestPageHelper.getFirstItalicSentenceNode(), undefined, longText);
 
             const noteLinks = RangeNote.getNoteLinks();
             assert.strictEqual(noteLinks.length, 1);
@@ -280,28 +296,12 @@ describe('content_script/rangeNote', function () {
             const noteLink = noteLinks[0];
             assert(noteLink && noteLink.text);
             assert(noteLink.text.length < longText.length);
+            assert.strictEqual(noteLink.text.length, 21);
         });
     });
 
     describe('#goToNote', function () {
-        
-        const runCallbackWithMockedScrolling = (callback) => {
-            const scrollIntoViewOriginal = Element.prototype.scrollIntoView;
-
-            let scrolledElement;
-    
-            Element.prototype.scrollIntoView = function() {
-                scrolledElement = this;
-            };
-
-            callback();
-
-            Element.prototype.scrollIntoView = scrollIntoViewOriginal;
-
-            return scrolledElement;
-        };
-
-        it('should scroll towards an existent link note', () => {
+        it('should scroll towards an existent link note', async () => {
             createNoteWithText(
                 TestPageHelper.getFirstItalicSentenceNode());
 
@@ -309,17 +309,16 @@ describe('content_script/rangeNote', function () {
             const secondNoteText = createNoteWithText(
                 TestPageHelper.getLastParagraphSentenceNode(), secondNoteId);
             
-            const scrolledElement = runCallbackWithMockedScrolling(() =>
-                RangeNote.goToNote(secondNoteId));
+            const scrolledElement = await runWithMockedScrollIntoView(() => RangeNote.goToNote(secondNoteId));
 
             assert(scrolledElement);
             assert.strictEqual(RangeNote.hasNote(scrolledElement), true);
             assert(scrolledElement.textContent.includes(secondNoteText));
         });
 
-        it('should not scroll when there is no passed link note', () =>
-            assert(!runCallbackWithMockedScrolling(() => 
-                RangeNote.goToNote(Randomiser.getRandomNumber(1000))))
-        );
+        it('should not scroll when there is no passed link note', async () => {
+            const scrolledElement = await runWithMockedScrollIntoView(() => RangeNote.goToNote(Randomiser.getRandomNumber(1000)));
+            assert(!scrolledElement);
+        });
     });
 });

@@ -4,6 +4,7 @@ import { EnvLoader } from '../tools/envLoader.js';
 import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
 import { StorageHelper } from '../tools/storageHelper.js';
+import { BrowserStorage } from '../../content_scripts/browserStorage.js';
 
 describe('content_script/browserStorage', function () {
     this.timeout(0);

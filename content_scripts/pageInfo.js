@@ -1,3 +1,7 @@
+import { ArrayExtension } from './arrayExtension.js';
+import { BrowserStorage } from './browserStorage.js';
+import { LZWCompressor } from './lzwCompressor.js';
+
 class Category {
     static async upsert(categorisedUris = {}) {
         if (!Object.getOwnPropertyNames(categorisedUris).length)
@@ -41,7 +45,6 @@ class Category {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class CategoryView {
     constructor(categories = []) {
         this.categoryTitles = [];
@@ -138,13 +141,12 @@ class PageCategory {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class PageInfo {
     constructor () {
         this._uri = this._computeUri();
         this._storage = null;
 
-        this._pageIsStored = false;
+        this._pageIsStored;
 
         this._pageCategory = new PageCategory(this._uri);
     }
@@ -172,12 +174,19 @@ class PageInfo {
 
     async _saveInternally() {
         await this._browserStorage.set(this._serialise());
+
+        this._pageIsStored = true;
+        
+        await this._pageCategory.load();
         return this._pageCategory.category;
     }
 
-    async save(defaultCategoryTitle = null) {
-        if (!this._pageIsStored && defaultCategoryTitle)
+    async save(defaultCategoryTitleGetter = null) {
+        const canLoad = await this.canLoad();
+        if (!canLoad && defaultCategoryTitleGetter) {
+            const defaultCategoryTitle = await defaultCategoryTitleGetter();
             await this._pageCategory.update(defaultCategoryTitle);
+        }
 
         return this._saveInternally();
     }
@@ -203,7 +212,10 @@ class PageInfo {
     }
 
     async canLoad() {
-        return (this._pageIsStored = await this._browserStorage.contains());
+        if(this._pageIsStored === undefined)
+            this._pageIsStored = await this._browserStorage.contains();
+
+        return this._pageIsStored;
     }
 
     async load() {
@@ -216,7 +228,7 @@ class PageInfo {
 
         this._renderHtml(this._deserialiseHtml(serialisedHtml, pageData[PageInfo.DIC_SIZE_PROP_NAME]));
 
-        this._pageCategory.load();
+        await this._pageCategory.load();
     }
 
     _throwNoContentError() {
@@ -241,8 +253,7 @@ class PageInfo {
         try {
             new URL(uri);
             return true;
-        }
-        catch (ex) {
+        } catch (ex) {
             return false;
         }
     }
@@ -325,8 +336,7 @@ class PageInfo {
             uriObj.searchParams.set(this._LOADING_PARAM, true);
 
             return uriObj.toString();
-        }
-        catch (ex) {
+        } catch (ex) {
             return uri;       
         }
     }
@@ -407,3 +417,5 @@ class PageInfo {
         return PageCategory.save(data);
     }
 }
+
+export { PageInfo, CategoryView };

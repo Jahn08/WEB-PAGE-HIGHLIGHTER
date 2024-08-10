@@ -1,20 +1,13 @@
 import assert from 'assert';
 import { Randomiser } from '../tools/randomiser.js';
-import { EnvLoader } from '../tools/envLoader.js';
+import { ReceiverMessage } from '../../content_scripts/receiverMessage.js';
+import { SenderMessage } from '../../components/senderMessage.js';
 
-describe('content_script/messageReceiver', function () {
+describe('content_script/receiverMessage', function () {
     this.timeout(0);
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/menuMessageEvent.js', 'MenuMessageEvent')
-            .then(() => EnvLoader.loadClass('./content_scripts/messageReceiver.js', 'MessageReceiver')
-                .then(() => EnvLoader.loadClass('./components/messageSender.js', 'MessageSender')
-                    .then(() => done())))
-            .catch(done);
-    });
 
     const testReceivingEvents = (senderEvent, receiverEvent, arg = null) => {
-        const receiver = new MessageReceiver(MessageSender[senderEvent](arg));
+        const receiver = new ReceiverMessage(SenderMessage[senderEvent](arg));
 
         assert.strictEqual(receiver[receiverEvent](), true);
         assert.strictEqual([receiver.shouldChangeColour(), receiver.shouldLoad(),
@@ -28,18 +21,23 @@ describe('content_script/messageReceiver', function () {
 
     describe('#shouldMark', () => 
         it('should recognise an event as marking', () => {
-            const colourClass = Randomiser.getRandomNumberUpToMax();
-            const receiver = testReceivingEvents('startMarking', 'shouldMark', colourClass);
-            
-            assert.strictEqual(receiver.markColourClass, colourClass);
+            const receiver = testReceivingEvents('startMarking', 'shouldMark');
+
+            assert(!receiver.markColourClass);
             assert(!receiver.noteLink);
             assert(!receiver.category);
         })
     );
 
     describe('#shouldChangeColour', () => 
-        it('should recognise an event as changing colour', () =>
-            testReceivingEvents('startChangingColour', 'shouldChangeColour', Randomiser.getRandomNumberUpToMax()))
+        it('should recognise an event as changing colour', () => {
+            const colourClass = Randomiser.getRandomString();
+            const receiver = testReceivingEvents('startChangingColour', 'shouldChangeColour', colourClass);
+            
+            assert.strictEqual(receiver.markColourClass, colourClass);
+            assert(!receiver.noteLink);
+            assert(!receiver.category);
+        })
     );
 
     describe('#shouldUnmark', () => 
@@ -55,8 +53,7 @@ describe('content_script/messageReceiver', function () {
     describe('#shouldSaveToCategory', () => 
         it('should recognise an event as saving a page to a category', () => {
             const categoryTitle = Randomiser.getRandomString();
-            const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', 
-                categoryTitle);
+            const receiver = testReceivingEvents('startSavingToCategory', 'shouldSaveToCategory', categoryTitle);
             
             assert.deepStrictEqual(receiver.category, categoryTitle);
             assert(!receiver.noteLink);
@@ -96,8 +93,8 @@ describe('content_script/messageReceiver', function () {
     );
 
     const testSendingEvents = (receiverEvent, senderEvent, ...args) => {
-        const msg = MessageReceiver[receiverEvent].call(null, ...args);
-        const sender = new MessageSender(msg);
+        const msg = ReceiverMessage[receiverEvent].call(null, ...args);
+        const sender = new SenderMessage(msg);
         
         assert.strictEqual(sender[senderEvent](), true);
         assert.strictEqual([sender.shouldSetMarkMenuReady(), sender.shouldSetUnmarkMenuReady(),
@@ -173,20 +170,20 @@ describe('content_script/messageReceiver', function () {
     describe('#combineEvents', function () {
         it('should return null when combining undefined events', () =>
             assert.strictEqual(
-                MessageReceiver.combineEvents(undefined, undefined), null));
+                ReceiverMessage.combineEvents(undefined, undefined), null));
 
         it('should filter out null events and combine the rest correctly', () => {
             const expectedNoteLinks = [createRandomLink(), createRandomLink()];
             const expectedCategoryTitles = [Randomiser.getRandomString(), Randomiser.getRandomString()];
             const expectedDefaultCategoryTitles = Randomiser.getRandomString();
 
-            const msg = MessageReceiver.combineEvents(undefined, 
-                MessageReceiver.setLoadMenuReady(), undefined, 
-                MessageReceiver.setSaveMenuReady(), null, 
-                MessageReceiver.setMarkMenuReady(),
-                MessageReceiver.setRemoveNoteMenuReady(),
-                MessageReceiver.addNoteLinks(expectedNoteLinks),
-                MessageReceiver.addCategories(expectedCategoryTitles, 
+            const msg = ReceiverMessage.combineEvents(undefined, 
+                ReceiverMessage.setLoadMenuReady(), undefined, 
+                ReceiverMessage.setSaveMenuReady(), null, 
+                ReceiverMessage.setMarkMenuReady(),
+                ReceiverMessage.setRemoveNoteMenuReady(),
+                ReceiverMessage.addNoteLinks(expectedNoteLinks),
+                ReceiverMessage.addCategories(expectedCategoryTitles, 
                     expectedDefaultCategoryTitles));
 
             assert(msg);
@@ -200,7 +197,7 @@ describe('content_script/messageReceiver', function () {
             assert(msg.category);
             assert.deepStrictEqual(msg.category, expectedCategoryTitles);
 
-            const sender = new MessageSender(msg);
+            const sender = new SenderMessage(msg);
             assert(sender.shouldSetSaveMenuReady());
             assert(sender.shouldSetLoadMenuReady());
             assert(sender.shouldSetRemoveNoteMenuReady());

@@ -1,16 +1,10 @@
 import assert from 'assert';
-import { EnvLoader } from '../tools/envLoader';
-import { TestPageHelper } from '../tools/testPageHelper';
-import { Expectation } from '../tools/expectation';
+import { EnvLoader } from '../tools/envLoader.js';
+import { TestPageHelper } from '../tools/testPageHelper.js';
+import { Expectation } from '../tools/expectation.js';
+import { LZWCompressor } from '../../content_scripts/lzwCompressor.js';
 
 describe('content_script/lzwCompressor', function() {
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/lzwCompressor.js', 'LZWCompressor')
-            .then(() => done())
-            .catch(done);
-    });
-    
     beforeEach('loadResources', done => {
         EnvLoader.loadDomModel().then(() => done()).catch(done);
     });

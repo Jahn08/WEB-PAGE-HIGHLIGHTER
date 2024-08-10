@@ -1,54 +1,43 @@
 import { MenuIcon } from './menuIcon.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
 class BaseMenuItem {
     constructor(id, type) {
         this._id = id;
         this._type = type;
 
-        this._isAdded = false;
-
         this._browser = new BrowserAPI();
     }
 
     get id() { return this._id; }
 
-    get isAdded() { return this._isAdded; }
+    async addToMenu(options = {}) {
+        options.id = this._id;
+        options.type = this._type;
 
-    addToMenu(options = {}) {
-        if (!this._isAdded) {
-            options.id = this._id;
-            options.type = this._type;
+        if (!options.contexts || !options.contexts.length)
+            options.contexts = ['all'];
 
-            if (!options.contexts || !options.contexts.length)
-                options.contexts = ['all'];
+        if (!options.title)
+            options.title = this._compileTitle(this._browser.locale.getString(this._id));
 
-            if (!options.title)
-                options.title = this._compileTitle(this._browser.locale.getString(this._id));
-
-            this._browser.menus.create(options);
-
-            return this._isAdded = true, this._isAdded;
-        }
-
-        return false;
+        await this._browser.menus.create(options);
     }
 
     _compileTitle(title) {
         return title;
     }
 
-    _removeFromMenu() {
-        this._browser.menus.remove(this._id);
+    async _removeFromMenu() {
+        await this._browser.menus.remove(this._id);
     }
 
     updateAvailability(isEnabled) {
-        this.updateItem({
-            enabled: isEnabled === true
-        });
+        return this.updateItem({ enabled: isEnabled === true });
     }
 
-    updateItem(options) {
-        this._browser.menus.update(this._id, options);
+    async updateItem(options) {
+        await this._browser.menus.update(this._id, options);
     }
 }
 
@@ -60,7 +49,7 @@ class SeparatorMenuItem extends BaseMenuItem {
 
     static get TYPE() { return 'separator'; }
 
-    addToMenu() { super.addToMenu(); }
+    addToMenu() { return super.addToMenu(); }
 }
 
 class RadioSubMenuItem extends BaseMenuItem {
@@ -69,38 +58,24 @@ class RadioSubMenuItem extends BaseMenuItem {
 
         this._parentId = parentId;
         this._title = title;
-
-        this._isChecked = false;
     }
 
     static get TYPE() { return 'radio'; }
 
-    addToMenu(onchange, icon = new MenuIcon(), checked = false) {
-        super.addToMenu({
+    addToMenu(icon = new MenuIcon(), checked = false) {
+        return super.addToMenu({
             icons : icon ? icon.getSettings() : null,
-            checked: this._isChecked = checked,
+            checked: checked,
             parentId: this._parentId,
-            title: this._title,
-            onclick: onchange
+            title: this._title
         });
     }
-
-    get isChecked() { return this._isChecked; }
 
     check() { return this._updateCheckedState(true); }
 
-    _updateCheckedState(checked) {
-        if (checked === this._isChecked)
-            return false;
-
-        this.updateItem({
-            checked: this._isChecked = checked
-        });
-
-        return true;
+    _updateCheckedState(checked) { 
+        return this.updateItem({ checked: checked });
     }
-
-    uncheck() { return this._updateCheckedState(false); }
 }
 
 class ButtonMenuItem extends BaseMenuItem {
@@ -108,13 +83,7 @@ class ButtonMenuItem extends BaseMenuItem {
         super(id, ButtonMenuItem.TYPE);
     
         this._title = title;
-        this._enabled = false;
-
         this._parentId = parentId;
-
-        this._onclick = null;
-
-        this._shortcut = null;
     }
 
     static get TYPE() { return 'normal'; }
@@ -122,48 +91,29 @@ class ButtonMenuItem extends BaseMenuItem {
     disable() { return this._setAvailability(false); }
 
     _setAvailability(isEnabled) {
-        if (isEnabled === this._enabled)
-            return false;
-
-        this.updateAvailability(this._enabled = isEnabled);
-        return true;
+        return this.updateAvailability(isEnabled);
     }
 
     enable() { return this._setAvailability(true); }
     
-    get isEnabled() { return this._enabled; }
-
-    addToMenu(onclick, icon = new MenuIcon(), enabled = false) {
-        this._enabled = enabled;
-
-        this._addToMenu(onclick, icon);
+    addToMenu(icon = new MenuIcon(), enabled = false) {
+        return this._addToMenu(icon, enabled);
     }
 
-    _addToMenu(onclick, icon) {
-        this._onclick = info => onclick(Object.assign(info, { title: this._title }));
-
-        super.addToMenu({
+    _addToMenu(icon, enabled) {
+        return super.addToMenu({
             icons : icon ? icon.getSettings() : null,
             parentId: this._parentId,
-            onclick: this._onclick,
             title: this._title,
-            enabled: this._enabled
+            enabled: enabled
         });
     }
 
-    removeFromMenu() { super._removeFromMenu(); }
-
-    updateTitle(newTitile) {
-        if (this._title === newTitile)
-            return false;
-
-        this._title = newTitile;
-        this.updateItem({ title: this._compileTitle() });
-        
-        return true;
+    removeFromMenu() { 
+        return super._removeFromMenu();
     }
 
-    _compileTitle(title = this._title) { 
+    _compileTitle(title, shortcut) { 
         if (!this._title) {
             if (!title)
                 return null;
@@ -171,22 +121,11 @@ class ButtonMenuItem extends BaseMenuItem {
             this._title = title;
         }
 
-        return title + (this._shortcut ? ` (${this._shortcut})` : '');
+        return title + (shortcut ? ` (${shortcut})` : '');
     }
 
     renderShortcut(shortcut) {
-        if (this._shortcut === shortcut)
-            return false;
-
-        this._shortcut = shortcut;
-        this.updateItem({ title: this._compileTitle() });
-
-        return true;
-    }
-
-    emitClick() {
-        if (this.isEnabled && this._onclick)
-            this._onclick({});
+        return this.updateItem({ title: this._compileTitle(this._title, shortcut) });
     }
 }
 

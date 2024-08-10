@@ -1,5 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-class RangeNote extends RangeBase {
+import { RangeBase } from './rangeBase.js';
+import { ArrayExtension } from './arrayExtension.js';
+import { RangeMarker } from './rangeMarker.js';
+
+export class RangeNote extends RangeBase {
     static createNote(text, targetNode = null) {
         const ranges = this._getSelectionRanges();
 
@@ -27,8 +30,15 @@ class RangeNote extends RangeBase {
         else
             success = this._appendNoteToNode(targetNode, noteId, text);
 
-        return success ? noteLink : null;
+        if (success) {
+            this.clearCachedNoteLinks();
+            return noteLink;
+        }
+
+        return null;
     }
+
+    static clearCachedNoteLinks() { this._cachedNoteLinks = null; }
 
     static get START_NOTE_CLASS_NAME() {
         return 'marker-start-note';
@@ -77,8 +87,7 @@ class RangeNote extends RangeBase {
 
                     noteNode.append(nodeToReplace.textContent);
                     nodeToReplace.replaceWith(noteNode);
-                }
-                else {
+                } else {
                     noteNode.append(range.extractContents());
                     range.insertNode(noteNode);
                 }
@@ -108,8 +117,7 @@ class RangeNote extends RangeBase {
                     
                     firstElParent.insertBefore(fragment, firstNode.nextSibling);
                 }
-            }
-            else {
+            } else {
                 if (isFirstNodeMarked)
                     this._insertNodeBefore(startNoteEl, firstElParent);
                 else
@@ -127,8 +135,7 @@ class RangeNote extends RangeBase {
                 if (isLastNodeMarked) {
                     RangeMarker.splitMarkerNode(lastElParent, endOffset);
                     this._insertNodeAfter(endNoteEl, lastElParent);
-                }
-                else {
+                } else {
                     const val = lastNode.nodeValue;
                     lastNode.nodeValue = val.substring(endOffset);
         
@@ -137,8 +144,7 @@ class RangeNote extends RangeBase {
                     
                     lastElParent.insertBefore(fragment, lastNode);
                 }
-            }
-            else {
+            } else {
                 if (isLastNodeMarked)
                     this._insertNodeAfter(endNoteEl, lastElParent);
                 else
@@ -199,7 +205,7 @@ class RangeNote extends RangeBase {
         return 'marker-has-note';
     }
 
-    static hasNote(targetNode) {
+    static hasNote(targetNode = null) {
         if (this._getNoteElement(targetNode))
             return true;
 
@@ -255,11 +261,15 @@ class RangeNote extends RangeBase {
         }
 
         const noteNodes = [...document.querySelectorAll(this._getNoteSearchSelector(noteId))];
-        ArrayExtension.runForEach(noteNodes, 
-            n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n):
-                n.remove());
-
-        return noteNodes.length > 0 ? noteId : null;        
+        if(noteNodes.length > 0) {
+            ArrayExtension.runForEach(noteNodes, 
+                n => n.classList.contains(this.SOLID_NOTE_CLASS_NAME) ? this._extractLastChildContent(n): n.remove());
+    
+            this.clearCachedNoteLinks();
+            return noteId;
+        }
+        
+        return null;        
     }
 
     static _extractNoteId(node) {
@@ -307,30 +317,32 @@ class RangeNote extends RangeBase {
     static getNoteLinks() {
         const uniqueIds = [];
         
-        return [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
-            const noteId = n.dataset.noteId;
+        if(!this._cachedNoteLinks)
+            this._cachedNoteLinks = [...document.getElementsByClassName(this.HAS_NOTE_CLASS_NAME)].map(n => {
+                const noteId = n.dataset.noteId;
 
-            if (noteId && !ArrayExtension.contains(uniqueIds, noteId)) {
-                uniqueIds.push(noteId);
-                return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
-            }
+                if (noteId && !ArrayExtension.contains(uniqueIds, noteId)) {
+                    uniqueIds.push(noteId);
+                    return new NoteLink(n.dataset.noteId, n.firstElementChild.textContent);
+                }
 
-            return null;
-        }).filter(n => n).sort((a, b) => a.id > b.id ? 1 : (a.id < b.id ? -1 : 0));
+                return null;
+            }).filter(n => n).sort((a, b) => a.id > b.id ? 1 : (a.id < b.id ? -1 : 0));
+
+        return this._cachedNoteLinks;
     }
 }
 
-class NoteLink {
+export class NoteLink {
     constructor(id, text) {
-        this._TEXT_LENGTH_LIMIT = 15;
-
         this.id = '' + id;
         this.text = this._formatText(id, text);
     }
 
     _formatText(id, text) {
-        return `${id}: ` + (text.length > this._TEXT_LENGTH_LIMIT ? 
-            `${text.substring(0, this._TEXT_LENGTH_LIMIT)}...` : 
-            text);
+        return `${id}: ` + (text.length > NoteLink._TEXT_LENGTH_LIMIT ? 
+            `${text.substring(0, NoteLink._TEXT_LENGTH_LIMIT)}...` : text);
     }
+
+    static get _TEXT_LENGTH_LIMIT() { return 15; }
 }

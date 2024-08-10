@@ -5,6 +5,8 @@ import { BrowserMocked } from '../tools/browserMocked';
 import { Expectation } from '../tools/expectation.js';
 import { Preferences } from '../../components/preferences.js';
 import { ColourList } from '../../components/colourList.js';
+import { BrowserStorage } from '../../content_scripts/browserStorage.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PagePreferencesDOM, CategoryPreferencesDOM, ShortcutPreferencesDOM } 
     from '../tools/preferencesDOM.js';
@@ -20,13 +22,6 @@ describe('components/preferences', function () {
         PagePreferencesDOM.loadDomModel().then(() => done()).catch(done);
     });
     
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => EnvLoader.loadClass('./content_scripts/lzwCompressor.js', 'LZWCompressor')
-                .then(() => done()))
-            .catch(done);
-    });
-
     afterEach('releaseResources', () => {        
         EnvLoader.unloadDomModel();
     });

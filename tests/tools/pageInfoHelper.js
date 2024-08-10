@@ -1,4 +1,5 @@
 import { Randomiser } from './randomiser.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
 
 export class PageInfoHelper {
     static createPageInfoArray(numberOfItems = 3) {

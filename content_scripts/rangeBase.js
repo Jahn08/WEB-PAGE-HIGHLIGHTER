@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-class RangeBase {
+export class RangeBase {
     static _getSelectionRanges() {
         const sel = window.getSelection();
         
@@ -63,10 +62,8 @@ class RangeBase {
 
         if (this._isProperTextNode(node))
             return node;
-        else if (node.childNodes && (childrenCount = node.childNodes.length))    
-        {
-            try 
-            {
+        else if (node.childNodes && (childrenCount = node.childNodes.length)) {
+            try {
                 const processNode = n => {
                     outcome = this._lookIntoNode(n, traverseFromEnd);
 
@@ -79,9 +76,7 @@ class RangeBase {
                         processNode(node.childNodes[i]);                                      
                 else
                     node.childNodes.forEach(processNode);
-            }
-            catch (ex)
-            {
+            } catch (ex) {
                 if (ex.message !== nodeFoundMsg)
                     throw ex;
             }
@@ -104,8 +99,7 @@ class RangeBase {
     static _nextNode(node) {
         if (node.hasChildNodes())
             return node.firstChild;
-        else 
-        {
+        else {
             while (node && !node.nextSibling)
                 node = node.parentNode;
 

@@ -3,28 +3,11 @@ import fs from 'fs';
 import _path from 'path';
 
 export class EnvLoader {
-    static loadClass(scriptPath, ...classNames) {
-        return this._wrapWithPromise(resolve => {
-            this._checkPathExistence(scriptPath);
-            
-            fs.readFile(scriptPath, (err, data) => {
-                if (err)
-                    throw err;
-
-                const globalInitialiser = classNames.map(cl => `global.${cl}=${cl};`).join('');
-                eval(data.toString('utf8').replace('export class', 'class') + globalInitialiser);
-
-                resolve();
-            });
-        });
-    }
-
     static _wrapWithPromise(callback) {
         return new Promise((resolve, reject) => {
             try {
                 callback(resolve);
-            }
-            catch (ex) {
+            } catch (ex) {
                 reject(ex);
             }
         });
@@ -43,7 +26,6 @@ export class EnvLoader {
             this._checkPathExistence(path);
 
             fs.readFile(path, (err, data) => {
-            
                 if (err)
                     throw err;
             
@@ -194,8 +176,7 @@ class Range {
 
         let lengthSum = 0;
 
-        for (let i = 0; i < childNodes.length; ++i)
-        {
+        for (let i = 0; i < childNodes.length; ++i) {
             const curNode = childNodes[i];
 
             if (startFrom < (lengthSum += curNode.textContent.length))
@@ -255,8 +236,7 @@ class Range {
         if (textNodes.length > 1) {
             curContainer.replaceWith(textNodes[0]);
             startFragmentNode = textNodes[1];
-        }
-        else {
+        } else {
             curContainer.remove();
             startFragmentNode = curContainer;
         }
@@ -272,8 +252,7 @@ class Range {
                 (endTextNodes = this._splitTextNode(curContainer, this.endOffset).length > 1)) {
                 curContainer.replaceWith(endTextNodes[1]);
                 fragmentEndNode = endTextNodes[0];
-            }
-            else {
+            } else {
                 curContainer.remove();
                 fragmentEndNode = curContainer;
             }

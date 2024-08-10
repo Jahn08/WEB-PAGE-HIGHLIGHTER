@@ -1,90 +1,51 @@
-const msgEvent = new MenuMessageEvent();
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
+import { SenderMessage } from './senderMessage.js';
 
 export class MessageSender {
-    constructor (msg) {
-        this._msg = msg;
-
-        this._noteLinks = [];
-
-        this._categories = [];
-        this._defaultCategory = null;
+    static sendMarking(info) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startMarking());
     }
 
-    shouldSetMarkMenuReady() { return msgEvent.isSetMarkReadyEvent(this._msg); }
-
-    shouldSetUnmarkMenuReady() { return msgEvent.isSetUnmarkReadyEvent(this._msg); }
-
-    static startMarking(colourClass) { return msgEvent.createMarkEvent(colourClass); }
-
-    static startChangingColour(colourClass) { return msgEvent.createChangeColourEvent(colourClass); }
-
-    static startUnmarking() { return msgEvent.createUnmarkEvent(); }
-
-    shouldSetSaveMenuReady() { return msgEvent.isSetSaveReadyEvent(this._msg); }
-
-    static startSaving() { return msgEvent.createSaveEvent(); }
-
-    shouldAddCategories() {
-        const isAddingCategories = msgEvent.isAddCategoriesEvent(this._msg);
-
-        if (isAddingCategories) {
-            this._setCategories();
-            this._setDefaultCategory();
-        }
-
-        return isAddingCategories;
+    static sendChangingColour(info) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startChangingColour(info.colourClass));
+    }
+    
+    static sendUnmarking(info) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startUnmarking());
     }
 
-    _setCategories() { this._categories = msgEvent.getCategories(this._msg); }
-
-    get categories() { return this._categories; }
-
-    _setDefaultCategory() { this._defaultCategory = msgEvent.getDefaultCategory(this._msg); }
-    
-    get defaultCategory() { return this._defaultCategory; }
-
-    static startSavingToCategory(categoryTitle) { 
-        return msgEvent.createSaveToCategoryEvent(categoryTitle);
+    static sendSaving(info) {
+        const msg = info.categoryTitle == null ? SenderMessage.startSaving():
+            SenderMessage.startSavingToCategory(info.categoryTitle);
+        return MessageSender._sendMessageToTab(info.tabId, msg);
     }
 
-    shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
-
-    static startLoading() { return msgEvent.createLoadEvent(); }
-
-    shouldLoadPreferences() { return msgEvent.isLoadPreferencesEvent(this._msg); }
-
-    static startLoadingTabState() { return msgEvent.createLoadTabStateEvent(this._msg); }
-    
-    static startAddingNote() { return msgEvent.createAddNoteEvent(); }
-
-    shouldSetAddNoteMenuReady() { return msgEvent.isSetAddNoteReadyEvent(this._msg); }
-
-    static startRemovingNote() { return msgEvent.createRemoveNoteEvent(); }
-
-    shouldSetRemoveNoteMenuReady() { return msgEvent.isSetRemoveNoteReadyEvent(this._msg); }
-
-    shouldAddNoteLinks() {
-        const isAddingNoteLink = msgEvent.isAddNoteLinksEvent(this._msg);
-
-        if (isAddingNoteLink)
-            this._setNoteLinks();
-
-        return isAddingNoteLink;
+    static sendLoading(info) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startLoading());
     }
 
-    _setNoteLinks() { this._noteLinks = msgEvent.getNoteLinks(this._msg); }
-    
-    get noteLinks() { return this._noteLinks; }
-
-    static startGoingToNote(noteId) { 
-        return msgEvent.createGoToNoteEvent({ id: noteId });
+    static sendAddingNote(info, menu) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startAddingNote())
+            .then(outcome => {
+                if (outcome)
+                    menu.appendNoteLink(outcome.id, outcome.text);
+            });
     }
-
-    shouldEmitEvent() { return msgEvent.isEmitEvent(this._msg); }
+       
+    static sendRemovingNote(info, menu) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startRemovingNote())
+            .then(noteId => menu.removeNoteLink(noteId));
+    }
+        
+    static sendGoingToNote(info) {
+        return MessageSender._sendMessageToTab(info.tabId, SenderMessage.startGoingToNote(info.noteId));
+    }
     
-    get eventName() { return msgEvent.getEventName(this._msg); }
-
-    shouldUpdateShortcuts() { return msgEvent.isUpdateShortcuts(this._msg); }
-    
-    get shortcuts() { return msgEvent.getShortcuts(this._msg); }
+    static _sendMessageToTab(tabId, msgBody) {
+        const browserApi = new BrowserAPI();
+        return browserApi.tabs.sendMessage(tabId, msgBody).then(outcome => {
+            browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`);
+            return outcome;
+        });
+    }
 }

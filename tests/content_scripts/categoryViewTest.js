@@ -1,15 +1,8 @@
 import assert from 'assert';
-import { EnvLoader } from '../tools/envLoader.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { CategoryView } from '../../content_scripts/pageInfo.js';
 
 describe('content_script/categoryView', function() {
-
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'CategoryView')
-            .then(() => done())
-            .catch(done);
-    });
-
     describe('#constructor', function() {
 
         it('should construct an array of category titles from page categories', () => {

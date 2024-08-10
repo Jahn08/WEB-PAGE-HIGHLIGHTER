@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-unused-vars
-class ArrayExtension {
+export class ArrayExtension {
     static runForEach(array, callback) {
         if (!callback)
             return;

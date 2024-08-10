@@ -5,6 +5,8 @@ import { BrowserMocked } from '../tools/browserMocked.js';
 import { Expectation } from '../tools/expectation.js';
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
+import { BrowserStorage } from '../../content_scripts/browserStorage.js';
 
 describe('content_script/pageInfo', function () {
     this.timeout(0);
@@ -17,12 +19,6 @@ describe('content_script/pageInfo', function () {
         storage = browser.resetBrowserStorage();
 
         EnvLoader.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => done())
-            .catch(done);
     });
     
     afterEach('releaseResources', () => {        
@@ -55,38 +51,34 @@ describe('content_script/pageInfo', function () {
             );
         });
 
-        const testSavingPage = (saveFn,  checkPageCategoriesFn) => {
+        const testSavingPage = (saveFn, checkPageCategoriesFn) => {
             const parentDiv = document.createElement('div');
             parentDiv.id = Randomiser.getRandomNumberUpToMax();
 
             const childLabel = parentDiv.appendChild(document.createElement('label'));
-            childLabel.innerHTML = `Test ${Randomiser.getRandomString()} тест`;
+            const expectedChildHtml = `Test ${Randomiser.getRandomString()} тест`;
+            childLabel.innerHTML = expectedChildHtml;
             
             document.body.appendChild(parentDiv);
 
-            const pageInfo = new PageInfo();
-
-            return Expectation.expectResolution(saveFn(pageInfo), async () => {
+            return Expectation.expectResolution(saveFn(), async () => {
                 parentDiv.remove();
-
                 assert.strictEqual(document.getElementById(parentDiv.id), null);
     
                 const pageInfoToLoad = new PageInfo();
                 await pageInfoToLoad.load();
 
-                checkPageCategoriesFn(
-                    (await PageInfo.getAllSavedPagesWithCategories()).pageCategories, pageInfoToLoad);
+                checkPageCategoriesFn((await PageInfo.getAllSavedPagesWithCategories()).pageCategories, pageInfoToLoad);
     
                 const loadedDiv = document.getElementById(parentDiv.id);
                 assert(loadedDiv);
                 assert.strictEqual(loadedDiv.childElementCount, 1);
-    
-                assert.strictEqual(loadedDiv.firstElementChild.innerHTML, childLabel.innerHTML);
+                assert.strictEqual(loadedDiv.firstElementChild.innerHTML, expectedChildHtml);
             });
         };
 
         it('should load a page previously saved in the storage without a category', () =>
-            testSavingPage(pageInfo => pageInfo.save(), pageCategories => {
+            testSavingPage(() => new PageInfo().save(), pageCategories => {
                 assert.strictEqual(Object.getOwnPropertyNames(pageCategories).length, 0);
                 assert.strictEqual(storage.length, 1);
             })
@@ -98,9 +90,8 @@ describe('content_script/pageInfo', function () {
                     const storedCategories = await PageInfo.getAllSavedCategories();
                     const defaultCategoryTitle = storedCategories.find(c => c.default).title;
 
-                    return testSavingPage(pageInfo => pageInfo.save(defaultCategoryTitle), 
-                        (pageCategories, pageInfo) =>
-                            assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
+                    return testSavingPage(() => new PageInfo().save(() => defaultCategoryTitle), 
+                        (pageCategories, pageInfo) => assert.strictEqual(pageCategories[pageInfo.uri], defaultCategoryTitle)
                     );
                 }
             )
@@ -109,11 +100,135 @@ describe('content_script/pageInfo', function () {
         it('should load a page previously saved in the storage with a category', () => {
             const categoryTitle = '' + Randomiser.getRandomNumberUpToMax();
 
-            return testSavingPage(pageInfo => pageInfo.saveToCategory(categoryTitle), 
+            return testSavingPage(() => new PageInfo().saveToCategory(categoryTitle), 
                 (pageCategories, pageInfo) => {
                     assert.strictEqual(pageCategories[pageInfo.uri], categoryTitle);
                     assert.strictEqual(storage.length, 2);
                 });
+        });
+    });
+
+    describe('#save', function() {
+        it('should not save a page stored in one category to a default category', () => {
+            const pageInfoToLoad = new PageInfo();
+
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, pageInfoToLoad.uri), async savedInfo => {
+                let categoriesBySavedPages = savedInfo.pageCategories;
+                const expectedCategory = categoriesBySavedPages[pageInfoToLoad.uri];
+
+                await pageInfoToLoad.load();
+
+                const defaultCategory = Object.values(categoriesBySavedPages).find(c => c !== expectedCategory);
+                assert(defaultCategory);
+                
+                let defaultCategoryGetterActivated = false;
+                const pageCategory = await pageInfoToLoad.save(() => {
+                    defaultCategoryGetterActivated = true;
+                    return defaultCategory;
+                });
+                assert.strictEqual(pageCategory, expectedCategory);
+                assert.strictEqual(defaultCategoryGetterActivated, false);
+
+                categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
+                assert.strictEqual(categoriesBySavedPages[pageInfoToLoad.uri], expectedCategory);
+            });
+        });
+        
+        it('should not save a page stored in one category to the NONE category', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, pageInfoToLoad.uri), async savedInfo => {
+                let categoriesBySavedPages = savedInfo.pageCategories;
+                const expectedCategory = categoriesBySavedPages[pageInfoToLoad.uri];
+
+                await pageInfoToLoad.load();
+
+                const pageCategory = await pageInfoToLoad.save();
+                assert.strictEqual(pageCategory, expectedCategory);
+
+                categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
+                const currentCategory = categoriesBySavedPages[pageInfoToLoad.uri];
+                assert.notStrictEqual(currentCategory, 'None');
+                assert.strictEqual(currentCategory, expectedCategory);
+            });
+        });
+        
+        it('should save to a changed category when it was changed prior to saving', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, pageInfoToLoad.uri), async savedInfo => {
+                const initialCategory = savedInfo.pageCategories[pageInfoToLoad.uri];
+
+                await pageInfoToLoad.load();
+
+                savedInfo = await StorageHelper.saveTestPageEnvironment(3, false, pageInfoToLoad.uri);
+                const expectedCategory = savedInfo.pageCategories[pageInfoToLoad.uri];
+
+                const pageCategory = await pageInfoToLoad.save();
+                assert.strictEqual(pageCategory, expectedCategory);
+                assert.notStrictEqual(pageCategory, initialCategory);
+
+                const categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
+                const currentCategory = categoriesBySavedPages[pageInfoToLoad.uri];
+                assert.strictEqual(currentCategory, expectedCategory);
+            });
+        });
+    });
+    
+    describe('#saveToCategory', function() {
+        it('should save a page stored in one category to another category', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false, pageInfoToLoad.uri), async savedInfo => {
+                let categoriesBySavedPages = savedInfo.pageCategories;
+                const currentCategory = categoriesBySavedPages[pageInfoToLoad.uri];
+
+                const expectedCategory = Object.values(categoriesBySavedPages).find(c => c !== currentCategory);
+                assert(expectedCategory);
+
+                await pageInfoToLoad.saveToCategory(expectedCategory);
+
+                await pageInfoToLoad.load();
+                categoriesBySavedPages = (await PageInfo.getAllSavedPagesWithCategories()).pageCategories;
+                assert.strictEqual(categoriesBySavedPages[pageInfoToLoad.uri], expectedCategory);
+            });
+        });
+    });
+
+    describe('#canLoad', function() {
+        it('should return true after both being saved and loaded', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(pageInfoToLoad.canLoad(), async canBeLoaded => {
+                assert.strictEqual(canBeLoaded, false);
+
+                await pageInfoToLoad.save();
+                canBeLoaded = await pageInfoToLoad.canLoad();
+                assert.strictEqual(canBeLoaded, true);
+
+                await pageInfoToLoad.load();
+                canBeLoaded = await pageInfoToLoad.canLoad();
+                assert.strictEqual(canBeLoaded, true);
+            });
+        });
+
+        it('should return true after both being saved to a category and loaded', () => {
+            const pageInfoToLoad = new PageInfo();
+            
+            return Expectation.expectResolution(StorageHelper.saveTestPageEnvironment(5, false), async savedInfo => {
+                let canBeLoaded = await pageInfoToLoad.canLoad();
+                assert.strictEqual(canBeLoaded, false);
+
+                const savingCategoryTitle = Randomiser.getRandomArrayItem(Object.values(savedInfo.pageCategories));
+                await pageInfoToLoad.saveToCategory(savingCategoryTitle);
+
+                canBeLoaded = await pageInfoToLoad.canLoad();
+                assert.strictEqual(canBeLoaded, true);
+
+                await pageInfoToLoad.load();
+                canBeLoaded = await pageInfoToLoad.canLoad();
+                assert.strictEqual(canBeLoaded, true);
+            });
         });
     });
 

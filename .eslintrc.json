@@ -11,28 +11,20 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
-    "globals": {
-        "RangeBase": "readonly",
-        "RangeMarker": "readonly",
-        "RangeNote": "readonly",
-        "MenuMessageEvent": "readonly",
-        "MessageReceiver": "readonly",
-        "MessageSender": "readonly",
-        "MessageControl": "readonly",
-        "BrowserStorage": "readonly",
-        "PageInfo": "readonly",
-        "ArrayExtension": "readonly",
-        "BrowserAPI": "readonly",
-        "LZWCompressor": "readonly",
-        "CategoryView": "readonly",
-        "Shortcut": "readonly",
-        "OptionList": "readonly"
-    },
     "rules": {
+        "brace-style": [
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
+        ],
         "indent": [
             "error",
             4,
-            { "SwitchCase": 1 }
+            {
+                "SwitchCase": 1
+            }
         ],
         "linebreak-style": 0,
         "quotes": [
@@ -43,7 +35,15 @@
             "error",
             "always"
         ],
-        "no-console": ["error", { "allow": ["warn", "error"] }],
+        "no-console": [
+            "error",
+            {
+                "allow": [
+                    "warn",
+                    "error"
+                ]
+            }
+        ],
         "block-scoped-var": "error",
         "no-var": "error"
     }

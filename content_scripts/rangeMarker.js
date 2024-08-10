@@ -1,5 +1,7 @@
-// eslint-disable-next-line no-unused-vars
-class RangeMarker extends RangeBase {    
+import { RangeBase } from './rangeBase.js';
+import { RangeNote } from './rangeNote.js';
+
+export class RangeMarker extends RangeBase {    
     static isNodeMarked(node) {
         return node && node.classList && node.classList.contains(this.MARKER_CLASS_NAME);
     }
@@ -155,15 +157,13 @@ class RangeMarker extends RangeBase {
                         else
                             markerNode.replaceWith(
                                 this._createMarkerNode(curColour, markerNode.nodeValue));
-                    }
-                    else if (colour)
+                    } else if (colour)
                         markerNode.classList.replace(curColour, colour);
                     else {
                         markerNode.replaceWith(document.createTextNode(markerNode.textContent));
                         markerNode.remove();
                     }
-                }
-                else {
+                } else {
                     if (!colour || markerNode.classList.contains(RangeNote.HAS_NOTE_CLASS_NAME) || 
                         markerNode.classList.contains(RangeNote.NOTE_CLASS_NAME))
                         return false;
@@ -177,21 +177,18 @@ class RangeMarker extends RangeBase {
 
                         const newNode = this._createMarkerNode(colour, val, startOffset);
                         this._insertNodeAfter(newNode, node);
-                    }
-                    else if (markLastNodePartially) {
+                    } else if (markLastNodePartially) {
                         const val = node.nodeValue;
                         node.nodeValue = val.substring(endOffset);
 
                         const newNode = this._createMarkerNode(colour, val, 0, endOffset);
                         this._insertNodeBefore(newNode, node);
-                    }
-                    else
+                    } else
                         markerNode.insertBefore(this._createMarkedSpan(colour), node).appendChild(node);
                 }
 
                 return true;
-            }
-            catch (e) {
+            } catch (e) {
                 lastError = e;
             }
         });
@@ -224,8 +221,7 @@ class RangeMarker extends RangeBase {
         if (colour) {
             newNode = this._createMarkedSpan(colour);
             newNode.innerHTML = contents;
-        }
-        else
+        } else
             newNode = document.createTextNode(contents);
 
         return newNode;

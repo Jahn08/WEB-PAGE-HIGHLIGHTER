@@ -8,6 +8,9 @@ import { CategoryPreferencesDOM, PagePreferencesDOM } from '../tools/preferences
 import { StorageHelper } from '../tools/storageHelper.js';
 import { PageInfoHelper } from '../tools/pageInfoHelper.js';
 import { PreferencesTestHelper } from '../tools/preferencesTestHelper.js';
+import { ArrayExtension } from '../../content_scripts/arrayExtension.js';
+import { PageInfo } from '../../content_scripts/pageInfo.js';
+import { SenderMessage } from '../../components/senderMessage.js';
 
 describe('components/preferences/categoryTable', function () {
     this.timeout(0);
@@ -16,13 +19,9 @@ describe('components/preferences/categoryTable', function () {
 
     beforeEach('loadResources', done => {
         browserMocked.resetBrowserStorage();
+        browserMocked.resetRuntime();
 
         CategoryPreferencesDOM.loadDomModel().then(() => done()).catch(done);
-    });
-    
-    before(done => {
-        EnvLoader.loadClass('./content_scripts/pageInfo.js', 'PageInfo', 'CategoryView')
-            .then(() => done()).catch(done);
     });
 
     afterEach('releaseResources', () => {        
@@ -70,8 +69,7 @@ describe('components/preferences/categoryTable', function () {
                         onWarning(input);
                     else
                         assert.fail('A status message wasn\'t expected');
-                }
-                else {
+                } else {
                     assert(!titleTxt.value,
                         'A field with a new category name should be emptied after successfull input');
                     inputs.push(input);
@@ -90,22 +88,38 @@ describe('components/preferences/categoryTable', function () {
                 })
         );
 
-        it('should save new categories', () =>
-            Expectation.expectResolution(StorageHelper.saveTestCategories(),
+        it('should save new categories and send them in a message to server', 
+            () => Expectation.expectResolution(StorageHelper.saveTestCategories(3, -1),
                 async categories => {
                     const preferences = new Preferences();
 
                     await preferences.load();
 
                     categories.push(...addCategories(3).map(c => PageInfoHelper.createCategory(c)));
+                    
+                    const defaultCategoryTitle = categoryTableDOM.tickRowCheckByIndex(4);
+                    categoryTableDOM.dispatchClickEvent(categoryTableDOM.getMakingDefaultBtn());
+                    categories.find(c => c.title === defaultCategoryTitle).default = true;
+
                     categoryTableDOM.assertStatusIsEmpty();
 
                     await preferences.save();
                     
                     const savedCategories = await PageInfo.getAllSavedCategories();
-                    assert.strictEqual(savedCategories.length, categories.length);
-                    assert(savedCategories.every(sc => 
-                        categories.find(c => sc.title === c.title && sc.default === c.default) !== null));
+                    const expectedCategories = new Map(categories.map(c => [c.title, c.default]));
+                    assert.strictEqual(savedCategories.length, expectedCategories.size);
+                    assert(savedCategories.every(sc => { 
+                        return expectedCategories.get(sc.title) === sc.default; 
+                    }));
+
+                    const msgs = browserMocked.getRuntimeMessages();
+                    assert.strictEqual(msgs.length, 1);
+                    const senderMsg = new SenderMessage(msgs[0]);
+                    assert(senderMsg.shouldAddCategories());
+                    
+                    assert.strictEqual(senderMsg.categories.length, expectedCategories.size);
+                    assert(senderMsg.categories.every(st => expectedCategories.has(st)));
+                    assert.deepStrictEqual(senderMsg.defaultCategory, defaultCategoryTitle);
                 })
         );
 

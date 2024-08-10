@@ -1,4 +1,5 @@
-// eslint-disable-next-line no-unused-vars
+import { ArrayExtension } from './arrayExtension.js';
+
 class OptionList {
     static get storage() {
         return {
@@ -7,7 +8,11 @@ class OptionList {
             save: 'save',
             saveTo: 'save-to',
             noneCategory: 'preferences-none-category',
-            getCategoryId: (index) => 'category-' + index
+            getCategoryId: (index, title) => `category-${index}-${title}`,
+            getCategoryTitleFromId: id => {
+                const parts = (id || '').split('-');
+                return parts.splice(2).join('-');
+            }
         };
     }
 
@@ -34,7 +39,6 @@ class OptionList {
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 class MenuMessageEvent {
     constructor () {
         const markingOptions = OptionList.marking;
@@ -82,7 +86,7 @@ class MenuMessageEvent {
         };
     }
 
-    createMarkEvent(colourClass) { return this._createEventWithColour(this._markEvent, colourClass); }
+    createMarkEvent() { return this._createEvent(this._markEvent); }
 
     _createEventWithColour(eventName, colourClass) {
         return this._createEventWithArgs(eventName, {
@@ -96,8 +100,7 @@ class MenuMessageEvent {
 
     _createEvent(eventName) { return { event: [eventName] }; }
 
-    combineEvents(msgs = [])
-    {
+    combineEvents(msgs = []) {
         msgs = msgs || [];
 
         const validMsgs = msgs.filter(m => m);
@@ -229,3 +232,5 @@ class MenuMessageEvent {
     isUpdateShortcuts(msg) { return this._isEvent(msg, this._updateShortcuts); }
     getShortcuts(msg) { return msg ? msg[this._props.shortcuts]: null; }
 }
+
+export { MenuMessageEvent, OptionList };

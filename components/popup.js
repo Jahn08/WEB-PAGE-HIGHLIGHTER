@@ -1,6 +1,8 @@
-import { MessageSender } from './messageSender.js';
+import { SenderMessage } from './senderMessage.js';
 import { PageLocalisation } from './pageLocalisation.js';
 import { Preferences } from './preferences.js';
+import { OptionList } from '../content_scripts/menuMessageEvent.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
 
 class Popup {
     static initialise() {
@@ -17,18 +19,18 @@ class Popup {
             item.addEventListener('click', Popup._clickCallback);
 
         Popup._callOnActiveTab(tab => {
-            Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoadingTabState())
+            Popup._browser.tabs.sendMessage(tab.id, SenderMessage.startLoadingTabState())
                 .then(msg => {
-                    const sender = new MessageSender(msg);
+                    const senderMsg = new SenderMessage(msg);
 
                     let sectionIsVisible = false;
 
-                    if (sender.shouldSetLoadMenuReady()) {
+                    if (senderMsg.shouldSetLoadMenuReady()) {
                         Popup._showControl(Popup._getControl('loading'));
                         sectionIsVisible = true;
                     }
 
-                    if (sender.shouldSetSaveMenuReady()) {
+                    if (senderMsg.shouldSetSaveMenuReady()) {
                         Popup._showControl(Popup._getControl('saving'));
                         sectionIsVisible = true;
                     }
@@ -36,8 +38,8 @@ class Popup {
                     if (sectionIsVisible) {
                         Popup._showControl(Popup._getControl('separator'));
 
-                        if (sender.shouldUpdateShortcuts())
-                            this._updateShortcuts(sender.shortcuts);
+                        if (senderMsg.shouldUpdateShortcuts())
+                            this._updateShortcuts(senderMsg.shortcuts);
                     }
 
                     Popup._browser.runtime.logLastError('An error while trying to get button states');
@@ -78,11 +80,11 @@ class Popup {
             switch(actionId) {
                 case 'tabs-saving':
                     await Popup._callOnActiveTab(tab => 
-                        Popup._browser.tabs.sendMessage(tab.id, MessageSender.startSaving()));
+                        Popup._browser.tabs.sendMessage(tab.id, SenderMessage.startSaving()));
                     break;
                 case 'tabs-loading':
                     await Popup._callOnActiveTab(tab => 
-                        Popup._browser.tabs.sendMessage(tab.id, MessageSender.startLoading()));
+                        Popup._browser.tabs.sendMessage(tab.id, SenderMessage.startLoading()));
                     break;
                 case 'tabs-preferences':
                     await Popup._browser.runtime.openOptionsPage();
@@ -93,8 +95,7 @@ class Popup {
             
             Popup._browser.runtime.logLastError(msgPrefix);
             window.close();
-        }
-        catch (ex) {
+        } catch (ex) {
             console.error(`${msgPrefix}: ${ex.toString()}`);
         }
     }

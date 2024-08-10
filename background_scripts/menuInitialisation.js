@@ -1,103 +1,80 @@
 import { ContextMenu } from '../components/contextMenu.js';
-import { MessageSender } from '../components/messageSender.js';
 import { Preferences } from '../components/preferences.js';
+import { BrowserAPI } from '../content_scripts/browserAPI.js';
+import { CategoryView, PageInfo } from '../content_scripts/pageInfo.js';
+import { SenderMessage } from '../components/senderMessage.js';
 
-const menu = new ContextMenu();
-
-const browserApi = new BrowserAPI();
-
-const sendMessageToTab = (tabId, msgBody) => browserApi.tabs.sendMessage(tabId, msgBody).then(() =>
-    browserApi.runtime.logLastError(`Error while sending a message ${JSON.stringify(msgBody)} to tab ${tabId}`));
-
-menu.onMarking = (info) => sendMessageToTab(info.tabId,
-    MessageSender.startMarking(info.colourClass));
-
-menu.onChangingColour = (info) => sendMessageToTab(info.tabId, 
-    MessageSender.startChangingColour(info.colourClass));
-
-menu.onUnmarking = (info) => sendMessageToTab(info.tabId, MessageSender.startUnmarking());
-
-menu.onSaving = info => {
-    const msg = info.categoryTitle === undefined ? MessageSender.startSaving():
-        MessageSender.startSavingToCategory(info.categoryTitle);
-    sendMessageToTab(info.tabId, msg);
-};
-
-menu.onLoading = (info) => sendMessageToTab(info.tabId, MessageSender.startLoading());
-
-menu.onAddingNote = (info) => 
-    sendMessageToTab(info.tabId, MessageSender.startAddingNote())
-        .then(outcome => {
-            if (outcome)
-                menu.appendNoteLink(outcome.id, outcome.text);
-        });
-
-menu.onRemovingNote = (info) =>
-    sendMessageToTab(info.tabId, MessageSender.startRemovingNote())
-        .then(noteId => menu.removeNoteLink(noteId));
-
-menu.onGoingToNote = (info) => sendMessageToTab(info.tabId, 
-    MessageSender.startGoingToNote(info.noteId));
-
-browserApi.runtime.onMessage(async msg => {
-    try {
-        const sender = new MessageSender(msg);
+const gBrowserApi = new BrowserAPI();
+gBrowserApi.runtime.onInstalled(async () => {
+    const contextMenu = new ContextMenu();
+    await contextMenu.render();
     
-        if (sender.shouldAddCategories())
-            menu.renderPageCategories(sender.categories, sender.defaultCategory);
+    const categories = await PageInfo.getAllSavedCategories();
+    const categoryView = new CategoryView(categories);
+    contextMenu.renderPageCategories(categoryView.categoryTitles, categoryView.defaultCategoryTitle);
+});
 
-        if (sender.shouldLoadPreferences()) {
+gBrowserApi.runtime.onMessage(async msg => {
+    try {
+        const senderMsg = new SenderMessage(msg);
+        const contextMenu = new ContextMenu();
+    
+        if (senderMsg.shouldLoadPreferences()) {
             const preferences = (await Preferences.loadFromStorage()) || {};
-            menu.checkColourRadio(preferences.defaultColourToken);
-            menu.renderShortcuts(preferences.shortcuts);
+            contextMenu.renderShortcuts(preferences.shortcuts);
+            preferences.defaultColourToken = await contextMenu.checkColourRadio(preferences.defaultColourToken);
 
             return preferences;
         }
 
-        if (sender.shouldUpdateShortcuts())
-            menu.renderShortcuts(sender.shortcuts);
+        if (senderMsg.shouldAddCategories())
+            contextMenu.renderPageCategories(senderMsg.categories, senderMsg.defaultCategory);
 
-        if (sender.shouldSetSaveMenuReady())
-            menu.enableSaveBtn();
-        else
-            menu.disableSaveBtn();
+        if (senderMsg.shouldUpdateShortcuts())
+            contextMenu.renderShortcuts(senderMsg.shortcuts);
 
-        if (sender.shouldSetLoadMenuReady())
-            menu.enableLoadBtn();
-        else
-            menu.disableLoadBtn();
+        if (senderMsg.shouldSetSaveMenuReady()) {
+            const categories = await PageInfo.getAllSavedCategories();
+            const shouldEnableSaveToMenu = categories && categories.length;
+            contextMenu.enableSaveBtn(shouldEnableSaveToMenu);
+        } else
+            contextMenu.disableSaveBtn();
 
-        if (sender.shouldSetMarkMenuReady())
-            menu.enableMarkingBtn();
+        if (senderMsg.shouldSetLoadMenuReady())
+            contextMenu.enableLoadBtn();
         else
-            menu.disableMarkingBtn();
+            contextMenu.disableLoadBtn();
+
+        if (senderMsg.shouldSetMarkMenuReady())
+            contextMenu.enableMarkingBtn();
+        else
+            contextMenu.disableMarkingBtn();
         
-        if (sender.shouldSetUnmarkMenuReady())
-            menu.enableUnmarkingBtn();
+        if (senderMsg.shouldSetUnmarkMenuReady())
+            contextMenu.enableUnmarkingBtn();
         else
-            menu.disableUnmarkingBtn();
+            contextMenu.disableUnmarkingBtn();
 
-        if (sender.shouldSetAddNoteMenuReady())
-            menu.enableAddingNoteBtn();
+        if (senderMsg.shouldSetAddNoteMenuReady())
+            contextMenu.enableAddingNoteBtn();
         else
-            menu.disableAddingNoteBtn();
+            contextMenu.disableAddingNoteBtn();
 
-        if (sender.shouldSetRemoveNoteMenuReady())
-            menu.enableRemovingNoteBtn();
+        if (senderMsg.shouldSetRemoveNoteMenuReady())
+            contextMenu.enableRemovingNoteBtn();
         else
-            menu.disableRemovingNoteBtn();
+            contextMenu.disableRemovingNoteBtn();
             
-        if (sender.shouldEmitEvent()) {
-            menu.emitItemClick(sender.eventName);
+        if (senderMsg.shouldEmitEvent()) {
+            contextMenu.emitItemClick(senderMsg.eventName);
             return true;
         }
 
-        if (sender.shouldAddNoteLinks())
-            menu.renderNoteLinks(sender.noteLinks);
+        if (senderMsg.shouldAddNoteLinks())
+            contextMenu.renderNoteLinks(senderMsg.noteLinks);
 
         return true;
-    }
-    catch (ex) {
+    } catch (ex) {
         console.error('Error while trying to set menu visibility: ' + ex.toString());
         throw ex;
     }
