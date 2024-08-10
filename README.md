@@ -2,19 +2,20 @@
 
 # WEB-PAGE-HIGHLIGHTER
 
-A Mozilla Firefox and Google Chrome extension that marks text on a web page. The general functionality:
+A Google Chrome extension that marks text on a web page. It is based on manifest v3, as Chrome has started dropping support of manifest v2 extensions [since June 3 2024](https://developer.chrome.com/docs/extensions/develop/migrate/mv2-deprecation-timeline). Mozilla Firefox's implmentation of manifest v3 differs from that in Chrome but Mozilla still supports manifest v2, that is why the current version of the extension is available in [its own repository](https://github.com/Jahn08/WEB-PAGE-HIGHLIGHTER-MANIFEST2).
 
+The general functionality:
 * Marking text with several colours through a context menu on a page
 * Saving the marked text and loading it later when accessing the same page
 * Preferences for changing the default colour for marking and autoloading a page, provided it is available in the storage ([more about configuring](#headConfiguration))
 * Categorising pages when saving or in the preferences
 * Adding notes on a page and navigating them through quick scrolling by means of clicking the respective links in the context menu
 * Supporting keyboard shortcuts for frequently used commands in the context menu
-* Importing and exporting stored pages between different devices and browsers (it is available for [installing](#headInstalling) in Mozilla and Chrome) through the preferences page
+* Importing and exporting stored pages between different devices and browsers (it is available for [installing](#headInstalling) in Chrome) through the preferences page
 
 ## <a name="headInstalling"></a>Installing / Getting started
 
-The application is available on [the official site for Firefox extensions](https://addons.mozilla.org/en-US/firefox/addon/highbrighter/) as well as in [the Chrome store](https://chrome.google.com/webstore/detail/highbrighter/gccbpihjfohfiipkoclimdkkeinadega). It is also possible to [deploy it locally](#headDeploying).
+The application is available in [the Chrome store](https://chrome.google.com/webstore/detail/highbrighter/gccbpihjfohfiipkoclimdkkeinadega). It is also possible to [deploy it locally](#headDeploying).
 
 ## Developing
 
@@ -24,21 +25,21 @@ As development dependencies necessary to build an environment for tests there ar
 
 * [babel-core 6.26.3](https://www.npmjs.com/package/babel-core/v/6.26.3)
 * [babel-preset-es2015 6.24.1](https://www.npmjs.com/package/babel-preset-es2015/v/6.24.1)
-* [jsdom 14.0.0](https://www.npmjs.com/package/jsdom/v/14.0.0)
+* [jsdom 16.7.0](https://www.npmjs.com/package/jsdom/v/16.7.0)
 * [jsdom-global 3.0.2](https://www.npmjs.com/package/jsdom-global/v/3.0.2)
-* [mocha 6.1.4](https://www.npmjs.com/package/mocha/v/6.1.4)
+* [mocha 10.2.0](https://www.npmjs.com/package/mocha/v/10.2.0)
 
 ### Prerequisites
 
-* [Node.js 16.14.0](https://nodejs.org/download/release/latest-v16.x/) is used for running tests
-* Npm 8.3.1 ([how to install](https://www.npmjs.com/get-npm)) - Node.js is likely to include it  
+* [Node.js 16.20.2](https://nodejs.org/download/release/latest-v16.x/) is used for running tests
+* Npm 8.19.4 ([how to install](https://www.npmjs.com/get-npm)) - Node.js is likely to include it  
 * [Visual Studio Code](https://code.visualstudio.com/) was used as an IDE
 
 ### <a name="headDeploying"></a>Deploying / Debugging
 
-To install it locally you need to type *about:debugging* as a URL in your browser and after clicking a button *Load Temporary Add-on* choose the project's *manifest.json* file in your file system. Thereafter the highlighter options will become visible in the context menu of web pages as well as a popup icon on the upper panel of your browser.
+To install it locally you need to type *chrome://extensions* as a URL in your browser and after clicking a button *Load unpacked* choose the project's folder in your file system. Thereafter the highlighter options will become visible in the context menu of web pages as well as a popup icon on the upper panel of your browser.
 
-The background scripts can be debugged from the *about:debugging* page through the respective button, whereas code on the client side is available in the developer panel (f12) under the *moz-extension* section in the Sources list.
+The background scripts can be debugged from the *chrome://extensions* page by clicking on a link *service worker* of an extension, whereas code on the client side is available in the developer panel (f12) in the *Content scripts* tab of the Sources page.
 
 ## <a name="headConfiguration"></a>Configuration
 
