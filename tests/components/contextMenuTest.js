@@ -58,7 +58,26 @@ describe('components/ContextMenu', () => {
         return menu;
     };
 
-    describe('#render', () => {
+    describe('#constructor', function () {
+        it('should create a clickable instance', async () => {
+            const browserMocked = mockBrowserWithTab();
+            new ContextMenu();
+
+            const menuCallbackNameToTest = 'sendMarking';
+            msgSenderChangedPropName = menuCallbackNameToTest;
+
+            let menuInfo = null;
+            MessageSender[menuCallbackNameToTest] = info => {
+                menuInfo = info;
+            };
+
+            await browserMocked.dispatchMenuClick('mark');
+            
+            assert.notStrictEqual(menuInfo, null);
+        });
+    });
+
+    describe('#render', function () {
         it('should create a proper number of items in a context menu', async () => {
             const browserMocked = mockBrowser();
             await renderContextMenu();

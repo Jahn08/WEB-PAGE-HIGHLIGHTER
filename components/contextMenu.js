@@ -30,6 +30,8 @@ export class ContextMenu {
         this._storageMenu = new PageStorageMenu(noneCategoryName);
 
         this._emittableButtons = null;
+
+        new BrowserAPI().menus.onClicked(ContextMenu._onClick);
     }
 
     async render() {
@@ -53,8 +55,6 @@ export class ContextMenu {
         await this._noteNavigation.render();
 
         await this._storageMenu.render();
-
-        new BrowserAPI().menus.onClicked(ContextMenu._onClick);
     }
 
     static _onClick(info) {
