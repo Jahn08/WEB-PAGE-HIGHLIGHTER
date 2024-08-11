@@ -18,7 +18,7 @@ export class Highlighter {
 
         this._pageInfo = new PageInfo();
 
-        document.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
+        window.addEventListener('mousedown', this._setUpContextMenuOnClick.bind(this));
         this._tempFocusedNode;
 
         this._keyTempCombination = [];
@@ -237,8 +237,10 @@ export class Highlighter {
                 if (this._savingIsEnabled)
                     await this._performStorageAction(this._saveToCategory, receiver.category);
             } else if (receiver.shouldLoad()) {
-                if (this._loadingIsEnabled)
+                if (this._loadingIsEnabled) {
                     await this._performStorageAction(this._load);
+                    this._cleanCaches();
+                }
             } else if (receiver.shouldReturnTabState())
                 return this._includeLoadSaveEvents(ReceiverMessage.updateShortcuts(this._shortcuts));
             else if (receiver.shouldGoToNote())
@@ -256,6 +258,10 @@ export class Highlighter {
             console.error(err.toString());
             throw err;
         }
+    }
+
+    _cleanCaches() {
+        RangeNote.clearCachedNoteLinks();        
     }
 
     _domHasOnlyOwnElements() {

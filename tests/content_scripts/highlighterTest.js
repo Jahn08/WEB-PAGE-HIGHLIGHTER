@@ -763,6 +763,29 @@ describe('content_script/highlighter', function () {
             });
         });
 
+        it('should update note links after loading a page', async () => {
+            const note = createNoteForRange(Randomiser.getRandomString());
+
+            const pageInfoToLoad = new PageInfo();
+            await pageInfoToLoad.save();
+
+            selectRange();
+            RangeNote.removeNote();
+
+            const highlighter = new Highlighter();
+            highlighter._canLoad = true;
+
+            dispatchMouseRightBtnClickEvent();
+
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startLoading());
+        
+                highlighter._setUpContextMenu();
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
+                assert.deepStrictEqual(senderMsg.noteLinks, [note]);
+            });
+        });
+
         it('should not load a loadable page when the option is disabled', async () => {
             const colourClass = getRandomColourClass();
             await savePageWithMarkedRange(colourClass);

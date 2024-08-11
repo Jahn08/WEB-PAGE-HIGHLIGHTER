@@ -5,11 +5,6 @@ const msgEvent = new MenuMessageEvent();
 export class SenderMessage {
     constructor (msg) {
         this._msg = msg;
-
-        this._noteLinks = [];
-
-        this._categories = [];
-        this._defaultCategory = null;
     }
 
     shouldSetMarkMenuReady() { return msgEvent.isSetMarkReadyEvent(this._msg); }
@@ -26,28 +21,13 @@ export class SenderMessage {
 
     static startSaving() { return msgEvent.createSaveEvent(); }
 
-    shouldAddCategories() {
-        const isAddingCategories = msgEvent.isAddCategoriesEvent(this._msg);
+    shouldAddCategories() { return msgEvent.isAddCategoriesEvent(this._msg); }
 
-        if (isAddingCategories) {
-            this._setCategories();
-            this._setDefaultCategory();
-        }
+    get categories() { return msgEvent.getCategories(this._msg); }
 
-        return isAddingCategories;
-    }
+    get defaultCategory() { return msgEvent.getDefaultCategory(this._msg); }
 
-    _setCategories() { this._categories = msgEvent.getCategories(this._msg); }
-
-    get categories() { return this._categories; }
-
-    _setDefaultCategory() { this._defaultCategory = msgEvent.getDefaultCategory(this._msg); }
-    
-    get defaultCategory() { return this._defaultCategory; }
-
-    static startSavingToCategory(categoryTitle) { 
-        return msgEvent.createSaveToCategoryEvent(categoryTitle);
-    }
+    static startSavingToCategory(categoryTitle) {  return msgEvent.createSaveToCategoryEvent(categoryTitle); }
 
     shouldSetLoadMenuReady() { return msgEvent.isSetLoadReadyEvent(this._msg); }
 
@@ -65,22 +45,11 @@ export class SenderMessage {
 
     shouldSetRemoveNoteMenuReady() { return msgEvent.isSetRemoveNoteReadyEvent(this._msg); }
 
-    shouldAddNoteLinks() {
-        const isAddingNoteLink = msgEvent.isAddNoteLinksEvent(this._msg);
+    shouldAddNoteLinks() { return msgEvent.isAddNoteLinksEvent(this._msg); }
 
-        if (isAddingNoteLink)
-            this._setNoteLinks();
+    get noteLinks() { return msgEvent.getNoteLinks(this._msg); }
 
-        return isAddingNoteLink;
-    }
-
-    _setNoteLinks() { this._noteLinks = msgEvent.getNoteLinks(this._msg); }
-    
-    get noteLinks() { return this._noteLinks; }
-
-    static startGoingToNote(noteId) { 
-        return msgEvent.createGoToNoteEvent({ id: noteId });
-    }
+    static startGoingToNote(noteId) {  return msgEvent.createGoToNoteEvent({ id: noteId }); }
 
     shouldEmitEvent() { return msgEvent.isEmitEvent(this._msg); }
     
