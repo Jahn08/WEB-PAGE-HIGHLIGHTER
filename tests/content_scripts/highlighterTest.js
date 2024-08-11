@@ -129,14 +129,11 @@ describe('content_script/highlighter', function () {
 
             window.dispatchEvent(new Event('beforeunload'));
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    assert(!warnMsgWhenPageUnchanged);
-                    assert(warnMsgWhenPageChanged);
-                    assert(warnMsgWhenPageChanged.length > 0);
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                assert(!warnMsgWhenPageUnchanged);
+                assert(warnMsgWhenPageChanged);
+                assert(warnMsgWhenPageChanged.length > 0);
+            });
         });
 
         it('should turn off warning about unsaved changes before unloading a page', async () => {
@@ -153,12 +150,7 @@ describe('content_script/highlighter', function () {
 
             window.dispatchEvent(new Event('beforeunload'));
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    assert(!warningTried);
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => assert(!warningTried));
         });
 
         it('should pass shortcuts from loaded settings and set up events for watching them', async () => {
@@ -178,12 +170,7 @@ describe('content_script/highlighter', function () {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
             window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    assert.strictEqual(shortcutCaughtCount, 2);
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => assert.strictEqual(shortcutCaughtCount, 2));
         });
         
         it('should set up no events for watching shortcuts when there are no shortcuts in loaded settings', async () => {
@@ -197,12 +184,7 @@ describe('content_script/highlighter', function () {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
             window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    assert.strictEqual(shortcutCaughtCount, 0);
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => assert.strictEqual(shortcutCaughtCount, 0));
         });
 
         it('should set up a default colour class from loaded settings', async () => {
@@ -301,19 +283,15 @@ describe('content_script/highlighter', function () {
             new Highlighter();
             dispatchMouseRightBtnClickEvent();        
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
+            });
         });
 
         it('should enable marking and adding a note for a non-marked selected range without a note', () => {
@@ -322,17 +300,13 @@ describe('content_script/highlighter', function () {
             selectRange();
             dispatchMouseRightBtnClickEvent();        
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+            });
         });
 
         it('should enable marking, unmarking and adding a note for a marked selected range without a note', () => {
@@ -343,17 +317,13 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent();        
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+            });
         });
 
         it('should enable unmarking and adding a note for a marked selected node without a note', () => {
@@ -365,17 +335,13 @@ describe('content_script/highlighter', function () {
             const markedNode = markedContainerNode.getElementsByClassName(colourClass)[0];
             dispatchMouseRightBtnClickEvent(markedNode);        
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), false);
+            });
         });
 
         it('should enable marking, removing a note for a selected range with a note', () => {
@@ -386,17 +352,13 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent();        
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
+            });
         });
 
         it('should enable removing a note for a selected node with a note', () => {
@@ -408,17 +370,13 @@ describe('content_script/highlighter', function () {
             const notedNode = notedContainerNode.getElementsByClassName(RangeNote.NOTE_CLASS_NAME)[0];
             dispatchMouseRightBtnClickEvent(notedNode);        
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetMarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetUnmarkMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetAddNoteMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetRemoveNoteMenuReady(), true);
+            });
         });
 
         it('should update shortcuts', async () => {
@@ -432,15 +390,11 @@ describe('content_script/highlighter', function () {
     
             dispatchMouseRightBtnClickEvent();
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
-                    assert.strictEqual(senderMsg.shouldUpdateShortcuts(), true);
-                    assert.deepStrictEqual(senderMsg.shortcuts, expectedShortcuts);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
+                assert.strictEqual(senderMsg.shouldUpdateShortcuts(), true);
+                assert.deepStrictEqual(senderMsg.shortcuts, expectedShortcuts);
+            });
         });
 
         it('should update note links', async () => {
@@ -451,15 +405,11 @@ describe('content_script/highlighter', function () {
     
             dispatchMouseRightBtnClickEvent();
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldAddNoteLinks(), true);
-                    assert.deepStrictEqual(senderMsg.noteLinks, [note1, note2]);
-
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldAddNoteLinks(), true);
+                assert.deepStrictEqual(senderMsg.noteLinks, [note1, note2]);
+            });
         });
 
         it('should enable saving when a page has changed', () => {
@@ -468,15 +418,11 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
-                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), true);
-                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[0]);
+                assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), true);
+                assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), false);
+            });
         });
 
         it('should enable loading when a page is loadable', async () => {
@@ -487,15 +433,11 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(() => {
-                    const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
-                    assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
-                    assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), true);
-                    
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(() => {
+                const senderMsg = new SenderMessage(browser.getRuntimeMessages()[1]);
+                assert.strictEqual(senderMsg.shouldSetSaveMenuReady(), false);
+                assert.strictEqual(senderMsg.shouldSetLoadMenuReady(), true);
+            });
         });
         
         it('should log an error to console when setting up context menu failed', async () => {
@@ -506,9 +448,7 @@ describe('content_script/highlighter', function () {
             dispatchMouseRightBtnClickEvent();
 
             let consoleMsg;
-            await mockConsole('error', (msg) => consoleMsg = msg, 
-                () => Expectation.expectResolution(new Promise((resolve) => setImmediate(resolve)))
-            );
+            await mockConsole('error', (msg) => consoleMsg = msg, Expectation.expectInNextLoopIteration);
 
             assert.notEqual(consoleMsg, null);
             assert(consoleMsg.includes('setting menu availability'));
@@ -526,16 +466,12 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startMarking());
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startMarking());
 
-                    assert.strictEqual(highlighter.domIsPure, false);
-                    assert.strictEqual(document.getElementsByClassName(colourClass).length, 1);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(highlighter.domIsPure, false);
+                assert.strictEqual(document.getElementsByClassName(colourClass).length, 1);
+            });
         });
         
         it('should mark a selected marked node with another colour', () => {
@@ -550,16 +486,12 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent(markedNode);
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startMarking());
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startMarking());
 
-                    assert.strictEqual(document.getElementsByClassName(initColourClass).length, 2);
-                    assert.strictEqual(document.getElementsByClassName(newColourClass).length, 1);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(document.getElementsByClassName(initColourClass).length, 2);
+                assert.strictEqual(document.getElementsByClassName(newColourClass).length, 1);
+            });
         });
 
         it('should not mark a selected range when the option is disabled', async () => {
@@ -586,16 +518,12 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent(markedNode);
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
 
-                    assert.strictEqual(highlighter.domIsPure, false);
-                    assert.strictEqual(document.getElementsByClassName(colourClass).length, 3);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(highlighter.domIsPure, false);
+                assert.strictEqual(document.getElementsByClassName(colourClass).length, 3);
+            });
         });
 
         it('should unmark a selected marked range and leave DOM pure', () => {
@@ -606,16 +534,12 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
 
-                    assert.strictEqual(highlighter.domIsPure, true);
-                    assert.strictEqual(document.getElementsByClassName(colourClass).length, 0);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(highlighter.domIsPure, true);
+                assert.strictEqual(document.getElementsByClassName(colourClass).length, 0);
+            });
         });
 
         it('should unmark a selected marked range and leave DOM loadable', async () => {
@@ -627,16 +551,12 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startUnmarking());
 
-                    assert.strictEqual(highlighter.domIsPure, undefined);
-                    assert.strictEqual(document.getElementsByClassName(colourClass).length, 0);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(highlighter.domIsPure, undefined);
+                assert.strictEqual(document.getElementsByClassName(colourClass).length, 0);
+            });
         });
 
         it('should not unmark a selected marked range when the option is disabled', async () => {
@@ -660,17 +580,13 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent(markedNode);
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    const newColourClass = getRandomColourClass();
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startChangingColour(newColourClass));
+            return Expectation.expectInNextLoopIteration(async () => {
+                const newColourClass = getRandomColourClass();
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startChangingColour(newColourClass));
 
-                    assert.strictEqual(document.getElementsByClassName(initColourClass).length, 2);
-                    assert.strictEqual(document.getElementsByClassName(newColourClass).length, 1);
-
-                    resolve();
-                });
-            }));
+                assert.strictEqual(document.getElementsByClassName(initColourClass).length, 2);
+                assert.strictEqual(document.getElementsByClassName(newColourClass).length, 1);
+            });
         });
 
         it('should add a note for a selected range', () => {
@@ -679,26 +595,22 @@ describe('content_script/highlighter', function () {
             selectRange();
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    let noteText;
-                    global.prompt = () => noteText = Randomiser.getRandomString();
+            return Expectation.expectInNextLoopIteration(async () => {
+                let noteText;
+                global.prompt = () => noteText = Randomiser.getRandomString();
 
-                    const addedNoteInfo = await browser.callRuntimeOnMessageCallback(SenderMessage.startAddingNote());
-                    assert.notStrictEqual(noteText, undefined);
+                const addedNoteInfo = await browser.callRuntimeOnMessageCallback(SenderMessage.startAddingNote());
+                assert.notStrictEqual(noteText, undefined);
 
-                    const expectedNote = new NoteLink(1, noteText);
-                    assert.deepStrictEqual(addedNoteInfo, expectedNote);
+                const expectedNote = new NoteLink(1, noteText);
+                assert.deepStrictEqual(addedNoteInfo, expectedNote);
 
-                    assert.strictEqual(highlighter.domIsPure, false);
-                    
-                    const noteLinks = RangeNote.getNoteLinks();
-                    assert.strictEqual(noteLinks.length, 1);
-                    assert.deepStrictEqual(noteLinks[0], expectedNote);
-            
-                    resolve();
-                });
-            }));
+                assert.strictEqual(highlighter.domIsPure, false);
+                
+                const noteLinks = RangeNote.getNoteLinks();
+                assert.strictEqual(noteLinks.length, 1);
+                assert.deepStrictEqual(noteLinks[0], expectedNote);
+            });
         });
 
         it('should not add a note for a selected range when the option is disabled', async () => {
@@ -725,19 +637,15 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    const removedNoteId = await browser.callRuntimeOnMessageCallback(SenderMessage.startRemovingNote());
-                    assert.strictEqual(removedNoteId, '1');
+            return Expectation.expectInNextLoopIteration(async () => {
+                const removedNoteId = await browser.callRuntimeOnMessageCallback(SenderMessage.startRemovingNote());
+                assert.strictEqual(removedNoteId, '1');
 
-                    assert.strictEqual(highlighter.domIsPure, true);
+                assert.strictEqual(highlighter.domIsPure, true);
 
-                    const noteLinks = RangeNote.getNoteLinks();
-                    assert.strictEqual(noteLinks.length, 0);
-            
-                    resolve();
-                });
-            }));
+                const noteLinks = RangeNote.getNoteLinks();
+                assert.strictEqual(noteLinks.length, 0);
+            });
         });
 
         it('should not remove a note for a selected range with a note when the option is disabled', async () => {
@@ -761,22 +669,18 @@ describe('content_script/highlighter', function () {
             
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    const expectedNoteId = 1;
-                    const scrollTargetElement = await runWithMockedScrollIntoView(async () => {
-                        await browser.callRuntimeOnMessageCallback(SenderMessage.startGoingToNote(expectedNoteId));
-                    });
-
-                    assert.notStrictEqual(scrollTargetElement, undefined);
-                    assert.strictEqual(RangeNote.hasNote(scrollTargetElement), true);
-                    assert.strictEqual(scrollTargetElement.dataset.noteId, expectedNoteId.toString());
-
-                    assert.strictEqual(highlighter.domIsPure, undefined);
-
-                    resolve();
+            return Expectation.expectInNextLoopIteration(async () => {
+                const expectedNoteId = 1;
+                const scrollTargetElement = await runWithMockedScrollIntoView(async () => {
+                    await browser.callRuntimeOnMessageCallback(SenderMessage.startGoingToNote(expectedNoteId));
                 });
-            }));
+
+                assert.notStrictEqual(scrollTargetElement, undefined);
+                assert.strictEqual(RangeNote.hasNote(scrollTargetElement), true);
+                assert.strictEqual(scrollTargetElement.dataset.noteId, expectedNoteId.toString());
+
+                assert.strictEqual(highlighter.domIsPure, undefined);
+            });
         });
 
         it('should save a changed page', () => {
@@ -788,20 +692,16 @@ describe('content_script/highlighter', function () {
             highlighter._domIsPure = false;
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startSaving());
-                    assert.strictEqual(highlighter.domIsPure, true);
-                    
-                    const storedPagesWithCategories = await PageInfo.getAllSavedPagesWithCategories();
-                    const storedPages = storedPagesWithCategories.pagesInfo;
-                    assert.strictEqual(storedPages.length, 1);
-                    assert.strictEqual(storedPages[0].uri, expectedUri);
-                    assert.strictEqual(storedPagesWithCategories.pageCategories[expectedUri], undefined);
-
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startSaving());
+                assert.strictEqual(highlighter.domIsPure, true);
+                
+                const storedPagesWithCategories = await PageInfo.getAllSavedPagesWithCategories();
+                const storedPages = storedPagesWithCategories.pagesInfo;
+                assert.strictEqual(storedPages.length, 1);
+                assert.strictEqual(storedPages[0].uri, expectedUri);
+                assert.strictEqual(storedPagesWithCategories.pageCategories[expectedUri], undefined);
+            });
         });
 
         it('should save a changed page to a category', async () => {
@@ -817,20 +717,16 @@ describe('content_script/highlighter', function () {
             highlighter._domIsPure = false;
             dispatchMouseRightBtnClickEvent();
             
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startSavingToCategory(expectedCategoryName));
-                    assert.strictEqual(highlighter.domIsPure, true);
-                    
-                    const storedPagesWithCategories = await PageInfo.getAllSavedPagesWithCategories();
-                    const storedPages = storedPagesWithCategories.pagesInfo;
-                    assert.strictEqual(storedPages.length, 1);
-                    assert.strictEqual(storedPages[0].uri, expectedUri);
-                    assert.strictEqual(storedPagesWithCategories.pageCategories[expectedUri], expectedCategoryName);
-
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startSavingToCategory(expectedCategoryName));
+                assert.strictEqual(highlighter.domIsPure, true);
+                
+                const storedPagesWithCategories = await PageInfo.getAllSavedPagesWithCategories();
+                const storedPages = storedPagesWithCategories.pagesInfo;
+                assert.strictEqual(storedPages.length, 1);
+                assert.strictEqual(storedPages[0].uri, expectedUri);
+                assert.strictEqual(storedPagesWithCategories.pageCategories[expectedUri], expectedCategoryName);
+            });
         });
 
         it('should not save a changed page when the option is disabled', async () => {
@@ -858,17 +754,13 @@ describe('content_script/highlighter', function () {
 
             dispatchMouseRightBtnClickEvent();
 
-            return Expectation.expectResolution(new Promise((resolve) => {
-                setImmediate(async () => {
-                    await browser.callRuntimeOnMessageCallback(SenderMessage.startLoading());
-                    assert.strictEqual(highlighter.domIsPure, true);
-                    
-                    assert.strictEqual(document.getElementsByClassName(colourClass).length, 1);
-                    assert.strictEqual(document.body.outerHTML, expectedHtml);
-
-                    resolve();
-                });
-            }));
+            return Expectation.expectInNextLoopIteration(async () => {
+                await browser.callRuntimeOnMessageCallback(SenderMessage.startLoading());
+                assert.strictEqual(highlighter.domIsPure, true);
+                
+                assert.strictEqual(document.getElementsByClassName(colourClass).length, 1);
+                assert.strictEqual(document.body.outerHTML, expectedHtml);
+            });
         });
 
         it('should not load a loadable page when the option is disabled', async () => {

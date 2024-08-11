@@ -2,12 +2,12 @@ import assert from 'assert';
 
 class Expectation {
     static expectError(fn, expectedProps) {
-        assert(this._isFunction(fn), 'The first argument should be a function');
+        assert(Expectation._isFunction(fn), 'The first argument should be a function');
 
         try {
             fn();
         } catch (err) {
-            return this._assertExpectedProps(err, expectedProps);
+            return Expectation._assertExpectedProps(err, expectedProps);
         }
 
         throw new Error('An error was expected');
@@ -19,9 +19,9 @@ class Expectation {
                 try {
                     assert(resultErr);
 
-                    this._assertExpectedProps(resultErr, expectedProps);
+                    Expectation._assertExpectedProps(resultErr, expectedProps);
                     
-                    return this._processCallback(assertionFn, resultErr, resolve, reject);
+                    return Expectation._processCallback(assertionFn, resultErr, resolve, reject);
                 } catch (err) {
                     reject(err);
                 }
@@ -41,7 +41,7 @@ class Expectation {
     }
 
     static _processCallback(callback, result, resolve, reject) {
-        if (!this._isFunction(callback))
+        if (!Expectation._isFunction(callback))
             return resolve();
 
         const resp = callback(result);
@@ -58,11 +58,19 @@ class Expectation {
         return new Promise((resolve, reject) => {
             promise.then(result => {
                 try {
-                    return this._processCallback(assertionFn, result, resolve, reject);
+                    return Expectation._processCallback(assertionFn, result, resolve, reject);
                 } catch (err) {
                     reject(err);
                 }
             }).catch(err => reject(err));
+        });
+    }
+    
+    static expectInNextLoopIteration(assertionFn) {
+        return new Promise((resolve, reject) => {
+            setImmediate(() => {
+                Expectation._processCallback(assertionFn, undefined, resolve, reject);
+            });
         });
     }
 }
